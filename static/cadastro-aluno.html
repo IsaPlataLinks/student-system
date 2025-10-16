@@ -148,23 +148,57 @@
                 <!-- Dados Pessoais -->
                 <div class="mb-4">
                     <label class="form-label">Nome Completo <span class="required">*</span></label>
-                    <input type="text" class="form-control" name="nome" required>
+                    <input type="text" class="form-control" name="nome" id="inputNome" pattern="[A-Za-zÀ-ÿ\s']+" title="Apenas letras e espaços" required>
+                    <small class="text-muted">Apenas letras</small>
                 </div>
 
                 <div class="row mb-4">
                     <div class="col-md-6">
                         <label class="form-label">Turma <span class="required">*</span></label>
-                        <input type="text" class="form-control" name="turma" placeholder="Ex: 3º A" required>
+                        <input type="text" class="form-control" name="turma" id="inputTurma" placeholder="Ex: 3º A" maxlength="20" required>
+                        <small class="text-muted"><span id="contadorTurma">0</span>/20 caracteres</small>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Ano de Formatura <span class="required">*</span></label>
-                        <input type="number" class="form-control" name="ano_formatura" min="2024" max="2030" required>
+                        <input type="number" class="form-control" name="ano_formatura" id="inputAno" min="2024" max="2035" maxlength="4" placeholder="2025" required>
+                        <small class="text-muted">4 dígitos (ex: 2025)</small>
                     </div>
                 </div>
 
                 <div class="mb-4">
-                    <label class="form-label">Escola <span class="required">*</span></label>
-                    <input type="text" class="form-control" name="escola" placeholder="Nome da escola" required>
+                    <label class="form-label">Escola/Universidade <span class="required">*</span></label>
+                    <input list="escolasBrasil" class="form-control" name="escola" id="inputEscola" placeholder="Digite ou selecione" required>
+                    <datalist id="escolasBrasil">
+                        <option value="Universidade de São Paulo (USP)">
+                        <option value="Universidade Federal do Rio de Janeiro (UFRJ)">
+                        <option value="Universidade Estadual de Campinas (UNICAMP)">
+                        <option value="Universidade Federal de Minas Gerais (UFMG)">
+                        <option value="Universidade Federal do Rio Grande do Sul (UFRGS)">
+                        <option value="Universidade de Brasília (UnB)">
+                        <option value="Universidade Federal de São Paulo (UNIFESP)">
+                        <option value="Universidade Federal de Santa Catarina (UFSC)">
+                        <option value="Universidade Federal do Paraná (UFPR)">
+                        <option value="Universidade Federal da Bahia (UFBA)">
+                        <option value="Universidade Federal de Pernambuco (UFPE)">
+                        <option value="Universidade Federal Fluminense (UFF)">
+                        <option value="Universidade Federal do Ceará (UFC)">
+                        <option value="Universidade Federal de Goiás (UFG)">
+                        <option value="Universidade Federal do Pará (UFPA)">
+                        <option value="Pontifícia Universidade Católica do Rio de Janeiro (PUC-Rio)">
+                        <option value="Pontifícia Universidade Católica de São Paulo (PUC-SP)">
+                        <option value="Universidade Federal de São Carlos (UFSCar)">
+                        <option value="Universidade Federal do Espírito Santo (UFES)">
+                        <option value="Universidade Federal de Juiz de Fora (UFJF)">
+                        <option value="Outra escola não listada">
+                    </datalist>
+                    <small class="text-muted">Comece digitando ou selecione da lista</small>
+                </div>
+
+                <!-- Campo para "Outra escola" -->
+                <div class="mb-4" id="divOutraEscola" style="display: none;">
+                    <label class="form-label">Nome da Escola/Universidade <span class="required">*</span></label>
+                    <input type="text" class="form-control" name="outra_escola" id="inputOutraEscola" maxlength="100" placeholder="Digite o nome completo da instituição">
+                    <small class="text-muted">Máximo 100 caracteres</small>
                 </div>
 
                 <!-- Contato -->
@@ -176,21 +210,56 @@
 
                 <div class="mb-4">
                     <label class="form-label">WhatsApp</label>
-                    <input type="text" class="form-control" name="whatsapp" placeholder="(00) 00000-0000" maxlength="15">
+                    <input type="text" class="form-control" name="whatsapp" id="inputWhatsApp" placeholder="(00) 00000-0000" maxlength="15">
                     <small class="text-muted">Opcional - Formato: (XX) XXXXX-XXXX</small>
                 </div>
 
-                <!-- Endereço -->
+                <!-- CEP e Endereço -->
                 <div class="mb-4">
                     <label class="form-label">CEP</label>
-                    <input type="text" class="form-control" name="cep" placeholder="00000-000" maxlength="9">
-                    <small class="text-muted">Opcional - Formato: XXXXX-XXX</small>
+                    <input type="text" class="form-control" name="cep" id="inputCEP" placeholder="00000-000" maxlength="9">
+                    <small class="text-muted">Opcional - Preencha para autocompletar endereço</small>
                 </div>
 
-                <div class="mb-4">
-                    <label class="form-label">Endereço Completo</label>
-                    <input type="text" class="form-control" name="endereco" placeholder="Rua, número, bairro, cidade">
-                    <small class="text-muted">Opcional</small>
+                <!-- Campos de endereço (aparecem após buscar CEP) -->
+                <div id="camposEndereco" style="display: none;">
+                    <div class="mb-3">
+                        <label class="form-label">Logradouro</label>
+                        <input type="text" class="form-control" name="logradouro" id="inputLogradouro" readonly>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label class="form-label">Bairro</label>
+                            <input type="text" class="form-control" name="bairro" id="inputBairro" readonly>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Número <span class="required">*</span></label>
+                            <input type="text" class="form-control" name="numero" id="inputNumero" placeholder="123">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Complemento</label>
+                        <input type="text" class="form-control" name="complemento" id="inputComplemento" placeholder="Apto, Bloco, etc (opcional)">
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label class="form-label">Cidade</label>
+                            <input type="text" class="form-control" name="cidade" id="inputCidade" readonly>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Estado</label>
+                            <input type="text" class="form-control" name="estado" id="inputEstado" readonly>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Endereço manual (se não preencher CEP) -->
+                <div class="mb-4" id="enderecoManual">
+                    <label class="form-label">Ou digite o endereço completo</label>
+                    <input type="text" class="form-control" name="endereco" placeholder="Rua, número, bairro, cidade (opcional)">
                 </div>
 
                 <!-- Foto -->

@@ -1,10 +1,75 @@
 // Configuração da API
 const API_URL = 'http://localhost:5000/api';
 
-// ========== MÁSCARAS DE ENTRADA ==========
+// ========== MÁSCARAS E VALIDAÇÕES ==========
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Máscara WhatsApp
+    
+    // ===== VALIDAÇÃO DE NOME - Apenas letras =====
+    const inputNome = document.querySelector('input[name="nome"]');
+    if (inputNome) {
+        inputNome.addEventListener('input', function(e) {
+            // Remove números em tempo real
+            e.target.value = e.target.value.replace(/[0-9]/g, '');
+        });
+    }
+
+    // ===== VALIDAÇÃO DE ANO - Máximo 4 dígitos =====
+    const inputAno = document.getElementById('inputAno');
+    if (inputAno) {
+        inputAno.addEventListener('input', function(e) {
+            // Limita a 4 dígitos
+            if (e.target.value.length > 4) {
+                e.target.value = e.target.value.slice(0, 4);
+            }
+        });
+    }
+
+    // ===== CONTADOR DE CARACTERES DA TURMA =====
+    const inputTurma = document.getElementById('inputTurma');
+    const contadorTurma = document.getElementById('contadorTurma');
+    if (inputTurma && contadorTurma) {
+        inputTurma.addEventListener('input', function(e) {
+            contadorTurma.textContent = e.target.value.length;
+            
+            // Alerta visual quando chegar perto do limite
+            if (e.target.value.length >= 18) {
+                contadorTurma.style.color = 'red';
+                contadorTurma.style.fontWeight = 'bold';
+            } else {
+                contadorTurma.style.color = '';
+                contadorTurma.style.fontWeight = '';
+            }
+        });
+    }
+
+    // ===== AUTOCOMPLETE DE ESCOLA + CAMPO "OUTRA" =====
+    const inputEscola = document.getElementById('inputEscola');
+    const divOutraEscola = document.getElementById('divOutraEscola');
+    const inputOutraEscola = document.getElementById('inputOutraEscola');
+    
+    if (inputEscola) {
+        inputEscola.addEventListener('change', function() {
+            if (this.value === 'Outra escola não listada') {
+                divOutraEscola.style.display = 'block';
+                inputOutraEscola.required = true;
+                inputOutraEscola.focus();
+            } else {
+                divOutraEscola.style.display = 'none';
+                inputOutraEscola.required = false;
+                inputOutraEscola.value = '';
+            }
+        });
+        
+        inputEscola.addEventListener('input', function() {
+            if (this.value !== 'Outra escola não listada') {
+                divOutraEscola.style.display = 'none';
+                inputOutraEscola.required = false;
+            }
+        });
+    }
+
+    // ===== MÁSCARA WHATSAPP =====
     const inputWhatsApp = document.querySelector('input[name="whatsapp"]');
     if (inputWhatsApp) {
         inputWhatsApp.addEventListener('input', function(e) {
@@ -23,9 +88,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Máscara CEP
-    const inputCEP = document.querySelector('input[name="cep"]');
+    // ===== MÁSCARA CEP + BUSCA AUTOMÁTICA =====
+    const inputCEP = document.getElementById('inputCEP');
+    const camposEndereco = document.getElementById('camposEndereco');
+    const enderecoManual = document.getElementById('enderecoManual');
+    
     if (inputCEP) {
+        // Máscara do CEP
         inputCEP.addEventListener('input', function(e) {
             let valor = e.target.value.replace(/\D/g, '');
             if (valor.length > 8) valor = valor.slice(0, 8);
@@ -40,23 +109,59 @@ document.addEventListener('DOMContentLoaded', function() {
         // Buscar endereço pelo CEP (ViaCEP)
         inputCEP.addEventListener('blur', async function() {
             const cep = this.value.replace(/\D/g, '');
+            
             if (cep.length === 8) {
+                // Mostrar loading
+                inputCEP.style.borderColor = '#fbbf24';
+                inputCEP.disabled = true;
+                
                 try {
                     const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
                     const dados = await response.json();
                     
                     if (!dados.erro) {
-                        const inputEndereco = document.querySelector('input[name="endereco"]');
-                        inputEndereco.value = `${dados.logradouro}, ${dados.bairro}, ${dados.localidade} - ${dados.uf}`;
+                        // Preencher campos
+                        document.getElementById('inputLogradouro').value = dados.logradouro;
+                        document.getElementById('inputBairro').value = dados.bairro;
+                        document.getElementById('inputCidade').value = dados.localidade;
+                        document.getElementById('inputEstado').value = dados.uf;
+                        
+                        // Mostrar campos de endereço
+                        camposEndereco.style.display = 'block';
+                        enderecoManual.style.display = 'none';
+                        
+                        // Focar no campo número
+                        document.getElementById('inputNumero').focus();
+                        
+                        // Sucesso visual
+                        inputCEP.style.borderColor = '#10b981';
+                        setTimeout(() => {
+                            inputCEP.style.borderColor = '';
+                        }, 2000);
+                    } else {
+                        mostrarAlerta('CEP não encontrado!', 'warning');
+                        inputCEP.style.borderColor = '#ef4444';
                     }
                 } catch (error) {
-                    console.log('Erro ao buscar CEP:', error);
+                    console.error('Erro ao buscar CEP:', error);
+                    mostrarAlerta('Erro ao buscar CEP. Verifique sua conexão.', 'danger');
+                    inputCEP.style.borderColor = '#ef4444';
+                } finally {
+                    inputCEP.disabled = false;
                 }
+            }
+        });
+        
+        // Se apagar o CEP, esconder campos automáticos
+        inputCEP.addEventListener('input', function() {
+            if (this.value.length < 9) {
+                camposEndereco.style.display = 'none';
+                enderecoManual.style.display = 'block';
             }
         });
     }
 
-    // Preview da foto
+    // ===== PREVIEW DA FOTO =====
     const inputFoto = document.getElementById('inputFoto');
     const fotoPreview = document.getElementById('fotoPreview');
     
