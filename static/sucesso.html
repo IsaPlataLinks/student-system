@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro Realizado!</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #10b981;
+            --secondary-color: #059669;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .sucesso-container {
+            max-width: 600px;
+            background: white;
+            border-radius: 20px;
+            padding: 3rem;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: bounceIn 0.8s ease-out;
+        }
+
+        @keyframes bounceIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.3);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            70% {
+                transform: scale(0.9);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .icone-sucesso {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 2rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 0 0 20px rgba(16, 185, 129, 0);
+            }
+        }
+
+        .icone-sucesso i {
+            font-size: 4rem;
+            color: white;
+        }
+
+        h1 {
+            color: #1f2937;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .mensagem {
+            color: #6b7280;
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+        }
+
+        .nome-cadastrado {
+            background: #f0fdf4;
+            border-left: 4px solid var(--primary-color);
+            padding: 1rem;
+            border-radius: 10px;
+            margin: 1.5rem 0;
+            color: #065f46;
+            font-weight: 600;
+        }
+
+        .btn-voltar {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 10px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .btn-voltar:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(79, 70, 229, 0.4);
+            color: white;
+        }
+
+        .info-adicional {
+            background: #f9fafb;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .info-adicional i {
+            color: var(--primary-color);
+            margin-right: 0.5rem;
+        }
+
+        .info-adicional p {
+            margin: 0.5rem 0;
+            color: #4b5563;
+        }
+    </style>
+</head>
+<body>
+    <div class="sucesso-container">
+        <div class="icone-sucesso">
+            <i class="fas fa-check"></i>
+        </div>
+
+        <h1>Cadastro Realizado com Sucesso! 🎉</h1>
+        
+        <p class="mensagem">Seus dados foram salvos com segurança em nosso sistema.</p>
+
+        <div class="nome-cadastrado" id="nomeCadastrado">
+            <i class="fas fa-user-check me-2"></i>
+            <span id="nomeExibir">Carregando...</span>
+        </div>
+
+        <div class="info-adicional">
+            <p><i class="fas fa-info-circle"></i> <strong>O que acontece agora?</strong></p>
+            <p>Em breve você receberá mais informações sobre a formatura.</p>
+            <p><i class="fas fa-phone"></i> Qualquer dúvida, entre em contato com a organização.</p>
+        </div>
+
+        <div class="mt-4">
+            <a href="index.html" class="btn-voltar">
+                <i class="fas fa-home me-2"></i>Voltar ao Início
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Recuperar dados do localStorage
+        document.addEventListener('DOMContentLoaded', function() {
+            const dadosCadastro = JSON.parse(localStorage.getItem('cadastroSucesso'));
+            
+            if (dadosCadastro) {
+                const tipoTexto = dadosCadastro.tipo === 'aluno' ? 'Aluno' : 'Responsável';
+                document.getElementById('nomeExibir').textContent = `${tipoTexto}: ${dadosCadastro.nome}`;
+                
+                // Limpar localStorage após exibir
+                localStorage.removeItem('cadastroSucesso');
+            } else {
+                // Se não houver dados, redirecionar
+                window.location.href = 'index.html';
+            }
+
+            // Confete (opcional - efeito visual)
+            criarConfete();
+        });
+
+        function criarConfete() {
+            // Efeito simples de confete
+            const cores = ['#4f46e5', '#7c3aed', '#ec4899', '#10b981', '#f59e0b'];
+            
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const confete = document.createElement('div');
+                    confete.style.cssText = `
+                        position: fixed;
+                        width: 10px;
+                        height: 10px;
+                        background: ${cores[Math.floor(Math.random() * cores.length)]};
+                        top: -10px;
+                        left: ${Math.random() * 100}%;
+                        opacity: 1;
+                        border-radius: 50%;
+                        pointer-events: none;
+                        z-index: 9999;
+                    `;
+                    document.body.appendChild(confete);
+
+                    const animacao = confete.animate([
+                        { transform: 'translateY(0) rotate(0deg)', opacity: 1 },
+                        { transform: `translateY(${window.innerHeight}px) rotate(${Math.random() * 360}deg)`, opacity: 0 }
+                    ], {
+                        duration: 3000 + Math.random() * 2000,
+                        easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+                    });
+
+                    animacao.onfinish = () => confete.remove();
+                }, i * 30);
+            }
+        }
+    </script>
+</body>
+</html>
