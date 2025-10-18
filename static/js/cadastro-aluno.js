@@ -5,35 +5,61 @@ const API_URL = 'http://localhost:5000/api';
 
 document.addEventListener('DOMContentLoaded', function() {
     
-    // ===== VALIDAÇÃO DE NOME - Apenas letras =====
+    // ===== VALIDAÇÃO DE NOME - Apenas letras (REFORÇADO) =====
     const inputNome = document.querySelector('input[name="nome"]');
     if (inputNome) {
         inputNome.addEventListener('input', function(e) {
-            // Remove números em tempo real
-            e.target.value = e.target.value.replace(/[0-9]/g, '');
+            // Remove TUDO que não for letra, espaço ou apóstrofo
+            e.target.value = e.target.value.replace(/[^a-zA-ZÀ-ÿ\s']/g, '');
         });
-    }
-
-    // ===== VALIDAÇÃO DE ANO - Máximo 4 dígitos =====
-    const inputAno = document.getElementById('inputAno');
-    if (inputAno) {
-        inputAno.addEventListener('input', function(e) {
-            // Limita a 4 dígitos
-            if (e.target.value.length > 4) {
-                e.target.value = e.target.value.slice(0, 4);
+        
+        inputNome.addEventListener('keypress', function(e) {
+            // Bloqueia a digitação de números
+            const char = String.fromCharCode(e.which);
+            if (!/[a-zA-ZÀ-ÿ\s']/.test(char)) {
+                e.preventDefault();
             }
         });
     }
 
-    // ===== CONTADOR DE CARACTERES DA TURMA =====
+    // ===== VALIDAÇÃO DE ANO - Máximo 4 dígitos (REFORÇADO) =====
+    const inputAno = document.getElementById('inputAno');
+    if (inputAno) {
+        inputAno.addEventListener('input', function(e) {
+            // Remove tudo que não for número
+            let valor = e.target.value.replace(/\D/g, '');
+            // Limita a 4 dígitos
+            if (valor.length > 4) {
+                valor = valor.slice(0, 4);
+            }
+            e.target.value = valor;
+        });
+        
+        inputAno.addEventListener('keypress', function(e) {
+            // Bloqueia se já tiver 4 dígitos
+            if (this.value.length >= 4) {
+                e.preventDefault();
+            }
+        });
+    }
+
+    // ===== CONTADOR DE CARACTERES DA TURMA (aumentado para 30) =====
     const inputTurma = document.getElementById('inputTurma');
     const contadorTurma = document.getElementById('contadorTurma');
     if (inputTurma && contadorTurma) {
+        inputTurma.setAttribute('maxlength', '30'); // Aumentado de 20 para 30
+        
         inputTurma.addEventListener('input', function(e) {
             contadorTurma.textContent = e.target.value.length;
             
+            // Atualiza contador para /30
+            const textoContador = document.querySelector('small .text-muted');
+            if (textoContador && !textoContador.textContent.includes('/30')) {
+                textoContador.innerHTML = '<span id="contadorTurma">0</span>/30 caracteres';
+            }
+            
             // Alerta visual quando chegar perto do limite
-            if (e.target.value.length >= 18) {
+            if (e.target.value.length >= 27) {
                 contadorTurma.style.color = 'red';
                 contadorTurma.style.fontWeight = 'bold';
             } else {
@@ -43,12 +69,27 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // ===== AUTOCOMPLETE DE ESCOLA + CAMPO "OUTRA" =====
+    // ===== AUTOCOMPLETE DE ESCOLA + CAMPO "OUTRA" (CORRIGIDO) =====
     const inputEscola = document.getElementById('inputEscola');
     const divOutraEscola = document.getElementById('divOutraEscola');
     const inputOutraEscola = document.getElementById('inputOutraEscola');
     
     if (inputEscola) {
+        // Detecta quando digita "Outra escola não listada"
+        inputEscola.addEventListener('input', function() {
+            if (this.value.toLowerCase().includes('outra') || 
+                this.value === 'Outra escola não listada') {
+                divOutraEscola.style.display = 'block';
+                inputOutraEscola.required = true;
+                inputOutraEscola.focus();
+            } else {
+                divOutraEscola.style.display = 'none';
+                inputOutraEscola.required = false;
+                inputOutraEscola.value = '';
+            }
+        });
+        
+        // Detecta quando seleciona da lista
         inputEscola.addEventListener('change', function() {
             if (this.value === 'Outra escola não listada') {
                 divOutraEscola.style.display = 'block';
@@ -61,10 +102,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        inputEscola.addEventListener('input', function() {
-            if (this.value !== 'Outra escola não listada') {
-                divOutraEscola.style.display = 'none';
-                inputOutraEscola.required = false;
+        // Detecta quando clica na opção
+        inputEscola.addEventListener('click', function() {
+            if (this.value === 'Outra escola não listada') {
+                divOutraEscola.style.display = 'block';
+                inputOutraEscola.required = true;
             }
         });
     }
@@ -128,7 +170,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         // Mostrar campos de endereço
                         camposEndereco.style.display = 'block';
-                        enderecoManual.style.display = 'none';
+                        
+                        // ESCONDER campo de endereço manual
+                        if (enderecoManual) {
+                            enderecoManual.style.display = 'none';
+                        }
                         
                         // Focar no campo número
                         document.getElementById('inputNumero').focus();
@@ -152,11 +198,13 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // Se apagar o CEP, esconder campos automáticos
+        // Se apagar o CEP, mostrar campo manual novamente
         inputCEP.addEventListener('input', function() {
             if (this.value.length < 9) {
                 camposEndereco.style.display = 'none';
-                enderecoManual.style.display = 'block';
+                if (enderecoManual) {
+                    enderecoManual.style.display = 'block';
+                }
             }
         });
     }
@@ -223,22 +271,64 @@ const btnSubmit = document.getElementById('btnSubmit');
 formAluno.addEventListener('submit', async function(e) {
     e.preventDefault();
 
-    // Validações
+    // Validação de nome (dupla checagem)
+    const nome = document.querySelector('input[name="nome"]').value;
+    if (!/^[a-zA-ZÀ-ÿ\s']+$/.test(nome)) {
+        mostrarAlerta('Nome inválido! Use apenas letras.', 'danger');
+        return;
+    }
+
+    // Validação de ano (dupla checagem)
+    const ano = document.querySelector('input[name="ano_formatura"]').value;
+    if (ano.length !== 4 || parseInt(ano) < 2024 || parseInt(ano) > 2035) {
+        mostrarAlerta('Ano inválido! Use 4 dígitos entre 2024 e 2035.', 'danger');
+        return;
+    }
+
+    // Validação de escola
+    let escolaFinal = inputEscola.value;
+    if (escolaFinal === 'Outra escola não listada') {
+        if (!inputOutraEscola.value) {
+            mostrarAlerta('Por favor, digite o nome da escola.', 'danger');
+            inputOutraEscola.focus();
+            return;
+        }
+        escolaFinal = inputOutraEscola.value;
+    }
+
+    // Validações opcionais AGORA SÃO OBRIGATÓRIAS
     const email = document.querySelector('input[name="email"]').value;
     const whatsapp = document.querySelector('input[name="whatsapp"]').value;
     const cep = document.querySelector('input[name="cep"]').value;
 
+    // Email OBRIGATÓRIO
+    if (!email) {
+        mostrarAlerta('E-mail é obrigatório!', 'danger');
+        document.querySelector('input[name="email"]').focus();
+        return;
+    }
+
     if (!validarEmail(email)) {
-        mostrarAlerta('E-mail inválido! Verifique o formato.', 'danger');
+        mostrarAlerta('E-mail inválido! Deve conter @ e .', 'danger');
+        document.querySelector('input[name="email"]').focus();
+        return;
+    }
+
+    // WhatsApp OBRIGATÓRIO
+    if (!whatsapp) {
+        mostrarAlerta('WhatsApp é obrigatório!', 'danger');
+        document.querySelector('input[name="whatsapp"]').focus();
         return;
     }
 
     if (!validarWhatsApp(whatsapp)) {
         mostrarAlerta('WhatsApp inválido! Use o formato (XX) XXXXX-XXXX', 'danger');
+        document.querySelector('input[name="whatsapp"]').focus();
         return;
     }
 
-    if (!validarCEP(cep)) {
+    // CEP opcional, mas se preenchido deve ser válido
+    if (cep && !validarCEP(cep)) {
         mostrarAlerta('CEP inválido! Use o formato XXXXX-XXX', 'danger');
         return;
     }
@@ -250,6 +340,11 @@ formAluno.addEventListener('submit', async function(e) {
     try {
         // Preparar FormData
         const formData = new FormData(formAluno);
+        
+        // Substituir escola se for "Outra"
+        if (inputEscola.value === 'Outra escola não listada') {
+            formData.set('escola', inputOutraEscola.value);
+        }
 
         // Enviar para API
         const response = await fetch(`${API_URL}/cadastro/aluno`, {

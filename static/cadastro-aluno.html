@@ -155,8 +155,8 @@
                 <div class="row mb-4">
                     <div class="col-md-6">
                         <label class="form-label">Turma <span class="required">*</span></label>
-                        <input type="text" class="form-control" name="turma" id="inputTurma" placeholder="Ex: 3º A" maxlength="20" required>
-                        <small class="text-muted"><span id="contadorTurma">0</span>/20 caracteres</small>
+                        <input type="text" class="form-control" name="turma" id="inputTurma" placeholder="Ex: 3º A" maxlength="30" required>
+                        <small class="text-muted"><span id="contadorTurma">0</span>/30 caracteres</small>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Ano de Formatura <span class="required">*</span></label>
@@ -167,8 +167,9 @@
 
                 <div class="mb-4">
                     <label class="form-label">Escola/Universidade <span class="required">*</span></label>
-                    <input list="escolasBrasil" class="form-control" name="escola" id="inputEscola" placeholder="Digite ou selecione" required>
+                    <input list="escolasBrasil" class="form-control" name="escola" id="inputEscola" placeholder="Digite ou selecione" autocomplete="off" required>
                     <datalist id="escolasBrasil">
+                        <!-- Universidades Federais -->
                         <option value="Universidade de São Paulo (USP)">
                         <option value="Universidade Federal do Rio de Janeiro (UFRJ)">
                         <option value="Universidade Estadual de Campinas (UNICAMP)">
@@ -184,11 +185,48 @@
                         <option value="Universidade Federal do Ceará (UFC)">
                         <option value="Universidade Federal de Goiás (UFG)">
                         <option value="Universidade Federal do Pará (UFPA)">
-                        <option value="Pontifícia Universidade Católica do Rio de Janeiro (PUC-Rio)">
-                        <option value="Pontifícia Universidade Católica de São Paulo (PUC-SP)">
                         <option value="Universidade Federal de São Carlos (UFSCar)">
                         <option value="Universidade Federal do Espírito Santo (UFES)">
                         <option value="Universidade Federal de Juiz de Fora (UFJF)">
+                        <option value="Universidade Federal do Amazonas (UFAM)">
+                        <option value="Universidade Federal de Viçosa (UFV)">
+                        <option value="Universidade Federal do Rio Grande do Norte (UFRN)">
+                        <option value="Universidade Federal de Santa Maria (UFSM)">
+                        <option value="Universidade Federal de Uberlândia (UFU)">
+                        <option value="Universidade Federal da Paraíba (UFPB)">
+                        <option value="Universidade Federal de Sergipe (UFS)">
+                        <option value="Universidade Federal do Maranhão (UFMA)">
+                        <option value="Universidade Federal de Mato Grosso (UFMT)">
+                        <option value="Universidade Federal de Pelotas (UFPel)">
+                        <option value="Universidade Federal Rural do Rio de Janeiro (UFRRJ)">
+                        <option value="Universidade Federal de Lavras (UFLA)">
+                        
+                        <!-- Universidades Estaduais -->
+                        <option value="Universidade Estadual Paulista (UNESP)">
+                        <option value="Universidade do Estado do Rio de Janeiro (UERJ)">
+                        <option value="Universidade Estadual de Londrina (UEL)">
+                        <option value="Universidade Estadual de Maringá (UEM)">
+                        <option value="Universidade Estadual de Ponta Grossa (UEPG)">
+                        
+                        <!-- Universidades Particulares -->
+                        <option value="Pontifícia Universidade Católica do Rio de Janeiro (PUC-Rio)">
+                        <option value="Pontifícia Universidade Católica de São Paulo (PUC-SP)">
+                        <option value="Pontifícia Universidade Católica do Rio Grande do Sul (PUC-RS)">
+                        <option value="Pontifícia Universidade Católica de Minas Gerais (PUC-MG)">
+                        <option value="Pontifícia Universidade Católica do Paraná (PUC-PR)">
+                        <option value="Universidade Presbiteriana Mackenzie">
+                        <option value="Fundação Getúlio Vargas (FGV)">
+                        <option value="Insper Instituto de Ensino e Pesquisa">
+                        <option value="Universidade Anhembi Morumbi">
+                        <option value="Universidade Paulista (UNIP)">
+                        <option value="Universidade Nove de Julho (UNINOVE)">
+                        <option value="Centro Universitário FAM">
+                        
+                        <!-- Escolas Técnicas -->
+                        <option value="Instituto Federal de São Paulo (IFSP)">
+                        <option value="Centro Paula Souza (ETEC)">
+                        <option value="Colégio Técnico Industrial (CTI)">
+                        
                         <option value="Outra escola não listada">
                     </datalist>
                     <small class="text-muted">Comece digitando ou selecione da lista</small>
@@ -197,21 +235,19 @@
                 <!-- Campo para "Outra escola" -->
                 <div class="mb-4" id="divOutraEscola" style="display: none;">
                     <label class="form-label">Nome da Escola/Universidade <span class="required">*</span></label>
-                    <input type="text" class="form-control" name="outra_escola" id="inputOutraEscola" maxlength="100" placeholder="Digite o nome completo da instituição">
-                    <small class="text-muted">Máximo 100 caracteres</small>
+                    <input type="text" class="form-control" name="outra_escola" id="inputOutraEscola" maxlength="150" placeholder="Digite o nome completo da instituição">
+                    <small class="text-muted">Máximo 150 caracteres</small>
                 </div>
 
                 <!-- Contato -->
                 <div class="mb-4">
-                    <label class="form-label">E-mail</label>
-                    <input type="email" class="form-control" name="email" placeholder="seuemail@exemplo.com">
-                    <small class="text-muted">Opcional</small>
+                    <label class="form-label">E-mail <span class="required">*</span></label>
+                    <input type="email" class="form-control" name="email" id="inputEmail" placeholder="seuemail@exemplo.com" required>
                 </div>
 
                 <div class="mb-4">
-                    <label class="form-label">WhatsApp</label>
-                    <input type="text" class="form-control" name="whatsapp" id="inputWhatsApp" placeholder="(00) 00000-0000" maxlength="15">
-                    <small class="text-muted">Opcional - Formato: (XX) XXXXX-XXXX</small>
+                    <label class="form-label">WhatsApp <span class="required">*</span></label>
+                    <input type="text" class="form-control" name="whatsapp" id="inputWhatsApp" placeholder="(00) 00000-0000" maxlength="15" required>
                 </div>
 
                 <!-- CEP e Endereço -->
