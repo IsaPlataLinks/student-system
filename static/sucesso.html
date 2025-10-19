@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastro Realizado!</title>
+    <title>Cadastro Realizado! - R3 Formaturas</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
             --primary-color: #10b981;
             --secondary-color: #059669;
+            --accent-color: #4f46e5;
         }
 
         body {
@@ -19,28 +20,31 @@
             align-items: center;
             justify-content: center;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 2rem 0;
         }
 
         .sucesso-container {
-            max-width: 600px;
+            max-width: 650px;
             background: white;
-            border-radius: 20px;
+            border-radius: 24px;
             padding: 3rem;
             text-align: center;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            animation: bounceIn 0.8s ease-out;
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.3);
+            animation: bounceIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            position: relative;
+            overflow: hidden;
         }
 
         @keyframes bounceIn {
             0% {
                 opacity: 0;
-                transform: scale(0.3);
+                transform: scale(0.3) translateY(-50px);
             }
             50% {
                 transform: scale(1.05);
             }
             70% {
-                transform: scale(0.9);
+                transform: scale(0.95);
             }
             100% {
                 opacity: 1;
@@ -48,89 +52,369 @@
             }
         }
 
+        /* Efeito de brilho de fundo */
+        .sucesso-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(16, 185, 129, 0.1), transparent);
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            0%, 100% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            50% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
         .icone-sucesso {
-            width: 120px;
-            height: 120px;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            border-radius: 50%;
+            width: 150px;
+            height: 150px;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto 2rem;
+            position: relative;
+            z-index: 1;
+            animation: checkmarkDraw 0.8s ease-out;
+        }
+
+        @keyframes checkmarkDraw {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.2);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .icone-sucesso i {
+            font-size: 8rem;
+            color: var(--primary-color);
+            text-shadow: 
+                0 0 20px rgba(16, 185, 129, 0.3),
+                0 5px 15px rgba(16, 185, 129, 0.2);
             animation: pulse 2s infinite;
         }
 
         @keyframes pulse {
             0%, 100% {
                 transform: scale(1);
-                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+                filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.4));
             }
             50% {
                 transform: scale(1.05);
-                box-shadow: 0 0 0 20px rgba(16, 185, 129, 0);
+                filter: drop-shadow(0 0 20px rgba(16, 185, 129, 0.6));
             }
-        }
-
-        .icone-sucesso i {
-            font-size: 4rem;
-            color: white;
         }
 
         h1 {
             color: #1f2937;
             font-weight: 700;
             margin-bottom: 1rem;
+            font-size: 2.2rem;
+            position: relative;
+            z-index: 1;
         }
 
         .mensagem {
             color: #6b7280;
-            font-size: 1.1rem;
+            font-size: 1.15rem;
             margin-bottom: 2rem;
+            line-height: 1.6;
+            position: relative;
+            z-index: 1;
         }
 
         .nome-cadastrado {
-            background: #f0fdf4;
-            border-left: 4px solid var(--primary-color);
-            padding: 1rem;
-            border-radius: 10px;
-            margin: 1.5rem 0;
+            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+            border-left: 5px solid var(--primary-color);
+            padding: 1.2rem 1.5rem;
+            border-radius: 12px;
+            margin: 2rem 0;
             color: #065f46;
             font-weight: 600;
+            font-size: 1.1rem;
+            position: relative;
+            z-index: 1;
+            animation: slideInLeft 0.6s ease-out 0.3s both;
         }
 
-        .btn-voltar {
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
-            color: white;
-            border: none;
-            padding: 0.75rem 2rem;
-            border-radius: 10px;
-            font-weight: 600;
-            text-decoration: none;
-            display: inline-block;
-            transition: all 0.3s ease;
-        }
-
-        .btn-voltar:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(79, 70, 229, 0.4);
-            color: white;
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
         }
 
         .info-adicional {
             background: #f9fafb;
-            border-radius: 10px;
-            padding: 1.5rem;
+            border-radius: 16px;
+            padding: 2rem;
             margin-top: 2rem;
+            position: relative;
+            z-index: 1;
+            animation: fadeInUp 0.6s ease-out 0.5s both;
         }
 
-        .info-adicional i {
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .info-titulo {
             color: var(--primary-color);
-            margin-right: 0.5rem;
+            font-weight: 700;
+            font-size: 1.15rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
         }
 
-        .info-adicional p {
-            margin: 0.5rem 0;
+        .info-titulo i {
+            font-size: 1.3rem;
+        }
+
+        .info-texto {
             color: #4b5563;
+            line-height: 1.8;
+            margin-bottom: 2rem;
+            text-align: left;
+        }
+
+        /* ÍCONES DE CONTATO */
+        .contatos-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            border: 2px solid #e5e7eb;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .contatos-titulo {
+            color: var(--accent-color);
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .social-icons {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .social-icon {
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            position: relative;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .social-icon:hover {
+            transform: translateY(-8px) scale(1.1);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+        }
+
+        .social-icon i {
+            font-size: 1.8rem;
+            color: white;
+            z-index: 1;
+        }
+
+        /* WhatsApp */
+        .social-icon.whatsapp {
+            background: linear-gradient(135deg, #25D366, #128C7E);
+        }
+
+        .social-icon.whatsapp:hover {
+            background: linear-gradient(135deg, #128C7E, #075E54);
+        }
+
+        /* E-mail */
+        .social-icon.email {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+        }
+
+        .social-icon.email:hover {
+            background: linear-gradient(135deg, #3730a3, #5b21b6);
+        }
+
+        /* Instagram */
+        .social-icon.instagram {
+            background: linear-gradient(135deg, #E4405F, #C13584, #833AB4);
+        }
+
+        .social-icon.instagram:hover {
+            background: linear-gradient(135deg, #C13584, #833AB4, #5851DB);
+        }
+
+        /* Facebook */
+        .social-icon.facebook {
+            background: linear-gradient(135deg, #1877F2, #0C63D4);
+        }
+
+        .social-icon.facebook:hover {
+            background: linear-gradient(135deg, #0C63D4, #084998);
+        }
+
+        /* Tooltip nos ícones */
+        .social-icon::before {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1f2937;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        .social-icon::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-bottom-color: #1f2937;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        .social-icon:hover::before,
+        .social-icon:hover::after {
+            opacity: 1;
+            bottom: -50px;
+        }
+
+        .social-icon:hover::after {
+            bottom: -16px;
+        }
+
+        /* Botão Voltar */
+        .btn-voltar {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            border: none;
+            padding: 0.85rem 2.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            margin-top: 2rem;
+            position: relative;
+            z-index: 1;
+            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn-voltar:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(79, 70, 229, 0.4);
+            color: white;
+        }
+
+        .btn-voltar i {
+            transition: transform 0.3s ease;
+        }
+
+        .btn-voltar:hover i {
+            transform: translateX(-3px);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sucesso-container {
+                padding: 2rem 1.5rem;
+                margin: 0 1rem;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .icone-sucesso {
+                width: 100px;
+                height: 100px;
+            }
+
+            .icone-sucesso i {
+                font-size: 3.5rem;
+            }
+
+            .social-icons {
+                gap: 1rem;
+            }
+
+            .social-icon {
+                width: 55px;
+                height: 55px;
+            }
+
+            .social-icon i {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* Animação de entrada dos ícones */
+        .social-icon {
+            animation: popIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) both;
+        }
+
+        .social-icon:nth-child(1) { animation-delay: 0.7s; }
+        .social-icon:nth-child(2) { animation-delay: 0.8s; }
+        .social-icon:nth-child(3) { animation-delay: 0.9s; }
+        .social-icon:nth-child(4) { animation-delay: 1s; }
+
+        @keyframes popIn {
+            from {
+                opacity: 0;
+                transform: scale(0);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
         }
     </style>
 </head>
@@ -150,33 +434,60 @@
         </div>
 
         <div class="info-adicional">
-            <p><i class="fas fa-info-circle"></i> <strong>O que acontece agora?</strong></p>
-            <p style="margin-top: 1rem;">Em breve entraremos em contato com você sobre as fotos profissionais do evento. A R3 Formaturas é especializada em fotografia de formaturas e nosso time entrará em contato para agendar seu book ou tirar suas dúvidas sobre o evento.</p>
+            <div class="info-titulo">
+                <i class="fas fa-info-circle"></i>
+                O que acontece agora?
+            </div>
             
-            <div style="background: white; padding: 1.5rem; border-radius: 10px; margin-top: 1.5rem; border-left: 4px solid var(--primary-color);">
-                <p style="margin: 0; font-weight: 600; color: var(--primary-color); margin-bottom: 1rem;">
-                    <i class="fas fa-camera me-2"></i>Contatos R3 Formaturas
-                </p>
+            <div class="info-texto">
+                <strong>Em breve, entraremos em contato com você para falar sobre as fotos do evento.</strong>
+                <br><br>
+                A R3 Formaturas é especialista em registrar momentos únicos, e nossa equipe está sempre à disposição para oferecer suporte e esclarecer quaisquer dúvidas.
+            </div>
+            
+            <div class="contatos-container">
+                <div class="contatos-titulo">
+                    <i class="fas fa-camera"></i>
+                    Contatos R3 Formaturas
+                </div>
                 
-                <p style="margin: 0.5rem 0;">
-                    <i class="fab fa-whatsapp" style="color: #25D366;"></i> 
-                    <strong>WhatsApp:</strong> <a href="https://wa.me/5511999999999" target="_blank" style="color: #25D366; text-decoration: none;">(11) 99999-9999</a>
-                </p>
-                
-                <p style="margin: 0.5rem 0;">
-                    <i class="fas fa-envelope" style="color: #4f46e5;"></i> 
-                    <strong>E-mail:</strong> <a href="mailto:contato@r3formaturas.com.br" style="color: #4f46e5; text-decoration: none;">contato@r3formaturas.com.br</a>
-                </p>
-                
-                <p style="margin: 0.5rem 0;">
-                    <i class="fab fa-instagram" style="color: #E4405F;"></i> 
-                    <strong>Instagram:</strong> <a href="https://instagram.com/r3formaturas" target="_blank" style="color: #E4405F; text-decoration: none;">@r3formaturas</a>
-                </p>
-                
-                <p style="margin: 0.5rem 0;">
-                    <i class="fab fa-facebook" style="color: #1877F2;"></i> 
-                    <strong>Facebook:</strong> <a href="https://facebook.com/r3formaturas" target="_blank" style="color: #1877F2; text-decoration: none;">/r3formaturas</a>
-                </p>
+                <div class="social-icons">
+                    <!-- WhatsApp -->
+                    <a href="https://wa.me/5511999999999?text=Olá!%20Gostaria%20de%20saber%20mais%20sobre%20as%20fotos%20da%20formatura" 
+                       class="social-icon whatsapp" 
+                       target="_blank"
+                       data-tooltip="WhatsApp"
+                       rel="noopener noreferrer">
+                        <i class="fab fa-whatsapp"></i>
+                    </a>
+
+                    <!-- E-mail -->
+                    <a href="mailto:contato@r3formaturas.com.br?subject=Contato%20via%20Site%20-%20Cadastro%20Formatura&body=Olá,%20gostaria%20de%20mais%20informações%20sobre%20as%20fotos%20da%20formatura." 
+                       class="social-icon email"
+                       data-tooltip="E-mail"
+                       target="_blank"
+                       rel="noopener noreferrer">
+                        <i class="fas fa-envelope"></i>
+                    </a>
+
+                    <!-- Instagram -->
+                    <a href="https://instagram.com/r3formaturas" 
+                       class="social-icon instagram" 
+                       target="_blank"
+                       data-tooltip="Instagram"
+                       rel="noopener noreferrer">
+                        <i class="fab fa-instagram"></i>
+                    </a>
+
+                    <!-- Facebook -->
+                    <a href="https://facebook.com/r3formaturas" 
+                       class="social-icon facebook" 
+                       target="_blank"
+                       data-tooltip="Facebook"
+                       rel="noopener noreferrer">
+                        <i class="fab fa-facebook-f"></i>
+                    </a>
+                </div>
             </div>
         </div>
 
@@ -203,34 +514,54 @@
                 window.location.href = 'index.html';
             }
 
-            // Confete (opcional - efeito visual)
+            // Efeito de confete
             criarConfete();
+
+            // Inicializar tooltips do Bootstrap
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
         });
 
+        // Efeito de confete melhorado
         function criarConfete() {
-            // Efeito simples de confete
-            const cores = ['#4f46e5', '#7c3aed', '#ec4899', '#10b981', '#f59e0b'];
+            const cores = ['#4f46e5', '#7c3aed', '#ec4899', '#10b981', '#f59e0b', '#ef4444'];
+            const formas = ['circle', 'square'];
             
-            for (let i = 0; i < 50; i++) {
+            for (let i = 0; i < 80; i++) {
                 setTimeout(() => {
                     const confete = document.createElement('div');
+                    const forma = formas[Math.floor(Math.random() * formas.length)];
+                    const tamanho = Math.random() * 8 + 5;
+                    
                     confete.style.cssText = `
                         position: fixed;
-                        width: 10px;
-                        height: 10px;
+                        width: ${tamanho}px;
+                        height: ${tamanho}px;
                         background: ${cores[Math.floor(Math.random() * cores.length)]};
-                        top: -10px;
+                        top: -20px;
                         left: ${Math.random() * 100}%;
                         opacity: 1;
-                        border-radius: 50%;
+                        border-radius: ${forma === 'circle' ? '50%' : '2px'};
                         pointer-events: none;
                         z-index: 9999;
+                        box-shadow: 0 0 10px rgba(0,0,0,0.1);
                     `;
                     document.body.appendChild(confete);
 
+                    const rotacao = Math.random() * 360;
+                    const deslocamentoX = (Math.random() - 0.5) * 200;
+                    
                     const animacao = confete.animate([
-                        { transform: 'translateY(0) rotate(0deg)', opacity: 1 },
-                        { transform: `translateY(${window.innerHeight}px) rotate(${Math.random() * 360}deg)`, opacity: 0 }
+                        { 
+                            transform: 'translateY(0) translateX(0) rotate(0deg)', 
+                            opacity: 1 
+                        },
+                        { 
+                            transform: `translateY(${window.innerHeight + 50}px) translateX(${deslocamentoX}px) rotate(${rotacao}deg)`, 
+                            opacity: 0 
+                        }
                     ], {
                         duration: 3000 + Math.random() * 2000,
                         easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
@@ -240,6 +571,595 @@
                 }, i * 30);
             }
         }
+
+        // Easter egg: Clicar no ícone de sucesso cria mais confetes
+        document.querySelector('.icone-sucesso').addEventListener('click', function() {
+            criarConfete();
+        });
     </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html><!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro Realizado! - R3 Formaturas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #10b981;
+            --secondary-color: #059669;
+            --accent-color: #4f46e5;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 2rem 0;
+        }
+
+        .sucesso-container {
+            max-width: 650px;
+            background: white;
+            border-radius: 24px;
+            padding: 3rem;
+            text-align: center;
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.3);
+            animation: bounceIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            position: relative;
+            overflow: hidden;
+        }
+
+        @keyframes bounceIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.3) translateY(-50px);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            70% {
+                transform: scale(0.95);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* Efeito de brilho de fundo */
+        .sucesso-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(16, 185, 129, 0.1), transparent);
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            0%, 100% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            50% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        .icone-sucesso {
+            width: 150px;
+            height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 2rem;
+            position: relative;
+            z-index: 1;
+            animation: checkmarkDraw 0.8s ease-out;
+        }
+
+        @keyframes checkmarkDraw {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.2);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .icone-sucesso i {
+            font-size: 8rem;
+            color: var(--primary-color);
+            text-shadow: 
+                0 0 20px rgba(16, 185, 129, 0.3),
+                0 5px 15px rgba(16, 185, 129, 0.2);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.4));
+            }
+            50% {
+                transform: scale(1.05);
+                filter: drop-shadow(0 0 20px rgba(16, 185, 129, 0.6));
+            }
+        }
+
+        h1 {
+            color: #1f2937;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            font-size: 2.2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .mensagem {
+            color: #6b7280;
+            font-size: 1.15rem;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+            position: relative;
+            z-index: 1;
+        }
+
+        .nome-cadastrado {
+            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+            border-left: 5px solid var(--primary-color);
+            padding: 1.2rem 1.5rem;
+            border-radius: 12px;
+            margin: 2rem 0;
+            color: #065f46;
+            font-weight: 600;
+            font-size: 1.1rem;
+            position: relative;
+            z-index: 1;
+            animation: slideInLeft 0.6s ease-out 0.3s both;
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .info-adicional {
+            background: #f9fafb;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-top: 2rem;
+            position: relative;
+            z-index: 1;
+            animation: fadeInUp 0.6s ease-out 0.5s both;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .info-titulo {
+            color: var(--primary-color);
+            font-weight: 700;
+            font-size: 1.15rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .info-titulo i {
+            font-size: 1.3rem;
+        }
+
+        .info-texto {
+            color: #4b5563;
+            line-height: 1.8;
+            margin-bottom: 2rem;
+            text-align: left;
+        }
+
+        /* ÍCONES DE CONTATO */
+        .contatos-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            border: 2px solid #e5e7eb;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .contatos-titulo {
+            color: var(--accent-color);
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .social-icons {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .social-icon {
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            position: relative;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .social-icon:hover {
+            transform: translateY(-8px) scale(1.1);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+        }
+
+        .social-icon i {
+            font-size: 1.8rem;
+            color: white;
+            z-index: 1;
+        }
+
+        /* WhatsApp */
+        .social-icon.whatsapp {
+            background: linear-gradient(135deg, #25D366, #128C7E);
+        }
+
+        .social-icon.whatsapp:hover {
+            background: linear-gradient(135deg, #128C7E, #075E54);
+        }
+
+        /* E-mail */
+        .social-icon.email {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+        }
+
+        .social-icon.email:hover {
+            background: linear-gradient(135deg, #3730a3, #5b21b6);
+        }
+
+        /* Instagram */
+        .social-icon.instagram {
+            background: linear-gradient(135deg, #E4405F, #C13584, #833AB4);
+        }
+
+        .social-icon.instagram:hover {
+            background: linear-gradient(135deg, #C13584, #833AB4, #5851DB);
+        }
+
+        /* Facebook */
+        .social-icon.facebook {
+            background: linear-gradient(135deg, #1877F2, #0C63D4);
+        }
+
+        .social-icon.facebook:hover {
+            background: linear-gradient(135deg, #0C63D4, #084998);
+        }
+
+        /* Tooltip nos ícones */
+        .social-icon::before {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1f2937;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        .social-icon::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-bottom-color: #1f2937;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        .social-icon:hover::before,
+        .social-icon:hover::after {
+            opacity: 1;
+            bottom: -50px;
+        }
+
+        .social-icon:hover::after {
+            bottom: -16px;
+        }
+
+        /* Botão Voltar */
+        .btn-voltar {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            border: none;
+            padding: 0.85rem 2.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            margin-top: 2rem;
+            position: relative;
+            z-index: 1;
+            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn-voltar:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(79, 70, 229, 0.4);
+            color: white;
+        }
+
+        .btn-voltar i {
+            transition: transform 0.3s ease;
+        }
+
+        .btn-voltar:hover i {
+            transform: translateX(-3px);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sucesso-container {
+                padding: 2rem 1.5rem;
+                margin: 0 1rem;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .icone-sucesso {
+                width: 100px;
+                height: 100px;
+            }
+
+            .icone-sucesso i {
+                font-size: 3.5rem;
+            }
+
+            .social-icons {
+                gap: 1rem;
+            }
+
+            .social-icon {
+                width: 55px;
+                height: 55px;
+            }
+
+            .social-icon i {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* Animação de entrada dos ícones */
+        .social-icon {
+            animation: popIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) both;
+        }
+
+        .social-icon:nth-child(1) { animation-delay: 0.7s; }
+        .social-icon:nth-child(2) { animation-delay: 0.8s; }
+        .social-icon:nth-child(3) { animation-delay: 0.9s; }
+        .social-icon:nth-child(4) { animation-delay: 1s; }
+
+        @keyframes popIn {
+            from {
+                opacity: 0;
+                transform: scale(0);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sucesso-container">
+        <div class="icone-sucesso">
+            <i class="fas fa-check"></i>
+        </div>
+
+        <h1>Cadastro Realizado com Sucesso!</h1>
+        
+        <p class="mensagem">Seus dados foram salvos com segurança em nosso sistema.</p>
+
+        <div class="nome-cadastrado" id="nomeCadastrado">
+            <i class="fas fa-user-check me-2"></i>
+            <span id="nomeExibir">Carregando...</span>
+        </div>
+
+        <div class="info-adicional">
+            <div class="info-titulo">
+                <i class="fas fa-info-circle"></i>
+                O que acontece agora?
+            </div>
+            
+            <div class="info-texto">
+                <strong>Em breve, entraremos em contato com você para falar sobre as fotos do evento.</strong>
+                <br><br>
+                A R3 Formaturas é especialista em registrar momentos únicos, e nossa equipe está sempre à disposição para oferecer suporte e esclarecer quaisquer dúvidas.
+            </div>
+            
+            <div class="contatos-container">
+                <div class="contatos-titulo">
+                    <i class="fas fa-camera"></i>
+                    Contatos R3 Formaturas
+                </div>
+                
+                <div class="social-icons">
+                    <!-- WhatsApp -->
+                    <a href="https://wa.me/5511999999999?text=Olá!%20Gostaria%20de%20saber%20mais%20sobre%20as%20fotos%20da%20formatura" 
+                       class="social-icon whatsapp" 
+                       target="_blank"
+                       data-tooltip="WhatsApp"
+                       rel="noopener noreferrer">
+                        <i class="fab fa-whatsapp"></i>
+                    </a>
+
+                    <!-- E-mail -->
+                    <a href="mailto:contato@r3formaturas.com.br?subject=Contato%20via%20Site%20-%20Cadastro%20Formatura&body=Olá,%20gostaria%20de%20mais%20informações%20sobre%20as%20fotos%20da%20formatura." 
+                       class="social-icon email"
+                       data-tooltip="E-mail"
+                       target="_blank"
+                       rel="noopener noreferrer">
+                        <i class="fas fa-envelope"></i>
+                    </a>
+
+                    <!-- Instagram -->
+                    <a href="https://instagram.com/r3formaturas" 
+                       class="social-icon instagram" 
+                       target="_blank"
+                       data-tooltip="Instagram"
+                       rel="noopener noreferrer">
+                        <i class="fab fa-instagram"></i>
+                    </a>
+
+                    <!-- Facebook -->
+                    <a href="https://facebook.com/r3formaturas" 
+                       class="social-icon facebook" 
+                       target="_blank"
+                       data-tooltip="Facebook"
+                       rel="noopener noreferrer">
+                        <i class="fab fa-facebook-f"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <a href="index.html" class="btn-voltar">
+                <i class="fas fa-home me-2"></i>Voltar ao Início
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Recuperar dados do localStorage
+        document.addEventListener('DOMContentLoaded', function() {
+            const dadosCadastro = JSON.parse(localStorage.getItem('cadastroSucesso'));
+            
+            if (dadosCadastro) {
+                const tipoTexto = dadosCadastro.tipo === 'aluno' ? 'Aluno' : 'Responsável';
+                document.getElementById('nomeExibir').textContent = `${tipoTexto}: ${dadosCadastro.nome}`;
+                
+                // Limpar localStorage após exibir
+                localStorage.removeItem('cadastroSucesso');
+            } else {
+                // Se não houver dados, redirecionar
+                window.location.href = 'index.html';
+            }
+
+            // Efeito de confete
+            criarConfete();
+
+            // Inicializar tooltips do Bootstrap
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+
+        // Efeito de confete melhorado
+        function criarConfete() {
+            const cores = ['#4f46e5', '#7c3aed', '#ec4899', '#10b981', '#f59e0b', '#ef4444'];
+            const formas = ['circle', 'square'];
+            
+            for (let i = 0; i < 80; i++) {
+                setTimeout(() => {
+                    const confete = document.createElement('div');
+                    const forma = formas[Math.floor(Math.random() * formas.length)];
+                    const tamanho = Math.random() * 8 + 5;
+                    
+                    confete.style.cssText = `
+                        position: fixed;
+                        width: ${tamanho}px;
+                        height: ${tamanho}px;
+                        background: ${cores[Math.floor(Math.random() * cores.length)]};
+                        top: -20px;
+                        left: ${Math.random() * 100}%;
+                        opacity: 1;
+                        border-radius: ${forma === 'circle' ? '50%' : '2px'};
+                        pointer-events: none;
+                        z-index: 9999;
+                        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+                    `;
+                    document.body.appendChild(confete);
+
+                    const rotacao = Math.random() * 360;
+                    const deslocamentoX = (Math.random() - 0.5) * 200;
+                    
+                    const animacao = confete.animate([
+                        { 
+                            transform: 'translateY(0) translateX(0) rotate(0deg)', 
+                            opacity: 1 
+                        },
+                        { 
+                            transform: `translateY(${window.innerHeight + 50}px) translateX(${deslocamentoX}px) rotate(${rotacao}deg)`, 
+                            opacity: 0 
+                        }
+                    ], {
+                        duration: 3000 + Math.random() * 2000,
+                        easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+                    });
+
+                    animacao.onfinish = () => confete.remove();
+                }, i * 30);
+            }
+        }
+
+        // Easter egg: Clicar no ícone de sucesso cria mais confetes
+        document.querySelector('.icone-sucesso').addEventListener('click', function() {
+            criarConfete();
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
