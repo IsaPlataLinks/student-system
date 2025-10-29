@@ -1,25 +1,28 @@
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, send_file
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from datetime import datetime, timedelta
-import os
 from PIL import Image
+import qrcode
+from io import BytesIO
+import os
 import re
 
-# Configuração do Flask
+# ==================== CONFIGURAÇÃO ====================
+
 app = Flask(__name__, static_folder='static')
 CORS(app)
 
 # Configurações
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///student_system.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///student_system.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['JWT_SECRET_KEY'] = 'sua-chave-secreta-aqui'
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'sua-chave-secreta-aqui')
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=8)
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
-app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5MB
 
 # Inicialização
 db = SQLAlchemy(app)
@@ -27,233 +30,534 @@ jwt = JWTManager(app)
 
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-# MODELS
+# ==================== MODELS ====================
+
 class Usuario(db.Model):
     __tablename__ = 'usuarios'
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100), nullable=False)
     login = db.Column(db.String(50), unique=True, nullable=False)
     senha_hash = db.Column(db.String(255), nullable=False)
-    tipo_usuario = db.Column(db.String(20), default='vendedor')
+    tipo_usuario = db.Column(db.String(20), default='vendedor')  # admin ou vendedor
     criado_em = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Escola(db.Model):
     __tablename__ = 'escolas'
     id = db.Column(db.Integer, primary_key=True)
-    nome = db.Column(db.String(200), nullable=False)
-    alunos = db.relationship('Aluno', backref='escola', lazy=True)
+    nome = db.Column(db.String(200), nullable=False, unique=True)
+    cidade = db.Column(db.String(100))
+    estado = db.Column(db.String(2))
+    eventos = db.relationship('Evento', backref='escola', lazy=True)
 
-class Responsavel(db.Model):
-    __tablename__ = 'responsaveis'
+class Evento(db.Model):
+    __tablename__ = 'eventos'
     id = db.Column(db.Integer, primary_key=True)
-    nome = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(100))
-    whatsapp = db.Column(db.String(20))
-    endereco = db.Column(db.String(300))
-    cep = db.Column(db.String(10))
-    criado_em = db.Column(db.DateTime, default=datetime.utcnow)
-    alunos = db.relationship('Aluno', backref='responsavel', lazy=True)
-
-class Aluno(db.Model):
-    __tablename__ = 'alunos'
-    id = db.Column(db.Integer, primary_key=True)
-    nome = db.Column(db.String(100), nullable=False)
-    turma = db.Column(db.String(50), nullable=False)
+    escola_id = db.Column(db.Integer, db.ForeignKey('escolas.id'), nullable=False)
     ano_formatura = db.Column(db.Integer, nullable=False)
-    email = db.Column(db.String(100))
-    whatsapp = db.Column(db.String(20))
-    endereco = db.Column(db.String(300))
-    cep = db.Column(db.String(10))
-    foto = db.Column(db.String(255))
-    escola_id = db.Column(db.Integer, db.ForeignKey('escolas.id'))
-    responsavel_id = db.Column(db.Integer, db.ForeignKey('responsaveis.id'))
+    serie = db.Column(db.String(15), nullable=False)  # "9º ano", "3º ano EM"
+    letra_turma = db.Column(db.String(2), nullable=False)  # "A", "B", "1"
+    data_evento = db.Column(db.Date)
+    local_evento = db.Column(db.String(200))
+    tipo_formatura = db.Column(db.String(50))  # "Fundamental" ou "Médio"
+    status = db.Column(db.String(20), default='ativo')  # ativo, finalizado, cancelado
+    vendedor_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'))
     criado_em = db.Column(db.DateTime, default=datetime.utcnow)
+    leads = db.relationship('Lead', backref='evento', lazy=True)
+    
+    @property
+    def turma_completa(self):
+        return f"{self.serie} - {self.letra_turma}"
+    
+    @property
+    def qr_url(self):
+        return f"/cadastro?e={self.id}"
 
-# VALIDAÇÕES
+class Lead(db.Model):
+    __tablename__ = 'leads'
+    id = db.Column(db.Integer, primary_key=True)
+    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=False)
+    
+    # Dados do formando
+    nome_formando = db.Column(db.String(100), nullable=False)
+    foto = db.Column(db.String(255))
+    
+    # Dados de contato
+    nome_contato = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(100), nullable=False)
+    whatsapp = db.Column(db.String(20), nullable=False)
+    tipo_cadastro = db.Column(db.String(20))  # "aluno" ou "responsavel"
+    
+    # Endereço (opcional)
+    cep = db.Column(db.String(10))
+    endereco = db.Column(db.String(300))
+    
+    # Controle do vendedor
+    status_lead = db.Column(db.String(20), default='novo')  # novo, contatado, interessado, convertido, perdido
+    observacoes = db.Column(db.Text)
+    data_contato = db.Column(db.DateTime)
+    vendedor_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'))
+    
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow)
+    atualizado_em = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Constraint: Mesmo e-mail não pode cadastrar 2x no mesmo evento
+    __table_args__ = (
+        db.UniqueConstraint('email', 'evento_id', name='unique_email_evento'),
+    )
+
+# ==================== VALIDAÇÕES ====================
+
 def validar_nome(nome):
-    if not nome:
+    """Valida se nome contém apenas letras, acentos e apóstrofos"""
+    if not nome or len(nome) < 3:
         return False
     return re.match(r"^[a-zA-ZÀ-ÿ\s']+$", nome) is not None
 
-def validar_ano_formatura(ano):
-    try:
-        ano_int = int(ano)
-        return len(str(ano)) == 4 and 2020 <= ano_int <= 2035
-    except:
-        return False
-
-def validar_turma(turma):
-    if not turma or len(turma) > 30:
-        return False
-    return re.match(r'^[a-zA-Z0-9º\s-]+$', turma) is not None
-
 def validar_email(email):
+    """Valida formato de e-mail"""
     if not email:
         return False
-    return re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email) is not None
+    return re.match(r'^[^\s@]+@[^\s@]+\.[^\s@]+$', email) is not None
 
 def validar_whatsapp(whatsapp):
+    """Valida formato WhatsApp (11) 98765-4321"""
     if not whatsapp:
         return False
     return re.match(r'^\(\d{2}\)\s?\d{5}-\d{4}$', whatsapp) is not None
 
 def validar_cep(cep):
+    """Valida formato CEP 00000-000"""
     if not cep:
-        return True
+        return True  # CEP é opcional
     return re.match(r'^\d{5}-\d{3}$', cep) is not None
 
+def validar_serie(serie):
+    """Valida se série está na lista permitida"""
+    series_validas = [
+        '6º ano', '7º ano', '8º ano', '9º ano',
+        '1º ano EM', '2º ano EM', '3º ano EM'
+    ]
+    return serie in series_validas
+
+def validar_letra_turma(letra):
+    """Valida letra/número da turma (1-2 caracteres)"""
+    if not letra or len(letra) > 2:
+        return False
+    return letra.isalnum()
+
 def processar_foto(file):
+    """Processa upload de foto: salva, redimensiona e otimiza"""
     if not file:
         return None
+    
     filename = secure_filename(file.filename)
     timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
     nome_arquivo = f"{timestamp}_{filename}"
     caminho = os.path.join(app.config['UPLOAD_FOLDER'], nome_arquivo)
+    
     file.save(caminho)
+    
+    # Redimensionar para 300x400
     img = Image.open(caminho)
     img.thumbnail((300, 400), Image.Resampling.LANCZOS)
+    
+    # Criar imagem com fundo branco
     nova_img = Image.new('RGB', (300, 400), (255, 255, 255))
-    nova_img.paste(img, ((300-img.width)//2, (400-img.height)//2))
+    offset = ((300 - img.width) // 2, (400 - img.height) // 2)
+    nova_img.paste(img, offset)
+    
+    # Salvar otimizada
     nova_img.save(caminho, 'JPEG', quality=85, optimize=True)
+    
     return nome_arquivo
 
-# ROTAS
+# ==================== ROTAS DE AUTENTICAÇÃO ====================
+
 @app.route('/api/login', methods=['POST'])
 def login():
+    """Login de vendedor/admin"""
     data = request.get_json()
+    
     usuario = Usuario.query.filter_by(login=data.get('login')).first()
+    
     if usuario and check_password_hash(usuario.senha_hash, data.get('senha')):
         token = create_access_token(identity=usuario.id)
-        return jsonify({'token': token, 'nome': usuario.nome, 'tipo_usuario': usuario.tipo_usuario}), 200
+        return jsonify({
+            'token': token,
+            'nome': usuario.nome,
+            'tipo_usuario': usuario.tipo_usuario
+        }), 200
+    
     return jsonify({'erro': 'Login ou senha inválidos'}), 401
 
-@app.route('/api/cadastro/aluno', methods=['POST'])
-def cadastrar_aluno():
-    try:
-        data = request.form
-        foto = request.files.get('foto')
-        
-        if not validar_nome(data.get('nome')):
-            return jsonify({'erro': 'Nome inválido! Use apenas letras.'}), 400
-        if not validar_ano_formatura(data.get('ano_formatura')):
-            return jsonify({'erro': 'Ano inválido! Use 4 dígitos.'}), 400
-        if not validar_turma(data.get('turma')):
-            return jsonify({'erro': 'Turma inválida! Máximo 30 caracteres.'}), 400
-        if not validar_email(data.get('email')):
-            return jsonify({'erro': 'E-mail inválido ou não preenchido!'}), 400
-        if not validar_whatsapp(data.get('whatsapp')):
-            return jsonify({'erro': 'WhatsApp inválido ou não preenchido!'}), 400
-        if not validar_cep(data.get('cep')):
-            return jsonify({'erro': 'CEP inválido!'}), 400
-        
-        nome_escola = data.get('escola')
-        escola = Escola.query.filter_by(nome=nome_escola).first()
-        if not escola:
-            escola = Escola(nome=nome_escola)
-            db.session.add(escola)
-            db.session.flush()
-        
-        foto_filename = processar_foto(foto) if foto else None
-        
-        endereco_completo = None
-        if data.get('logradouro'):
-            partes = [data.get('logradouro'), data.get('numero'), data.get('complemento'), 
-                     data.get('bairro'), data.get('cidade'), data.get('estado')]
-            endereco_completo = ', '.join([p for p in partes if p])
-        
-        aluno = Aluno(
-            nome=data.get('nome'),
-            turma=data.get('turma'),
-            ano_formatura=int(data.get('ano_formatura')),
-            email=data.get('email'),
-            whatsapp=data.get('whatsapp'),
-            endereco=endereco_completo or data.get('endereco'),
-            cep=data.get('cep'),
-            foto=foto_filename,
-            escola_id=escola.id
-        )
-        
-        db.session.add(aluno)
-        db.session.commit()
-        return jsonify({'mensagem': 'Aluno cadastrado com sucesso!', 'id': aluno.id}), 201
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'erro': str(e)}), 500
+# ==================== ROTAS DE EVENTOS ====================
 
-@app.route('/api/cadastro/responsavel', methods=['POST'])
-def cadastrar_responsavel():
-    try:
-        data = request.form
-        foto = request.files.get('foto')
-        
-        if not validar_nome(data.get('nome_responsavel')):
-            return jsonify({'erro': 'Nome do responsável inválido!'}), 400
-        if not validar_nome(data.get('nome_aluno')):
-            return jsonify({'erro': 'Nome do aluno inválido!'}), 400
-        if not validar_ano_formatura(data.get('ano_formatura')):
-            return jsonify({'erro': 'Ano inválido!'}), 400
-        if not validar_turma(data.get('turma')):
-            return jsonify({'erro': 'Turma inválida!'}), 400
-        
-        responsavel = Responsavel(
-            nome=data.get('nome_responsavel'),
-            email=data.get('email_responsavel'),
-            whatsapp=data.get('whatsapp_responsavel'),
-            endereco=data.get('endereco_responsavel'),
-            cep=data.get('cep_responsavel')
-        )
-        db.session.add(responsavel)
-        db.session.flush()
-        
-        nome_escola = data.get('escola')
-        escola = Escola.query.filter_by(nome=nome_escola).first()
-        if not escola:
-            escola = Escola(nome=nome_escola)
-            db.session.add(escola)
-            db.session.flush()
-        
-        foto_filename = processar_foto(foto) if foto else None
-        
-        aluno = Aluno(
-            nome=data.get('nome_aluno'),
-            turma=data.get('turma'),
-            ano_formatura=int(data.get('ano_formatura')),
-            foto=foto_filename,
-            escola_id=escola.id,
-            responsavel_id=responsavel.id
-        )
-        
-        db.session.add(aluno)
-        db.session.commit()
-        return jsonify({'mensagem': 'Aluno cadastrado com sucesso!', 'id': aluno.id}), 201
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'erro': str(e)}), 500
-
-@app.route('/api/alunos', methods=['GET'])
+@app.route('/api/eventos', methods=['POST'])
 @jwt_required()
-def listar_alunos():
-    alunos = Aluno.query.all()
+def criar_evento():
+    """Admin cria novo evento de formatura"""
+    vendedor_id = get_jwt_identity()
+    vendedor = Usuario.query.get(vendedor_id)
+    
+    # Só admin pode criar eventos
+    if vendedor.tipo_usuario != 'admin':
+        return jsonify({'erro': 'Apenas administradores podem criar eventos'}), 403
+    
+    data = request.get_json()
+    
+    # Validar série
+    serie = data.get('serie')
+    if not validar_serie(serie):
+        return jsonify({'erro': 'Série inválida'}), 400
+    
+    # Validar letra turma
+    letra_turma = data.get('letra_turma', '').upper()
+    if not validar_letra_turma(letra_turma):
+        return jsonify({'erro': 'Turma inválida (1-2 caracteres)'}), 400
+    
+    # Buscar ou criar escola
+    escola_nome = data.get('escola')
+    escola = Escola.query.filter_by(nome=escola_nome).first()
+    if not escola:
+        escola = Escola(
+            nome=escola_nome,
+            cidade=data.get('cidade'),
+            estado=data.get('estado')
+        )
+        db.session.add(escola)
+        db.session.flush()
+    
+    # Criar evento
+    evento = Evento(
+        escola_id=escola.id,
+        ano_formatura=int(data.get('ano_formatura')),
+        serie=serie,
+        letra_turma=letra_turma,
+        data_evento=data.get('data_evento'),
+        local_evento=data.get('local_evento'),
+        tipo_formatura=data.get('tipo_formatura'),
+        status='ativo',
+        vendedor_id=data.get('vendedor_id')
+    )
+    
+    db.session.add(evento)
+    db.session.commit()
+    
+    # Gerar URL do QR Code
+    base_url = request.host_url
+    qr_url = f"{base_url}cadastro?e={evento.id}"
+    
+    return jsonify({
+        'mensagem': 'Evento criado com sucesso!',
+        'evento_id': evento.id,
+        'qr_url': qr_url,
+        'evento': {
+            'id': evento.id,
+            'escola': escola.nome,
+            'turma_completa': evento.turma_completa,
+            'ano': evento.ano_formatura,
+            'data': evento.data_evento.isoformat() if evento.data_evento else None
+        }
+    }), 201
+
+@app.route('/api/eventos/<int:evento_id>', methods=['GET'])
+def buscar_evento(evento_id):
+    """Retorna dados do evento (público - para formulário)"""
+    evento = Evento.query.get_or_404(evento_id)
+    
+    if evento.status != 'ativo':
+        return jsonify({'erro': 'Este evento não está mais disponível'}), 400
+    
+    return jsonify({
+        'id': evento.id,
+        'escola': {
+            'id': evento.escola.id,
+            'nome': evento.escola.nome,
+            'cidade': evento.escola.cidade,
+            'estado': evento.escola.estado
+        },
+        'serie': evento.serie,
+        'letra_turma': evento.letra_turma,
+        'turma_completa': evento.turma_completa,
+        'ano_formatura': evento.ano_formatura,
+        'data_evento': evento.data_evento.isoformat() if evento.data_evento else None,
+        'local_evento': evento.local_evento,
+        'tipo_formatura': evento.tipo_formatura
+    }), 200
+
+@app.route('/api/eventos', methods=['GET'])
+@jwt_required()
+def listar_eventos():
+    """Lista todos os eventos (admin/vendedor)"""
+    eventos = Evento.query.order_by(Evento.criado_em.desc()).all()
+    
     resultado = []
-    for aluno in alunos:
+    for evento in eventos:
         resultado.append({
-            'id': aluno.id,
-            'nome': aluno.nome,
-            'turma': aluno.turma,
-            'ano_formatura': aluno.ano_formatura,
-            'email': aluno.email,
-            'whatsapp': aluno.whatsapp,
-            'foto': f'/static/uploads/{aluno.foto}' if aluno.foto else None,
-            'escola': aluno.escola.nome if aluno.escola else None,
-            'responsavel': aluno.responsavel.nome if aluno.responsavel else None
+            'id': evento.id,
+            'escola': evento.escola.nome,
+            'turma_completa': evento.turma_completa,
+            'ano_formatura': evento.ano_formatura,
+            'data_evento': evento.data_evento.isoformat() if evento.data_evento else None,
+            'local_evento': evento.local_evento,
+            'status': evento.status,
+            'total_leads': len(evento.leads),
+            'qr_url': f"{request.host_url}cadastro?e={evento.id}"
         })
+    
     return jsonify(resultado), 200
 
-@app.route('/api/escolas', methods=['GET'])
+@app.route('/api/eventos/<int:evento_id>/qrcode', methods=['GET'])
 @jwt_required()
+def gerar_qrcode(evento_id):
+    """Gera imagem do QR Code para o evento"""
+    evento = Evento.query.get_or_404(evento_id)
+    
+    # URL do cadastro
+    base_url = request.host_url
+    qr_url = f"{base_url}cadastro?e={evento.id}"
+    
+    # Gerar QR Code
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(qr_url)
+    qr.make(fit=True)
+    
+    img = qr.make_image(fill_color="black", back_color="white")
+    
+    # Salvar em buffer
+    buffer = BytesIO()
+    img.save(buffer, format='PNG')
+    buffer.seek(0)
+    
+    return send_file(buffer, mimetype='image/png', download_name=f'qrcode-evento-{evento_id}.png')
+
+# ==================== ROTAS DE CADASTRO (PÚBLICO) ====================
+
+@app.route('/api/cadastro', methods=['POST'])
+def cadastrar_lead():
+    """Cadastro rápido no evento (público - não precisa autenticação)"""
+    try:
+        data = request.form
+        
+        # Pegar ID do evento (vem do QR Code)
+        evento_id = data.get('evento_id')
+        
+        if not evento_id:
+            return jsonify({'erro': 'Evento não identificado'}), 400
+        
+        # Verificar se evento existe e está ativo
+        evento = Evento.query.get(evento_id)
+        if not evento or evento.status != 'ativo':
+            return jsonify({'erro': 'Evento não disponível'}), 400
+        
+        # Dados do formulário
+        nome_formando = data.get('nome_formando')
+        nome_contato = data.get('nome_contato')
+        email = data.get('email')
+        whatsapp = data.get('whatsapp')
+        tipo_cadastro = data.get('tipo_cadastro')
+        
+        # Validações
+        if not all([nome_formando, nome_contato, email, whatsapp]):
+            return jsonify({'erro': 'Preencha todos os campos obrigatórios'}), 400
+        
+        if not validar_nome(nome_formando):
+            return jsonify({'erro': 'Nome do formando inválido! Use apenas letras'}), 400
+        
+        if not validar_nome(nome_contato):
+            return jsonify({'erro': 'Seu nome inválido! Use apenas letras'}), 400
+        
+        if not validar_email(email):
+            return jsonify({'erro': 'E-mail inválido'}), 400
+        
+        if not validar_whatsapp(whatsapp):
+            return jsonify({'erro': 'WhatsApp inválido! Use o formato (11) 98765-4321'}), 400
+        
+        # VERIFICAR DUPLICIDADE (mesmo e-mail no mesmo evento)
+        lead_existente = Lead.query.filter_by(
+            email=email,
+            evento_id=evento_id
+        ).first()
+        
+        if lead_existente:
+            return jsonify({
+                'erro': 'Este e-mail já foi cadastrado neste evento!'
+            }), 400
+        
+        # Processar foto (opcional)
+        foto_filename = None
+        if 'foto' in request.files and request.files['foto'].filename:
+            foto_filename = processar_foto(request.files['foto'])
+        
+        # Criar lead
+        lead = Lead(
+            evento_id=evento_id,
+            nome_formando=nome_formando,
+            nome_contato=nome_contato,
+            email=email,
+            whatsapp=whatsapp,
+            tipo_cadastro=tipo_cadastro,
+            cep=data.get('cep'),
+            endereco=data.get('endereco'),
+            foto=foto_filename,
+            status_lead='novo'
+        )
+        
+        db.session.add(lead)
+        db.session.commit()
+        
+        return jsonify({
+            'mensagem': 'Cadastro realizado com sucesso!',
+            'id': lead.id
+        }), 201
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'erro': str(e)}), 500
+
+# ==================== ROTAS DE LEADS (DASHBOARD) ====================
+
+@app.route('/api/leads', methods=['GET'])
+@jwt_required()
+def listar_leads():
+    """Lista leads para o vendedor"""
+    vendedor_id = get_jwt_identity()
+    vendedor = Usuario.query.get(vendedor_id)
+    
+    # Filtros
+    evento_id = request.args.get('evento_id')
+    status = request.args.get('status')
+    busca = request.args.get('busca', '')
+    
+    # Query base
+    query = Lead.query
+    
+    # Se não for admin, mostra só leads do vendedor ou sem vendedor
+    if vendedor.tipo_usuario != 'admin':
+        query = query.filter(
+            (Lead.vendedor_id == vendedor_id) | 
+            (Lead.vendedor_id == None)
+        )
+    
+    # Aplicar filtros
+    if evento_id:
+        query = query.filter_by(evento_id=evento_id)
+    
+    if status:
+        query = query.filter_by(status_lead=status)
+    
+    if busca:
+        query = query.filter(
+            (Lead.nome_formando.ilike(f'%{busca}%')) |
+            (Lead.nome_contato.ilike(f'%{busca}%')) |
+            (Lead.email.ilike(f'%{busca}%'))
+        )
+    
+    # Ordenar por mais recentes
+    leads = query.order_by(Lead.criado_em.desc()).all()
+    
+    # Formatar resposta
+    resultado = []
+    for lead in leads:
+        resultado.append({
+            'id': lead.id,
+            'nome_formando': lead.nome_formando,
+            'nome_contato': lead.nome_contato,
+            'email': lead.email,
+            'whatsapp': lead.whatsapp,
+            'tipo_cadastro': lead.tipo_cadastro,
+            'status_lead': lead.status_lead,
+            'observacoes': lead.observacoes,
+            'foto': f'/static/uploads/{lead.foto}' if lead.foto else None,
+            'evento': {
+                'id': lead.evento.id,
+                'escola': lead.evento.escola.nome,
+                'turma_completa': lead.evento.turma_completa,
+                'ano': lead.evento.ano_formatura
+            },
+            'criado_em': lead.criado_em.isoformat(),
+            'atualizado_em': lead.atualizado_em.isoformat() if lead.atualizado_em else None
+        })
+    
+    return jsonify(resultado), 200
+
+@app.route('/api/leads/<int:lead_id>', methods=['PATCH'])
+@jwt_required()
+def atualizar_lead(lead_id):
+    """Vendedor atualiza status/observações do lead"""
+    vendedor_id = get_jwt_identity()
+    
+    lead = Lead.query.get_or_404(lead_id)
+    data = request.get_json()
+    
+    # Atualizar campos permitidos
+    if 'status_lead' in data:
+        lead.status_lead = data['status_lead']
+    
+    if 'observacoes' in data:
+        lead.observacoes = data['observacoes']
+    
+    if data.get('marcar_contato'):
+        lead.data_contato = datetime.utcnow()
+    
+    # Atribuir vendedor se ainda não tiver
+    if not lead.vendedor_id:
+        lead.vendedor_id = vendedor_id
+    
+    db.session.commit()
+    
+    return jsonify({'mensagem': 'Lead atualizado!'}), 200
+
+@app.route('/api/estatisticas', methods=['GET'])
+@jwt_required()
+def estatisticas():
+    """Estatísticas do dashboard"""
+    vendedor_id = get_jwt_identity()
+    vendedor = Usuario.query.get(vendedor_id)
+    
+    # Query base
+    if vendedor.tipo_usuario == 'admin':
+        leads_query = Lead.query
+    else:
+        leads_query = Lead.query.filter_by(vendedor_id=vendedor_id)
+    
+    # Contar por status
+    novos = leads_query.filter_by(status_lead='novo').count()
+    contatados = leads_query.filter_by(status_lead='contatado').count()
+    interessados = leads_query.filter_by(status_lead='interessado').count()
+    convertidos = leads_query.filter_by(status_lead='convertido').count()
+    perdidos = leads_query.filter_by(status_lead='perdido').count()
+    
+    # Total
+    total = leads_query.count()
+    
+    # Taxa de conversão
+    taxa_conversao = (convertidos / total * 100) if total > 0 else 0
+    
+    return jsonify({
+        'total': total,
+        'novos': novos,
+        'contatados': contatados,
+        'interessados': interessados,
+        'convertidos': convertidos,
+        'perdidos': perdidos,
+        'taxa_conversao': round(taxa_conversao, 2)
+    }), 200
+
+# ==================== ROTAS DE ESCOLAS ====================
+
+@app.route('/api/escolas', methods=['GET'])
 def listar_escolas():
-    escolas = Escola.query.all()
-    return jsonify([{'id': e.id, 'nome': e.nome} for e in escolas]), 200
+    """Lista escolas (público)"""
+    escolas = Escola.query.order_by(Escola.nome).all()
+    return jsonify([{'id': e.id, 'nome': e.nome, 'cidade': e.cidade} for e in escolas]), 200
+
+# ==================== ROTAS ESTÁTICAS ====================
 
 @app.route('/')
 def index():
@@ -263,7 +567,10 @@ def index():
 def static_files(path):
     return send_from_directory('static', path)
 
+# ==================== INICIALIZAÇÃO ====================
+
 def criar_usuario_admin():
+    """Cria usuário admin padrão se não existir"""
     if not Usuario.query.filter_by(login='admin').first():
         admin = Usuario(
             nome='Administrador',
@@ -279,4 +586,5 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()
         criar_usuario_admin()
+    
     app.run(debug=True, host='0.0.0.0', port=5000)

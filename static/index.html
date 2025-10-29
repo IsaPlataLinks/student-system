@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Cadastro - Formandos</title>
+    <title>R3 Formaturas - Sistema de Cadastro</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -20,6 +20,7 @@
             align-items: center;
             justify-content: center;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 2rem 0;
         }
 
         .container-principal {
@@ -97,20 +98,23 @@
             margin-bottom: 1.5rem;
         }
 
-        .btn-selecionar {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        .btn-admin {
+            background: linear-gradient(135deg, #1e40af, #3b82f6);
             color: white;
             border: none;
-            padding: 12px 30px;
+            padding: 0.75rem 2rem;
             border-radius: 12px;
             font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
             transition: all 0.3s ease;
-            width: 100%;
+            margin-top: 2rem;
         }
 
-        .btn-selecionar:hover {
-            transform: scale(1.05);
-            box-shadow: 0 10px 25px rgba(79, 70, 229, 0.5);
+        .btn-admin:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(30, 64, 175, 0.4);
+            color: white;
         }
 
         @keyframes fadeInDown {
@@ -152,6 +156,14 @@
             font-size: 0.9rem;
             opacity: 0.9;
         }
+
+        .alert-info {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border-left: 5px solid var(--primary-color);
+        }
     </style>
 </head>
 <body>
@@ -160,36 +172,27 @@
         <div class="card-boas-vindas">
             <i class="fas fa-graduation-cap" style="font-size: 4rem; color: var(--primary-color);"></i>
             <h1>Bem-vindo(a)! 🎓</h1>
-            <p>Sistema de Cadastro de Formandos<br>
+            <p>Sistema de Cadastro de Formandos R3 Formaturas<br>
             Faça seu cadastro de forma rápida e segura</p>
         </div>
 
-        <!-- Opções de Cadastro -->
-        <div class="opcoes-container">
-            <!-- Opção: Aluno -->
-            <div class="card-opcao" onclick="window.location.href='cadastro-aluno.html'">
-                <i class="fas fa-user-graduate"></i>
-                <h3>Sou Aluno</h3>
-                <p>Cadastre-se diretamente como formando</p>
-                <button class="btn-selecionar">
-                    Fazer Cadastro <i class="fas fa-arrow-right ms-2"></i>
-                </button>
-            </div>
-
-            <!-- Opção: Responsável -->
-            <div class="card-opcao" onclick="window.location.href='cadastro-responsavel.html'">
-                <i class="fas fa-users"></i>
-                <h3>Sou Responsável</h3>
-                <p>Cadastre seu(s) filho(s) formando(s)</p>
-                <button class="btn-selecionar">
-                    Fazer Cadastro <i class="fas fa-arrow-right ms-2"></i>
-                </button>
-            </div>
+        <!-- Alerta: Usar QR Code do evento -->
+        <div class="alert-info">
+            <p class="mb-0">
+                <i class="fas fa-qrcode me-2"></i>
+                <strong>Atenção:</strong> Para fazer seu cadastro, escaneie o QR Code que está no banner do seu evento de formatura.
+            </p>
         </div>
 
         <!-- Footer -->
         <div class="footer-info">
-            <p>💡 Seus dados estão seguros e protegidos</p>
+            <p>
+                <i class="fas fa-shield-alt me-2"></i>
+                Seus dados estão seguros e protegidos
+            </p>
+            <a href="login.html" class="btn-admin">
+                <i class="fas fa-sign-in-alt me-2"></i>Área Administrativa
+            </a>
         </div>
     </div>
 

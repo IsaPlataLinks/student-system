@@ -3,23 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastro pelo Responsável</title>
+    <title>Cadastro - R3 Formaturas</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #7c3aed;
-            --secondary-color: #ec4899;
+            --primary-color: #4f46e5;
+            --secondary-color: #7c3aed;
+            --success-color: #10b981;
+            --error-color: #ef4444;
         }
 
         body {
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
             min-height: 100vh;
             padding: 2rem 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         .form-container {
-            max-width: 800px;
+            max-width: 650px;
             margin: 0 auto;
             background: white;
             border-radius: 20px;
@@ -49,23 +52,23 @@
             font-weight: 700;
         }
 
-        .section-divider {
-            display: flex;
-            align-items: center;
-            margin: 2rem 0 1.5rem;
+        .evento-info {
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+            border-left: 4px solid var(--primary-color);
+            padding: 1.2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
         }
 
-        .section-divider::before,
-        .section-divider::after {
-            content: '';
-            flex: 1;
-            border-bottom: 2px solid #e5e7eb;
-        }
-
-        .section-divider h5 {
-            margin: 0 1rem;
+        .evento-info h4 {
             color: var(--primary-color);
-            font-weight: 600;
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .evento-info p {
+            color: #1e40af;
+            margin: 0;
         }
 
         .form-label {
@@ -75,7 +78,7 @@
         }
 
         .form-label .required {
-            color: #ef4444;
+            color: var(--error-color);
         }
 
         .form-control, .form-select {
@@ -87,20 +90,93 @@
 
         .form-control:focus, .form-select:focus {
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.2rem rgba(124, 58, 237, 0.25);
+            box-shadow: 0 0 0 0.2rem rgba(79, 70, 229, 0.15);
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .validation-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.4rem;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .validation-icon.show {
+            opacity: 1;
+        }
+
+        .validation-icon.valid {
+            color: var(--success-color);
+        }
+
+        .validation-icon.invalid {
+            color: var(--error-color);
+        }
+
+        .tipo-cadastro {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .tipo-option {
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tipo-option:hover {
+            border-color: var(--primary-color);
+            background: #f9fafb;
+        }
+
+        .tipo-option input[type="radio"] {
+            display: none;
+        }
+
+        .tipo-option input[type="radio"]:checked + label {
+            color: var(--primary-color);
+        }
+
+        .tipo-option.selected {
+            border-color: var(--primary-color);
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
         }
 
         .foto-preview {
             width: 150px;
             height: 200px;
             border: 3px dashed #d1d5db;
-            border-radius: 10px;
+            border-radius: 15px;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 1rem auto;
             overflow: hidden;
             background: #f9fafb;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .foto-preview:hover {
+            border-color: var(--primary-color);
+            transform: scale(1.02);
+        }
+
+        .foto-preview.has-image {
+            border-style: solid;
+            border-color: var(--success-color);
         }
 
         .foto-preview img {
@@ -109,161 +185,197 @@
             object-fit: cover;
         }
 
-        .foto-preview i {
-            font-size: 3rem;
-            color: #9ca3af;
+        .foto-remove-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--error-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .foto-preview.has-image .foto-remove-btn {
+            display: flex;
         }
 
         .btn-primary {
             background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             border: none;
-            padding: 0.75rem 2rem;
-            border-radius: 10px;
+            padding: 0.85rem 2rem;
+            border-radius: 12px;
             font-weight: 600;
             transition: all 0.3s ease;
+            font-size: 1.1rem;
         }
 
-        .btn-primary:hover {
+        .btn-primary:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(124, 58, 237, 0.4);
+            box-shadow: 0 15px 35px rgba(79, 70, 229, 0.4);
         }
 
-        .btn-voltar {
-            color: #6b7280;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-            transition: color 0.3s ease;
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
 
-        .btn-voltar:hover {
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .loading i {
+            font-size: 3rem;
             color: var(--primary-color);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
 
         .alert {
             border-radius: 10px;
             border: none;
         }
-
-        .info-box {
-            background: #f0f9ff;
-            border-left: 4px solid #3b82f6;
-            padding: 1rem;
-            border-radius: 10px;
-            margin-bottom: 1.5rem;
-        }
-
-        .info-box i {
-            color: #3b82f6;
-        }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="form-container">
-            <a href="index.html" class="btn-voltar">
-                <i class="fas fa-arrow-left"></i> Voltar
-            </a>
+        <!-- LOADING -->
+        <div class="form-container loading show" id="loading">
+            <i class="fas fa-spinner"></i>
+            <h4 class="mt-3">Carregando evento...</h4>
+        </div>
 
+        <!-- FORMULÁRIO -->
+        <div class="form-container" id="formulario" style="display: none;">
             <div class="form-header">
-                <i class="fas fa-users"></i>
-                <h2>Cadastro pelo Responsável</h2>
-                <p class="text-muted">Preencha os dados do responsável e do aluno</p>
+                <i class="fas fa-camera"></i>
+                <h2>Cadastro de Formando</h2>
+                <p class="text-muted">Cadastre-se para receber suas fotos!</p>
             </div>
 
-            <div class="info-box">
-                <i class="fas fa-info-circle me-2"></i>
-                <strong>Importante:</strong> Você pode cadastrar vários alunos usando o mesmo responsável.
+            <!-- INFO DO EVENTO -->
+            <div class="evento-info" id="eventoInfo">
+                <h4>Evento: <span id="eventoTitulo">Carregando...</span></h4>
+                <p id="eventoDetalhes"></p>
             </div>
 
             <div id="alertContainer"></div>
 
-            <form id="formResponsavel" enctype="multipart/form-data">
-                
-                <!-- SEÇÃO 1: DADOS DO RESPONSÁVEL -->
-                <div class="section-divider">
-                    <h5><i class="fas fa-user-tie me-2"></i>Dados do Responsável</h5>
-                </div>
+            <form id="formCadastro" enctype="multipart/form-data">
+                <input type="hidden" name="evento_id" id="eventoId">
 
+                <!-- TIPO DE CADASTRO -->
                 <div class="mb-4">
-                    <label class="form-label">Nome Completo do Responsável <span class="required">*</span></label>
-                    <input type="text" class="form-control" name="nome_responsavel" required>
-                </div>
-
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <label class="form-label">E-mail do Responsável</label>
-                        <input type="email" class="form-control" name="email_responsavel" placeholder="seuemail@exemplo.com">
-                        <small class="text-muted">Opcional</small>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">WhatsApp do Responsável</label>
-                        <input type="text" class="form-control" name="whatsapp_responsavel" placeholder="(00) 00000-0000" maxlength="15">
-                        <small class="text-muted">Opcional - Formato: (XX) XXXXX-XXXX</small>
-                    </div>
-                </div>
-
-                <div class="mb-4">
-                    <label class="form-label">CEP do Responsável</label>
-                    <input type="text" class="form-control" name="cep_responsavel" placeholder="00000-000" maxlength="9">
-                    <small class="text-muted">Opcional - Formato: XXXXX-XXX</small>
-                </div>
-
-                <div class="mb-4">
-                    <label class="form-label">Endereço Completo</label>
-                    <input type="text" class="form-control" name="endereco_responsavel" placeholder="Rua, número, bairro, cidade">
-                    <small class="text-muted">Opcional</small>
-                </div>
-
-                <!-- SEÇÃO 2: DADOS DO ALUNO -->
-                <div class="section-divider">
-                    <h5><i class="fas fa-user-graduate me-2"></i>Dados do Aluno</h5>
-                </div>
-
-                <div class="mb-4">
-                    <label class="form-label">Nome Completo do Aluno <span class="required">*</span></label>
-                    <input type="text" class="form-control" name="nome_aluno" required>
-                </div>
-
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <label class="form-label">Turma <span class="required">*</span></label>
-                        <input type="text" class="form-control" name="turma" placeholder="Ex: 3º A" required>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Ano de Formatura <span class="required">*</span></label>
-                        <input type="number" class="form-control" name="ano_formatura" min="2024" max="2030" required>
+                    <label class="form-label">Você é: <span class="required">*</span></label>
+                    <div class="tipo-cadastro">
+                        <div class="tipo-option" onclick="selecionarTipo('aluno')">
+                            <input type="radio" name="tipo_cadastro" id="tipoAluno" value="aluno" required>
+                            <label for="tipoAluno" style="cursor: pointer; margin: 0;">
+                                <i class="fas fa-user-graduate fa-2x mb-2"></i>
+                                <p class="mb-0"><strong>Aluno</strong></p>
+                            </label>
+                        </div>
+                        <div class="tipo-option" onclick="selecionarTipo('responsavel')">
+                            <input type="radio" name="tipo_cadastro" id="tipoResponsavel" value="responsavel" required>
+                            <label for="tipoResponsavel" style="cursor: pointer; margin: 0;">
+                                <i class="fas fa-users fa-2x mb-2"></i>
+                                <p class="mb-0"><strong>Responsável</strong></p>
+                            </label>
+                        </div>
                     </div>
                 </div>
 
+                <!-- NOME DO FORMANDO -->
                 <div class="mb-4">
-                    <label class="form-label">Escola <span class="required">*</span></label>
-                    <input type="text" class="form-control" name="escola" placeholder="Nome da escola" required>
-                </div>
-
-                <!-- Foto do Aluno -->
-                <div class="mb-4">
-                    <label class="form-label">Foto 3x4 do Aluno</label>
-                    <div class="foto-preview" id="fotoPreview">
-                        <i class="fas fa-camera"></i>
+                    <label class="form-label">Nome do formando <span class="required">*</span></label>
+                    <div class="input-wrapper">
+                        <input type="text" class="form-control" name="nome_formando" id="inputNomeFormando" 
+                               placeholder="Ex: João Silva" required>
+                        <i class="fas fa-check validation-icon valid" id="nomeFormandoValid"></i>
+                        <i class="fas fa-times validation-icon invalid" id="nomeFormandoInvalid"></i>
                     </div>
-                    <input type="file" class="form-control" name="foto" id="inputFoto" accept="image/jpeg,image/jpg,image/png">
-                    <small class="text-muted">Opcional - Formato JPG ou PNG (máx. 5MB)</small>
+                    <small class="text-muted">Apenas letras</small>
                 </div>
 
-                <!-- Botão Submit -->
+                <!-- SEU NOME -->
+                <div class="mb-4">
+                    <label class="form-label">Seu nome <span class="required">*</span></label>
+                    <div class="input-wrapper">
+                        <input type="text" class="form-control" name="nome_contato" id="inputNomeContato" 
+                               placeholder="Ex: Maria Santos" required>
+                        <i class="fas fa-check validation-icon valid" id="nomeContatoValid"></i>
+                        <i class="fas fa-times validation-icon invalid" id="nomeContatoInvalid"></i>
+                    </div>
+                    <small class="text-muted">Quem está preenchendo este formulário</small>
+                </div>
+
+                <!-- E-MAIL -->
+                <div class="mb-4">
+                    <label class="form-label">E-mail <span class="required">*</span></label>
+                    <div class="input-wrapper">
+                        <input type="email" class="form-control" name="email" id="inputEmail" 
+                               placeholder="seuemail@exemplo.com" required>
+                        <i class="fas fa-check validation-icon valid" id="emailValid"></i>
+                        <i class="fas fa-times validation-icon invalid" id="emailInvalid"></i>
+                    </div>
+                </div>
+
+                <!-- WHATSAPP -->
+                <div class="mb-4">
+                    <label class="form-label">WhatsApp <span class="required">*</span></label>
+                    <div class="input-wrapper">
+                        <input type="text" class="form-control" name="whatsapp" id="inputWhatsApp" 
+                               placeholder="(11) 98765-4321" maxlength="15" required>
+                        <i class="fas fa-check validation-icon valid" id="whatsappValid"></i>
+                        <i class="fas fa-times validation-icon invalid" id="whatsappInvalid"></i>
+                    </div>
+                </div>
+
+                <!-- FOTO (OPCIONAL) -->
+                <div class="text-center mb-4">
+                    <label class="form-label">Foto 3x4 (Opcional)</label>
+                    <div class="foto-preview" id="fotoPreview" onclick="document.getElementById('inputFoto').click()">
+                        <div class="placeholder">
+                            <i class="fas fa-camera fa-2x mb-2"></i>
+                            <p class="mb-0" style="font-size: 0.9rem;">Clique para adicionar</p>
+                        </div>
+                        <button type="button" class="foto-remove-btn" onclick="event.stopPropagation(); removerFoto()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <input type="file" class="d-none" name="foto" id="inputFoto" accept="image/jpeg,image/jpg,image/png">
+                    <small class="text-muted">JPG ou PNG (máx. 5MB)</small>
+                </div>
+
+                <!-- BOTÃO SUBMIT -->
                 <div class="text-center">
                     <button type="submit" class="btn btn-primary btn-lg w-100" id="btnSubmit">
                         <i class="fas fa-check-circle me-2"></i>Finalizar Cadastro
                     </button>
+                    <small class="text-muted d-block mt-2">
+                        <i class="fas fa-lock me-1"></i>Seus dados estão protegidos
+                    </small>
                 </div>
             </form>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/cadastro-resp.js"></script>
+    <script src="js/cadastro.js"></script>
 </body>
 </html>
