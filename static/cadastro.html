@@ -52,23 +52,69 @@
             font-weight: 700;
         }
 
+        /* BOAS-VINDAS */
+        .boas-vindas {
+            text-align: center;
+            padding: 2rem 1rem;
+        }
+
+        .boas-vindas .icon-evento {
+            font-size: 4rem;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .boas-vindas h1 {
+            color: #1f2937;
+            font-weight: 700;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
         .evento-info {
             background: linear-gradient(135deg, #eff6ff, #dbeafe);
             border-left: 4px solid var(--primary-color);
-            padding: 1.2rem;
+            padding: 1.5rem;
             border-radius: 10px;
-            margin-bottom: 2rem;
+            margin: 2rem 0;
+            text-align: left;
         }
 
         .evento-info h4 {
             color: var(--primary-color);
-            font-size: 1.2rem;
-            margin-bottom: 0.5rem;
+            font-size: 1.3rem;
+            margin-bottom: 0.75rem;
+            font-weight: 700;
         }
 
         .evento-info p {
             color: #1e40af;
-            margin: 0;
+            margin: 0.5rem 0;
+            font-size: 1.05rem;
+        }
+
+        .boas-vindas .instrucoes {
+            color: #6b7280;
+            font-size: 1rem;
+            margin: 1.5rem 0;
+            line-height: 1.6;
+        }
+
+        .btn-iniciar {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            padding: 1rem 3rem;
+            border-radius: 12px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            font-size: 1.2rem;
+            color: white;
+            margin-top: 1.5rem;
+        }
+
+        .btn-iniciar:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(79, 70, 229, 0.5);
         }
 
         .form-label {
@@ -257,7 +303,33 @@
         <!-- LOADING -->
         <div class="form-container loading show" id="loading">
             <i class="fas fa-spinner"></i>
-            <h4 class="mt-3">Carregando evento...</h4>
+            <h4 class="mt-3">Carregando...</h4>
+        </div>
+
+        <!-- BOAS-VINDAS -->
+        <div class="form-container" id="boasVindas" style="display: none;">
+            <div class="boas-vindas">
+                <i class="fas fa-graduation-cap icon-evento"></i>
+                <h1>Bem-vindo(a)! 🎓</h1>
+                
+                <div class="evento-info">
+                    <h4 id="eventoTitulo">Carregando evento...</h4>
+                    <p id="eventoDetalhes"></p>
+                </div>
+
+                <p class="instrucoes">
+                    <strong>Estamos felizes em ter você aqui!</strong><br>
+                    Preencha o cadastro rápido para garantir que você receba suas fotos de formatura.
+                </p>
+
+                <button type="button" class="btn btn-iniciar" onclick="iniciarCadastro()">
+                    <i class="fas fa-arrow-right me-2"></i>Fazer meu cadastro
+                </button>
+
+                <p class="mt-3" style="color: #9ca3af; font-size: 0.9rem;">
+                    <i class="fas fa-lock me-1"></i>Seus dados estão seguros
+                </p>
+            </div>
         </div>
 
         <!-- FORMULÁRIO -->
@@ -265,13 +337,7 @@
             <div class="form-header">
                 <i class="fas fa-camera"></i>
                 <h2>Cadastro de Formando</h2>
-                <p class="text-muted">Cadastre-se para receber suas fotos!</p>
-            </div>
-
-            <!-- INFO DO EVENTO -->
-            <div class="evento-info" id="eventoInfo">
-                <h4>Evento: <span id="eventoTitulo">Carregando...</span></h4>
-                <p id="eventoDetalhes"></p>
+                <p class="text-muted">Preencha seus dados</p>
             </div>
 
             <div id="alertContainer"></div>
@@ -298,6 +364,23 @@
                             </label>
                         </div>
                     </div>
+                </div>
+
+                <!-- MATRÍCULA -->
+                <div class="mb-4">
+                    <label class="form-label">
+                        Matrícula do Aluno <span class="required">*</span>
+                        <i class="fas fa-info-circle" style="color: #9ca3af; cursor: help;" 
+                           title="Número de matrícula fornecido pela escola"></i>
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="text" class="form-control" name="matricula" id="inputMatricula" 
+                               placeholder="Ex: 2024001234" maxlength="20" required 
+                               style="text-transform: uppercase;">
+                        <i class="fas fa-check validation-icon valid" id="matriculaValid"></i>
+                        <i class="fas fa-times validation-icon invalid" id="matriculaInvalid"></i>
+                    </div>
+                    <small class="text-muted">Digite o número de matrícula do aluno</small>
                 </div>
 
                 <!-- NOME DO FORMANDO -->

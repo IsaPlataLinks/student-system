@@ -248,10 +248,75 @@ function exportarExcel() {
     URL.revokeObjectURL(url);
 }
 
+// ========== EVENTOS E QR CODES ==========
+
+async function carregarEventos() {
+    const token = verificarAutenticacao();
+    if (!token) return;
+
+    try {
+        const response = await fetch(`${API_URL}/eventos`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) {
+            console.error('Erro ao carregar eventos');
+            return;
+        }
+
+        const eventos = await response.json();
+        renderizarEventos(eventos);
+    } catch (error) {
+        console.error('Erro ao buscar eventos:', error);
+    }
+}
+
+function renderizarEventos(eventos) {
+    const tabela = document.getElementById('tabelaEventos');
+    if (!tabela) return; // evita erro caso o HTML não tenha a tabela
+
+    tabela.innerHTML = '';
+
+    if (eventos.length === 0) {
+        tabela.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center text-muted py-3">
+                    Nenhum evento cadastrado ainda
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    eventos.forEach(evento => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${evento.id}</td>
+            <td>${evento.escola}</td>
+            <td>${evento.turma_completa}</td>
+            <td>${evento.ano_formatura}</td>
+            <td>
+                <span class="badge bg-${evento.status === 'ativo' ? 'success' : 'secondary'}">
+                    ${evento.status}
+                </span>
+            </td>
+            <td>
+                <a href="${API_URL}/eventos/${evento.id}/qrcode" 
+                   target="_blank" 
+                   class="btn btn-sm btn-outline-primary">
+                   <i class="fas fa-qrcode"></i> QR
+                </a>
+            </td>
+        `;
+        tabela.appendChild(tr);
+    });
+}
+
 // ========== INICIALIZAÇÃO ==========
 
 document.addEventListener('DOMContentLoaded', function() {
     verificarAutenticacao();
     carregarDadosUsuario();
     carregarAlunos();
+    carregarEventos();
 });

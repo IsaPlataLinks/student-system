@@ -19,7 +19,7 @@ CORS(app)
 # Configurações
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///student_system.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'sua-chave-secreta-aqui')
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'r3-formaturas-secret-2024')
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=8)
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5MB
@@ -38,7 +38,7 @@ class Usuario(db.Model):
     nome = db.Column(db.String(100), nullable=False)
     login = db.Column(db.String(50), unique=True, nullable=False)
     senha_hash = db.Column(db.String(255), nullable=False)
-    tipo_usuario = db.Column(db.String(20), default='vendedor')  # admin ou vendedor
+    tipo_usuario = db.Column(db.String(20), default='vendedor')
     criado_em = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Escola(db.Model):
@@ -54,12 +54,12 @@ class Evento(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     escola_id = db.Column(db.Integer, db.ForeignKey('escolas.id'), nullable=False)
     ano_formatura = db.Column(db.Integer, nullable=False)
-    serie = db.Column(db.String(15), nullable=False)  # "9º ano", "3º ano EM"
-    letra_turma = db.Column(db.String(2), nullable=False)  # "A", "B", "1"
+    serie = db.Column(db.String(15), nullable=False)
+    letra_turma = db.Column(db.String(2), nullable=False)
     data_evento = db.Column(db.Date)
     local_evento = db.Column(db.String(200))
-    tipo_formatura = db.Column(db.String(50))  # "Fundamental" ou "Médio"
-    status = db.Column(db.String(20), default='ativo')  # ativo, finalizado, cancelado
+    tipo_formatura = db.Column(db.String(50))
+    status = db.Column(db.String(20), default='ativo')
     vendedor_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'))
     criado_em = db.Column(db.DateTime, default=datetime.utcnow)
     leads = db.relationship('Lead', backref='evento', lazy=True)
@@ -77,6 +77,9 @@ class Lead(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=False)
     
+    # ✨ MATRÍCULA - IDENTIFICADOR ÚNICO
+    matricula = db.Column(db.String(20), nullable=False)
+    
     # Dados do formando
     nome_formando = db.Column(db.String(100), nullable=False)
     foto = db.Column(db.String(255))
@@ -85,14 +88,14 @@ class Lead(db.Model):
     nome_contato = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), nullable=False)
     whatsapp = db.Column(db.String(20), nullable=False)
-    tipo_cadastro = db.Column(db.String(20))  # "aluno" ou "responsavel"
+    tipo_cadastro = db.Column(db.String(20))
     
     # Endereço (opcional)
     cep = db.Column(db.String(10))
     endereco = db.Column(db.String(300))
     
     # Controle do vendedor
-    status_lead = db.Column(db.String(20), default='novo')  # novo, contatado, interessado, convertido, perdido
+    status_lead = db.Column(db.String(20), default='novo')
     observacoes = db.Column(db.Text)
     data_contato = db.Column(db.DateTime)
     vendedor_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'))
@@ -100,9 +103,9 @@ class Lead(db.Model):
     criado_em = db.Column(db.DateTime, default=datetime.utcnow)
     atualizado_em = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # Constraint: Mesmo e-mail não pode cadastrar 2x no mesmo evento
+    # ✅ CONSTRAINT: MATRÍCULA ÚNICA POR EVENTO
     __table_args__ = (
-        db.UniqueConstraint('email', 'evento_id', name='unique_email_evento'),
+        db.UniqueConstraint('matricula', 'evento_id', name='unique_matricula_evento'),
     )
 
 # ==================== VALIDAÇÕES ====================
@@ -128,7 +131,7 @@ def validar_whatsapp(whatsapp):
 def validar_cep(cep):
     """Valida formato CEP 00000-000"""
     if not cep:
-        return True  # CEP é opcional
+        return True
     return re.match(r'^\d{5}-\d{3}$', cep) is not None
 
 def validar_serie(serie):
@@ -144,6 +147,13 @@ def validar_letra_turma(letra):
     if not letra or len(letra) > 2:
         return False
     return letra.isalnum()
+
+def validar_matricula(matricula):
+    """Valida matrícula: mínimo 3 caracteres alfanuméricos"""
+    if not matricula or len(matricula) < 3:
+        return False
+    matricula = matricula.strip().replace(' ', '')
+    return matricula.isalnum()
 
 def processar_foto(file):
     """Processa upload de foto: salva, redimensiona e otimiza"""
@@ -166,7 +176,6 @@ def processar_foto(file):
     offset = ((300 - img.width) // 2, (400 - img.height) // 2)
     nova_img.paste(img, offset)
     
-    # Salvar otimizada
     nova_img.save(caminho, 'JPEG', quality=85, optimize=True)
     
     return nome_arquivo
@@ -199,23 +208,19 @@ def criar_evento():
     vendedor_id = get_jwt_identity()
     vendedor = Usuario.query.get(vendedor_id)
     
-    # Só admin pode criar eventos
     if vendedor.tipo_usuario != 'admin':
         return jsonify({'erro': 'Apenas administradores podem criar eventos'}), 403
     
     data = request.get_json()
     
-    # Validar série
     serie = data.get('serie')
     if not validar_serie(serie):
         return jsonify({'erro': 'Série inválida'}), 400
     
-    # Validar letra turma
     letra_turma = data.get('letra_turma', '').upper()
     if not validar_letra_turma(letra_turma):
         return jsonify({'erro': 'Turma inválida (1-2 caracteres)'}), 400
     
-    # Buscar ou criar escola
     escola_nome = data.get('escola')
     escola = Escola.query.filter_by(nome=escola_nome).first()
     if not escola:
@@ -227,7 +232,6 @@ def criar_evento():
         db.session.add(escola)
         db.session.flush()
     
-    # Criar evento
     evento = Evento(
         escola_id=escola.id,
         ano_formatura=int(data.get('ano_formatura')),
@@ -243,26 +247,18 @@ def criar_evento():
     db.session.add(evento)
     db.session.commit()
     
-    # Gerar URL do QR Code
     base_url = request.host_url
     qr_url = f"{base_url}cadastro?e={evento.id}"
     
     return jsonify({
         'mensagem': 'Evento criado com sucesso!',
         'evento_id': evento.id,
-        'qr_url': qr_url,
-        'evento': {
-            'id': evento.id,
-            'escola': escola.nome,
-            'turma_completa': evento.turma_completa,
-            'ano': evento.ano_formatura,
-            'data': evento.data_evento.isoformat() if evento.data_evento else None
-        }
+        'qr_url': qr_url
     }), 201
 
 @app.route('/api/eventos/<int:evento_id>', methods=['GET'])
 def buscar_evento(evento_id):
-    """Retorna dados do evento (público - para formulário)"""
+    """Retorna dados do evento (público)"""
     evento = Evento.query.get_or_404(evento_id)
     
     if evento.status != 'ativo':
@@ -288,7 +284,7 @@ def buscar_evento(evento_id):
 @app.route('/api/eventos', methods=['GET'])
 @jwt_required()
 def listar_eventos():
-    """Lista todos os eventos (admin/vendedor)"""
+    """Lista todos os eventos"""
     eventos = Evento.query.order_by(Evento.criado_em.desc()).all()
     
     resultado = []
@@ -299,7 +295,6 @@ def listar_eventos():
             'turma_completa': evento.turma_completa,
             'ano_formatura': evento.ano_formatura,
             'data_evento': evento.data_evento.isoformat() if evento.data_evento else None,
-            'local_evento': evento.local_evento,
             'status': evento.status,
             'total_leads': len(evento.leads),
             'qr_url': f"{request.host_url}cadastro?e={evento.id}"
@@ -310,14 +305,12 @@ def listar_eventos():
 @app.route('/api/eventos/<int:evento_id>/qrcode', methods=['GET'])
 @jwt_required()
 def gerar_qrcode(evento_id):
-    """Gera imagem do QR Code para o evento"""
+    """Gera QR Code para o evento"""
     evento = Evento.query.get_or_404(evento_id)
     
-    # URL do cadastro
     base_url = request.host_url
     qr_url = f"{base_url}cadastro?e={evento.id}"
     
-    # Gerar QR Code
     qr = qrcode.QRCode(
         version=1,
         error_correction=qrcode.constants.ERROR_CORRECT_L,
@@ -329,33 +322,30 @@ def gerar_qrcode(evento_id):
     
     img = qr.make_image(fill_color="black", back_color="white")
     
-    # Salvar em buffer
     buffer = BytesIO()
     img.save(buffer, format='PNG')
     buffer.seek(0)
     
     return send_file(buffer, mimetype='image/png', download_name=f'qrcode-evento-{evento_id}.png')
 
-# ==================== ROTAS DE CADASTRO (PÚBLICO) ====================
+# ==================== ROTAS DE CADASTRO ====================
 
 @app.route('/api/cadastro', methods=['POST'])
 def cadastrar_lead():
-    """Cadastro rápido no evento (público - não precisa autenticação)"""
+    """Cadastro público no evento"""
     try:
         data = request.form
         
-        # Pegar ID do evento (vem do QR Code)
         evento_id = data.get('evento_id')
-        
         if not evento_id:
             return jsonify({'erro': 'Evento não identificado'}), 400
         
-        # Verificar se evento existe e está ativo
         evento = Evento.query.get(evento_id)
         if not evento or evento.status != 'ativo':
             return jsonify({'erro': 'Evento não disponível'}), 400
         
         # Dados do formulário
+        matricula = data.get('matricula', '').strip().upper()
         nome_formando = data.get('nome_formando')
         nome_contato = data.get('nome_contato')
         email = data.get('email')
@@ -363,8 +353,22 @@ def cadastrar_lead():
         tipo_cadastro = data.get('tipo_cadastro')
         
         # Validações
-        if not all([nome_formando, nome_contato, email, whatsapp]):
+        if not all([matricula, nome_formando, nome_contato, email, whatsapp]):
             return jsonify({'erro': 'Preencha todos os campos obrigatórios'}), 400
+        
+        if not validar_matricula(matricula):
+            return jsonify({'erro': 'Matrícula inválida! Digite pelo menos 3 caracteres'}), 400
+        
+        # Verificar duplicidade por matrícula
+        lead_existente = Lead.query.filter_by(
+            matricula=matricula,
+            evento_id=evento_id
+        ).first()
+        
+        if lead_existente:
+            return jsonify({
+                'erro': f'Matrícula {matricula} já cadastrada neste evento!'
+            }), 400
         
         if not validar_nome(nome_formando):
             return jsonify({'erro': 'Nome do formando inválido! Use apenas letras'}), 400
@@ -376,20 +380,9 @@ def cadastrar_lead():
             return jsonify({'erro': 'E-mail inválido'}), 400
         
         if not validar_whatsapp(whatsapp):
-            return jsonify({'erro': 'WhatsApp inválido! Use o formato (11) 98765-4321'}), 400
+            return jsonify({'erro': 'WhatsApp inválido! Formato: (11) 98765-4321'}), 400
         
-        # VERIFICAR DUPLICIDADE (mesmo e-mail no mesmo evento)
-        lead_existente = Lead.query.filter_by(
-            email=email,
-            evento_id=evento_id
-        ).first()
-        
-        if lead_existente:
-            return jsonify({
-                'erro': 'Este e-mail já foi cadastrado neste evento!'
-            }), 400
-        
-        # Processar foto (opcional)
+        # Processar foto
         foto_filename = None
         if 'foto' in request.files and request.files['foto'].filename:
             foto_filename = processar_foto(request.files['foto'])
@@ -397,6 +390,7 @@ def cadastrar_lead():
         # Criar lead
         lead = Lead(
             evento_id=evento_id,
+            matricula=matricula,
             nome_formando=nome_formando,
             nome_contato=nome_contato,
             email=email,
@@ -413,14 +407,16 @@ def cadastrar_lead():
         
         return jsonify({
             'mensagem': 'Cadastro realizado com sucesso!',
-            'id': lead.id
+            'id': lead.id,
+            'matricula': matricula
         }), 201
         
     except Exception as e:
         db.session.rollback()
-        return jsonify({'erro': str(e)}), 500
+        print(f"❌ ERRO: {str(e)}")
+        return jsonify({'erro': 'Erro ao processar cadastro'}), 500
 
-# ==================== ROTAS DE LEADS (DASHBOARD) ====================
+# ==================== ROTAS DE LEADS ====================
 
 @app.route('/api/leads', methods=['GET'])
 @jwt_required()
@@ -429,22 +425,18 @@ def listar_leads():
     vendedor_id = get_jwt_identity()
     vendedor = Usuario.query.get(vendedor_id)
     
-    # Filtros
     evento_id = request.args.get('evento_id')
     status = request.args.get('status')
     busca = request.args.get('busca', '')
     
-    # Query base
     query = Lead.query
     
-    # Se não for admin, mostra só leads do vendedor ou sem vendedor
     if vendedor.tipo_usuario != 'admin':
         query = query.filter(
             (Lead.vendedor_id == vendedor_id) | 
             (Lead.vendedor_id == None)
         )
     
-    # Aplicar filtros
     if evento_id:
         query = query.filter_by(evento_id=evento_id)
     
@@ -455,17 +447,17 @@ def listar_leads():
         query = query.filter(
             (Lead.nome_formando.ilike(f'%{busca}%')) |
             (Lead.nome_contato.ilike(f'%{busca}%')) |
-            (Lead.email.ilike(f'%{busca}%'))
+            (Lead.email.ilike(f'%{busca}%')) |
+            (Lead.matricula.ilike(f'%{busca}%'))
         )
     
-    # Ordenar por mais recentes
     leads = query.order_by(Lead.criado_em.desc()).all()
     
-    # Formatar resposta
     resultado = []
     for lead in leads:
         resultado.append({
             'id': lead.id,
+            'matricula': lead.matricula,
             'nome_formando': lead.nome_formando,
             'nome_contato': lead.nome_contato,
             'email': lead.email,
@@ -480,8 +472,7 @@ def listar_leads():
                 'turma_completa': lead.evento.turma_completa,
                 'ano': lead.evento.ano_formatura
             },
-            'criado_em': lead.criado_em.isoformat(),
-            'atualizado_em': lead.atualizado_em.isoformat() if lead.atualizado_em else None
+            'criado_em': lead.criado_em.isoformat()
         })
     
     return jsonify(resultado), 200
@@ -489,13 +480,12 @@ def listar_leads():
 @app.route('/api/leads/<int:lead_id>', methods=['PATCH'])
 @jwt_required()
 def atualizar_lead(lead_id):
-    """Vendedor atualiza status/observações do lead"""
+    """Vendedor atualiza lead"""
     vendedor_id = get_jwt_identity()
     
     lead = Lead.query.get_or_404(lead_id)
     data = request.get_json()
     
-    # Atualizar campos permitidos
     if 'status_lead' in data:
         lead.status_lead = data['status_lead']
     
@@ -505,7 +495,6 @@ def atualizar_lead(lead_id):
     if data.get('marcar_contato'):
         lead.data_contato = datetime.utcnow()
     
-    # Atribuir vendedor se ainda não tiver
     if not lead.vendedor_id:
         lead.vendedor_id = vendedor_id
     
@@ -520,23 +509,18 @@ def estatisticas():
     vendedor_id = get_jwt_identity()
     vendedor = Usuario.query.get(vendedor_id)
     
-    # Query base
     if vendedor.tipo_usuario == 'admin':
         leads_query = Lead.query
     else:
         leads_query = Lead.query.filter_by(vendedor_id=vendedor_id)
     
-    # Contar por status
     novos = leads_query.filter_by(status_lead='novo').count()
     contatados = leads_query.filter_by(status_lead='contatado').count()
     interessados = leads_query.filter_by(status_lead='interessado').count()
     convertidos = leads_query.filter_by(status_lead='convertido').count()
     perdidos = leads_query.filter_by(status_lead='perdido').count()
     
-    # Total
     total = leads_query.count()
-    
-    # Taxa de conversão
     taxa_conversao = (convertidos / total * 100) if total > 0 else 0
     
     return jsonify({
@@ -548,14 +532,6 @@ def estatisticas():
         'perdidos': perdidos,
         'taxa_conversao': round(taxa_conversao, 2)
     }), 200
-
-# ==================== ROTAS DE ESCOLAS ====================
-
-@app.route('/api/escolas', methods=['GET'])
-def listar_escolas():
-    """Lista escolas (público)"""
-    escolas = Escola.query.order_by(Escola.nome).all()
-    return jsonify([{'id': e.id, 'nome': e.nome, 'cidade': e.cidade} for e in escolas]), 200
 
 # ==================== ROTAS ESTÁTICAS ====================
 
@@ -570,7 +546,7 @@ def static_files(path):
 # ==================== INICIALIZAÇÃO ====================
 
 def criar_usuario_admin():
-    """Cria usuário admin padrão se não existir"""
+    """Cria usuário admin padrão"""
     if not Usuario.query.filter_by(login='admin').first():
         admin = Usuario(
             nome='Administrador',
