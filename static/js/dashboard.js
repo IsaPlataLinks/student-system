@@ -2,7 +2,9 @@ const API_URL = 'http://localhost:5000/api';
 let todosAlunos = [];
 let alunosFiltrados = [];
 
-// ========== VERIFICAÇÃO DE AUTENTICAÇÃO ==========
+// ======================================================
+// 🔐 AUTENTICAÇÃO E PERFIL
+// ======================================================
 
 function verificarAutenticacao() {
     const token = localStorage.getItem('token');
@@ -13,8 +15,6 @@ function verificarAutenticacao() {
     return token;
 }
 
-// ========== LOGOUT ==========
-
 function logout() {
     if (confirm('Deseja realmente sair?')) {
         localStorage.removeItem('token');
@@ -24,18 +24,17 @@ function logout() {
     }
 }
 
-// ========== CARREGAR DADOS DO USUÁRIO ==========
-
 function carregarDadosUsuario() {
     const nomeUsuario = localStorage.getItem('nomeUsuario') || 'Usuário';
     const tipoUsuario = localStorage.getItem('tipoUsuario') || 'admin';
-    
     document.getElementById('nomeUsuario').textContent = nomeUsuario;
-    document.getElementById('tipoUsuario').textContent = 
+    document.getElementById('tipoUsuario').textContent =
         tipoUsuario === 'admin' ? 'Administrador' : 'Vendedor';
 }
 
-// ========== CARREGAR ALUNOS ==========
+// ======================================================
+// 🎓 ALUNOS
+// ======================================================
 
 async function carregarAlunos() {
     const token = verificarAutenticacao();
@@ -43,9 +42,7 @@ async function carregarAlunos() {
 
     try {
         const response = await fetch(`${API_URL}/alunos`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
+            headers: { 'Authorization': `Bearer ${token}` }
         });
 
         if (response.status === 401) {
@@ -65,23 +62,21 @@ async function carregarAlunos() {
         }
     } catch (error) {
         console.error('Erro:', error);
-        alert('Erro ao conectar com o servidor. Verifique se está rodando.');
+        alert('Erro ao conectar com o servidor.');
     }
 }
 
-// ========== RENDERIZAR ALUNOS ==========
-
 function renderizarAlunos(alunos) {
     const container = document.getElementById('alunosGrid');
-    
+    if (!container) return;
+
     if (alunos.length === 0) {
         container.innerHTML = `
             <div class="empty-state" style="grid-column: 1 / -1;">
                 <i class="fas fa-inbox"></i>
                 <h4>Nenhum aluno encontrado</h4>
                 <p>Tente ajustar os filtros de busca ou aguarde novos cadastros.</p>
-            </div>
-        `;
+            </div>`;
         return;
     }
 
@@ -92,68 +87,38 @@ function renderizarAlunos(alunos) {
             </div>
             <div class="card-body-custom">
                 <div class="foto-container">
-                    ${aluno.foto 
-                        ? `<img src="${aluno.foto}" alt="${aluno.nome}">`
-                        : `<i class="fas fa-user"></i>`
-                    }
+                    ${aluno.foto ? `<img src="${aluno.foto}" alt="${aluno.nome}">` : `<i class="fas fa-user"></i>`}
                 </div>
                 <div class="info-container">
                     <div class="aluno-nome">${aluno.nome}</div>
-                    <div class="aluno-info">
-                        <i class="fas fa-chalkboard-teacher"></i>
-                        <span>${aluno.turma}</span>
-                    </div>
-                    <div class="aluno-info">
-                        <i class="fas fa-calendar"></i>
-                        <span>${aluno.ano_formatura}</span>
-                    </div>
-                    ${aluno.whatsapp ? `
-                        <div class="aluno-info">
-                            <i class="fab fa-whatsapp"></i>
-                            <span>${aluno.whatsapp}</span>
-                        </div>
-                    ` : ''}
-                    ${aluno.email ? `
-                        <div class="aluno-info">
-                            <i class="fas fa-envelope"></i>
-                            <span>${aluno.email}</span>
-                        </div>
-                    ` : ''}
-                    ${aluno.responsavel ? `
-                        <div class="aluno-info">
-                            <i class="fas fa-user-tie"></i>
-                            <span>${aluno.responsavel}</span>
-                        </div>
-                    ` : ''}
+                    <div class="aluno-info"><i class="fas fa-chalkboard-teacher"></i><span>${aluno.turma}</span></div>
+                    <div class="aluno-info"><i class="fas fa-calendar"></i><span>${aluno.ano_formatura}</span></div>
+                    ${aluno.whatsapp ? `<div class="aluno-info"><i class="fab fa-whatsapp"></i><span>${aluno.whatsapp}</span></div>` : ''}
+                    ${aluno.email ? `<div class="aluno-info"><i class="fas fa-envelope"></i><span>${aluno.email}</span></div>` : ''}
+                    ${aluno.responsavel ? `<div class="aluno-info"><i class="fas fa-user-tie"></i><span>${aluno.responsavel}</span></div>` : ''}
                 </div>
             </div>
         </div>
     `).join('');
 }
 
-// ========== ESTATÍSTICAS ==========
-
 function atualizarEstatisticas() {
-    // Total de alunos
     document.getElementById('totalAlunos').textContent = todosAlunos.length;
-
-    // Total de escolas únicas
     const escolasUnicas = new Set(todosAlunos.map(a => a.escola).filter(Boolean));
     document.getElementById('totalEscolas').textContent = escolasUnicas.size;
-
-    // Total com fotos
     const comFotos = todosAlunos.filter(a => a.foto).length;
     document.getElementById('totalFotos').textContent = comFotos;
 }
 
-// ========== FILTROS ==========
+// ======================================================
+// 🔍 FILTROS
+// ======================================================
 
 function carregarEscolasNoFiltro() {
     const escolas = [...new Set(todosAlunos.map(a => a.escola).filter(Boolean))];
     const selectEscola = document.getElementById('filtroEscola');
-    
     selectEscola.innerHTML = '<option value="">Todas as Escolas</option>' +
-        escolas.map(escola => `<option value="${escola}">${escola}</option>`).join('');
+        escolas.map(e => `<option value="${e}">${e}</option>`).join('');
 }
 
 function aplicarFiltros() {
@@ -162,13 +127,11 @@ function aplicarFiltros() {
     const turma = document.getElementById('filtroTurma').value.toLowerCase();
     const ano = document.getElementById('filtroAno').value;
 
-    alunosFiltrados = todosAlunos.filter(aluno => {
-        const matchBusca = !busca || aluno.nome.toLowerCase().includes(busca);
-        const matchEscola = !escola || aluno.escola === escola;
-        const matchTurma = !turma || (aluno.turma && aluno.turma.toLowerCase().includes(turma));
-        const matchAno = !ano || aluno.ano_formatura == ano;
-
-        return matchBusca && matchEscola && matchTurma && matchAno;
+    alunosFiltrados = todosAlunos.filter(a => {
+        return (!busca || a.nome.toLowerCase().includes(busca)) &&
+               (!escola || a.escola === escola) &&
+               (!turma || (a.turma && a.turma.toLowerCase().includes(turma))) &&
+               (!ano || a.ano_formatura == ano);
     });
 
     renderizarAlunos(alunosFiltrados);
@@ -179,144 +142,150 @@ function limparFiltros() {
     document.getElementById('filtroEscola').value = '';
     document.getElementById('filtroTurma').value = '';
     document.getElementById('filtroAno').value = '';
-    
     alunosFiltrados = [...todosAlunos];
     renderizarAlunos(alunosFiltrados);
 }
 
-// Aplicar filtros em tempo real na busca por nome
-document.addEventListener('DOMContentLoaded', function() {
-    const filtroBusca = document.getElementById('filtroBusca');
-    if (filtroBusca) {
-        filtroBusca.addEventListener('input', aplicarFiltros);
-    }
-});
-
-// ========== EXPORTAR EXCEL ==========
+// ======================================================
+// 📁 EXPORTAR EXCEL
+// ======================================================
 
 function exportarExcel() {
-    if (alunosFiltrados.length === 0) {
-        alert('Não há dados para exportar!');
-        return;
-    }
-
-    // Criar tabela HTML
-    let html = `
+    if (alunosFiltrados.length === 0) return alert('Não há dados para exportar!');
+    const html = `
         <table>
-            <thead>
+            <thead><tr><th>Nome</th><th>Turma</th><th>Ano</th><th>Escola</th><th>Email</th><th>WhatsApp</th><th>Responsável</th></tr></thead>
+            <tbody>${alunosFiltrados.map(a => `
                 <tr>
-                    <th>Nome</th>
-                    <th>Turma</th>
-                    <th>Ano</th>
-                    <th>Escola</th>
-                    <th>Email</th>
-                    <th>WhatsApp</th>
-                    <th>Responsável</th>
-                </tr>
-            </thead>
-            <tbody>
-    `;
-
-    alunosFiltrados.forEach(aluno => {
-        html += `
-            <tr>
-                <td>${aluno.nome}</td>
-                <td>${aluno.turma}</td>
-                <td>${aluno.ano_formatura}</td>
-                <td>${aluno.escola || ''}</td>
-                <td>${aluno.email || ''}</td>
-                <td>${aluno.whatsapp || ''}</td>
-                <td>${aluno.responsavel || ''}</td>
-            </tr>
-        `;
-    });
-
-    html += `
+                    <td>${a.nome}</td>
+                    <td>${a.turma}</td>
+                    <td>${a.ano_formatura}</td>
+                    <td>${a.escola || ''}</td>
+                    <td>${a.email || ''}</td>
+                    <td>${a.whatsapp || ''}</td>
+                    <td>${a.responsavel || ''}</td>
+                </tr>`).join('')}
             </tbody>
-        </table>
-    `;
-
-    // Criar Blob e baixar
+        </table>`;
     const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `alunos_${new Date().toISOString().split('T')[0]}.xls`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `alunos_${new Date().toISOString().split('T')[0]}.xls`;
+    a.click();
     URL.revokeObjectURL(url);
 }
 
-// ========== EVENTOS E QR CODES ==========
+// ======================================================
+// 🎟️ EVENTOS E QR CODES
+// ======================================================
 
 async function carregarEventos() {
     const token = verificarAutenticacao();
     if (!token) return;
-
     try {
         const response = await fetch(`${API_URL}/eventos`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
-
-        if (!response.ok) {
-            console.error('Erro ao carregar eventos');
-            return;
-        }
-
         const eventos = await response.json();
         renderizarEventos(eventos);
-    } catch (error) {
-        console.error('Erro ao buscar eventos:', error);
+    } catch (err) {
+        console.error('Erro ao buscar eventos:', err);
     }
 }
 
 function renderizarEventos(eventos) {
     const tabela = document.getElementById('tabelaEventos');
-    if (!tabela) return; // evita erro caso o HTML não tenha a tabela
+    if (!tabela) return;
 
-    tabela.innerHTML = '';
-
-    if (eventos.length === 0) {
-        tabela.innerHTML = `
+    tabela.innerHTML = eventos.length === 0
+        ? `<tr><td colspan="6" class="text-center text-muted py-3">Nenhum evento cadastrado</td></tr>`
+        : eventos.map(e => `
             <tr>
-                <td colspan="6" class="text-center text-muted py-3">
-                    Nenhum evento cadastrado ainda
-                </td>
-            </tr>
-        `;
-        return;
-    }
-
-    eventos.forEach(evento => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${evento.id}</td>
-            <td>${evento.escola}</td>
-            <td>${evento.turma_completa}</td>
-            <td>${evento.ano_formatura}</td>
-            <td>
-                <span class="badge bg-${evento.status === 'ativo' ? 'success' : 'secondary'}">
-                    ${evento.status}
-                </span>
-            </td>
-            <td>
-                <a href="${API_URL}/eventos/${evento.id}/qrcode" 
-                   target="_blank" 
-                   class="btn btn-sm btn-outline-primary">
-                   <i class="fas fa-qrcode"></i> QR
-                </a>
-            </td>
-        `;
-        tabela.appendChild(tr);
-    });
+                <td>${e.id}</td>
+                <td>${e.escola}</td>
+                <td>${e.turma_completa}</td>
+                <td>${e.ano_formatura}</td>
+                <td><span class="badge bg-${e.status === 'ativo' ? 'success' : 'secondary'}">${e.status}</span></td>
+                <td><button class="btn btn-sm btn-outline-primary" onclick="abrirQRCode(${e.id})">
+                    <i class="fas fa-qrcode"></i> Ver QR</button></td>
+            </tr>`).join('');
 }
 
-// ========== INICIALIZAÇÃO ==========
+function abrirQRCode(eventoId) {
+    const modal = new bootstrap.Modal(document.getElementById('modalQRCode'));
+    const img = document.getElementById('imgQRCode');
+    const link = document.getElementById('linkEvento');
+    const btnDownload = document.getElementById('btnDownloadQR');
+
+    const qrUrl = `${API_URL}/eventos/${eventoId}/qrcode`;
+    const pageUrl = `${window.location.origin}/cadastro?e=${eventoId}`;
+    img.src = qrUrl;
+    link.textContent = pageUrl;
+    btnDownload.onclick = () => baixarQRCode(qrUrl, `evento-${eventoId}.png`);
+
+    modal.show();
+}
+
+function baixarQRCode(url, filename) {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+}
+
+function abrirModalNovoEvento() {
+    const modal = new bootstrap.Modal(document.getElementById('modalNovoEvento'));
+    modal.show();
+}
+
+// ======================================================
+// 🚀 INICIALIZAÇÃO
+// ======================================================
 
 document.addEventListener('DOMContentLoaded', function() {
     verificarAutenticacao();
     carregarDadosUsuario();
     carregarAlunos();
     carregarEventos();
+
+    // Listener de criação do evento
+    const formEvento = document.getElementById('formNovoEvento');
+    if (formEvento) {
+        formEvento.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const token = localStorage.getItem('token');
+            const dados = Object.fromEntries(new FormData(e.target).entries());
+
+            try {
+                const response = await fetch(`${API_URL}/eventos`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(dados)
+                });
+
+                const resultado = await response.json();
+
+                if (response.ok) {
+                    alert('✅ Evento criado com sucesso!');
+                    e.target.reset();
+                    carregarEventos();
+                    bootstrap.Modal.getInstance(document.getElementById('modalNovoEvento')).hide();
+                } else {
+                    alert(`Erro: ${resultado.erro || 'Falha ao criar evento'}`);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Erro ao criar evento');
+            }
+        });
+    }
+
+    const filtroBusca = document.getElementById('filtroBusca');
+    if (filtroBusca) filtroBusca.addEventListener('input', aplicarFiltros);
 });

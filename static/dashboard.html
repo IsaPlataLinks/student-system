@@ -460,18 +460,17 @@
 
         <!-- Grid de Alunos -->
         <div id="alunosContainer">
-            <div class="alunos-grid" id="alunosGrid"></div>
-        </div>
+<!-- ========================================================= -->
+<!-- 🎓 SEÇÃO DE EVENTOS E QR CODES -->
+<!-- ========================================================= -->
+<div class="filtros-container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5><i class="fas fa-qrcode me-2"></i>Gerenciamento de Eventos</h5>
+        <button class="btn btn-primary" onclick="abrirModalNovoEvento()">
+            <i class="fas fa-plus me-1"></i> Novo Evento
+        </button>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/dashboard.js"></script>
-</body>
-</html>
-
-<!-- Eventos Cadastrados -->
-<div class="filtros-container mt-5">
-    <h5><i class="fas fa-school me-2"></i>Eventos Cadastrados</h5>
     <div class="table-responsive">
         <table class="table table-hover align-middle">
             <thead class="table-light">
@@ -487,10 +486,126 @@
             <tbody id="tabelaEventos">
                 <tr>
                     <td colspan="6" class="text-center text-muted py-3">
-                        Carregando eventos...
+                        Nenhum evento cadastrado ainda
                     </td>
                 </tr>
             </tbody>
         </table>
     </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- MODAL: CRIAR NOVO EVENTO -->
+<!-- ========================================================= -->
+<div class="modal fade" id="modalNovoEvento" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title"><i class="fas fa-calendar-plus me-2"></i>Novo Evento</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="formNovoEvento">
+          <div class="mb-3">
+            <label class="form-label">Escola <span class="text-danger">*</span></label>
+            <input 
+              type="text" 
+              class="form-control" 
+              name="escola" 
+              maxlength="60"
+              placeholder="Ex: Colégio Estadual Tenente Almachio"
+              required
+            >
+            <small class="text-muted">Máximo de 60 caracteres</small>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Ano de Formatura <span class="text-danger">*</span></label>
+            <input 
+              type="number" 
+              class="form-control" 
+              name="ano_formatura"
+              min="2025" 
+              max="2030"
+              maxlength="4"
+              oninput="if(this.value.length > 4) this.value = this.value.slice(0, 4);"
+              placeholder="Ex: 2025"
+              required
+            >
+            <small class="text-muted">Somente entre 2025 e 2030</small>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Série <span class="text-danger">*</span></label>
+            <select class="form-select" name="serie" required>
+              <option value="">Selecione</option>
+              <optgroup label="Educação Infantil">
+                <option>Berçário</option>
+                <option>Maternal I</option>
+                <option>Maternal II</option>
+                <option>Jardim I</option>
+                <option>Jardim II</option>
+              </optgroup>
+              <optgroup label="Ensino Fundamental I">
+                <option>1º ano</option>
+                <option>2º ano</option>
+                <option>3º ano</option>
+                <option>4º ano</option>
+                <option>5º ano</option>
+              </optgroup>
+              <optgroup label="Ensino Fundamental II">
+                <option>6º ano</option>
+                <option>7º ano</option>
+                <option>8º ano</option>
+                <option>9º ano</option>
+              </optgroup>
+              <optgroup label="Ensino Médio">
+                <option>1º ano EM</option>
+                <option>2º ano EM</option>
+                <option>3º ano EM</option>
+              </optgroup>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Turma <span class="text-danger">*</span></label>
+            <input 
+              type="text" 
+              class="form-control" 
+              name="turma" 
+              maxlength="4"
+              placeholder="Ex: A, 6A, 3EM"
+              required
+            >
+            <small class="text-muted">Até 4 caracteres (letras e números)</small>
+          </div>
+
+          <button type="submit" class="btn btn-success w-100">
+            <i class="fas fa-check me-2"></i>Criar Evento
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- MODAL: VISUALIZAR QR CODE -->
+<!-- ========================================================= -->
+<div class="modal fade" id="modalQRCode" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content text-center p-3">
+      <div class="modal-header border-0">
+        <h5 class="modal-title"><i class="fas fa-qrcode me-2"></i>QR Code do Evento</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <img id="imgQRCode" src="" alt="QR Code" class="img-fluid mb-3" style="max-width: 300px;">
+        <p class="text-muted small" id="linkEvento"></p>
+        <button class="btn btn-success" id="btnDownloadQR">
+          <i class="fas fa-download me-2"></i>Baixar QR Code
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
