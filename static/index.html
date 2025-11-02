@@ -24,7 +24,7 @@
         }
 
         .container-principal {
-            max-width: 900px;
+            max-width: 600px;
             padding: 20px;
         }
 
@@ -35,8 +35,16 @@
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             padding: 3rem;
             text-align: center;
-            margin-bottom: 2rem;
             animation: fadeInDown 0.6s ease-out;
+        }
+
+        .card-boas-vindas .logo-icon {
+            font-size: 4rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
         }
 
         .card-boas-vindas h1 {
@@ -49,72 +57,49 @@
         .card-boas-vindas p {
             color: #6b7280;
             font-size: 1.1rem;
+            margin-bottom: 2rem;
         }
 
-        .opcoes-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2rem;
-            animation: fadeInUp 0.8s ease-out;
+        .info-box {
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+            border-left: 4px solid var(--primary-color);
+            padding: 1.2rem;
+            border-radius: 12px;
+            margin-top: 2rem;
+            text-align: left;
         }
 
-        .card-opcao {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 2.5rem;
-            text-align: center;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            border: 3px solid transparent;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-        }
-
-        .card-opcao:hover {
-            transform: translateY(-10px);
-            border-color: var(--primary-color);
-            box-shadow: 0 20px 40px rgba(79, 70, 229, 0.4);
-        }
-
-        .card-opcao i {
-            font-size: 4rem;
-            margin-bottom: 1.5rem;
-            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .card-opcao h3 {
-            color: #1f2937;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            font-size: 1.5rem;
-        }
-
-        .card-opcao p {
-            color: #6b7280;
+        .info-box p {
+            color: #1e40af;
             font-size: 0.95rem;
-            margin-bottom: 1.5rem;
+            margin: 0;
         }
 
         .btn-admin {
             background: linear-gradient(135deg, #1e40af, #3b82f6);
             color: white;
             border: none;
-            padding: 0.75rem 2rem;
+            padding: 0.85rem 2rem;
             border-radius: 12px;
             font-weight: 600;
             text-decoration: none;
             display: inline-block;
             transition: all 0.3s ease;
-            margin-top: 2rem;
+            font-size: 1.1rem;
         }
 
         .btn-admin:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 25px rgba(30, 64, 175, 0.4);
             color: white;
+        }
+
+        .footer-info {
+            text-align: center;
+            color: white;
+            margin-top: 2rem;
+            font-size: 0.9rem;
+            opacity: 0.9;
         }
 
         @keyframes fadeInDown {
@@ -128,71 +113,41 @@
             }
         }
 
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
         @media (max-width: 768px) {
-            .opcoes-container {
-                grid-template-columns: 1fr;
-            }
-
             .card-boas-vindas h1 {
                 font-size: 2rem;
             }
-        }
-
-        .footer-info {
-            text-align: center;
-            color: white;
-            margin-top: 2rem;
-            font-size: 0.9rem;
-            opacity: 0.9;
-        }
-
-        .alert-info {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 15px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            border-left: 5px solid var(--primary-color);
+            
+            .card-boas-vindas {
+                padding: 2rem;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container-principal">
-        <!-- Card de Boas-Vindas -->
         <div class="card-boas-vindas">
-            <i class="fas fa-graduation-cap" style="font-size: 4rem; color: var(--primary-color);"></i>
-            <h1>Bem-vindo(a)! 🎓</h1>
-            <p>Sistema de Cadastro de Formandos R3 Formaturas<br>
-            Faça seu cadastro de forma rápida e segura</p>
-        </div>
+            <i class="fas fa-graduation-cap logo-icon"></i>
+            <h1>Bem-vindo! 🎓</h1>
+            <p>R3 Formaturas - Sistema de Cadastro de Formandos<br>
+            Registre seus dados e receba as fotos da sua formatura!</p>
 
-        <!-- Alerta: Usar QR Code do evento -->
-        <div class="alert-info">
-            <p class="mb-0">
-                <i class="fas fa-qrcode me-2"></i>
-                <strong>Atenção:</strong> Para fazer seu cadastro, escaneie o QR Code que está no banner do seu evento de formatura.
-            </p>
-        </div>
+            <div class="info-box">
+                <p>
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Para se cadastrar:</strong> Use o link ou QR Code fornecido no evento de formatura pela equipe R3.
+                </p>
+            </div>
 
-        <!-- Footer -->
-        <div class="footer-info">
-            <p>
-                <i class="fas fa-shield-alt me-2"></i>
-                Seus dados estão seguros e protegidos
-            </p>
-            <a href="login.html" class="btn-admin">
-                <i class="fas fa-sign-in-alt me-2"></i>Área Administrativa
-            </a>
+            <div class="footer-info">
+                <p>
+                    <i class="fas fa-shield-alt me-2"></i>
+                    Seus dados estão seguros e protegidos
+                </p>
+                <a href="login.html" class="btn-admin mt-3">
+                    <i class="fas fa-sign-in-alt me-2"></i>Área Administrativa
+                </a>
+            </div>
         </div>
     </div>
 
