@@ -30,6 +30,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     document.getElementById('eventoId').value = eventoId;
     carregarEvento(eventoId);
+    
+    // ✨ VERIFICAR SE TEM DADOS DO RESPONSÁVEL (PARA CADASTRAR OUTRO FILHO)
+    verificarDadosResponsavel();
 });
 
 // ==================== CARREGAR EVENTO ====================
@@ -62,12 +65,57 @@ async function carregarEvento(eventoId) {
     }
 }
 
+// ✨ NOVO: VERIFICAR E PRÉ-PREENCHER DADOS DO RESPONSÁVEL
+function verificarDadosResponsavel() {
+    const dadosResponsavel = localStorage.getItem('dadosResponsavel');
+    
+    if (dadosResponsavel) {
+        const dados = JSON.parse(dadosResponsavel);
+        
+        // Mostrar alerta informativo
+        setTimeout(() => {
+            mostrarAlerta('📝 Dados do responsável já preenchidos! Preencha apenas a matrícula e nome do novo formando.', 'info');
+        }, 500);
+        
+        // Guardar os dados para uso posterior
+        window.dadosResponsavelTemp = dados;
+    }
+}
+
 // ==================== INICIAR CADASTRO ====================
 function iniciarCadastro() {
     boasVindas.style.display = 'none';
     formulario.style.display = 'block';
     window.scrollTo({ top: 0, behavior: 'smooth' });
     inicializarValidacoes();
+    
+    // ✨ PRÉ-PREENCHER DADOS DO RESPONSÁVEL SE EXISTIREM
+    if (window.dadosResponsavelTemp) {
+        const dados = window.dadosResponsavelTemp;
+        
+        // Marcar como responsável
+        document.getElementById('tipoResponsavel').checked = true;
+        selecionarTipo('responsavel');
+        
+        // Preencher campos
+        inputNomeContato.value = dados.nomeContato;
+        inputEmail.value = dados.email;
+        inputWhatsApp.value = dados.whatsapp;
+        
+        // Validar campos preenchidos
+        validarCampo(inputNomeContato, true, 'nomeContato');
+        validarCampo(inputEmail, true, 'email');
+        validarCampo(inputWhatsApp, true, 'whatsapp');
+        
+        // Focar no campo de matrícula
+        setTimeout(() => {
+            inputMatricula.focus();
+            mostrarAlerta('✅ Dados de contato carregados! Agora preencha a matrícula e nome do novo formando.', 'success');
+        }, 500);
+        
+        // Limpar dados temporários
+        delete window.dadosResponsavelTemp;
+    }
 }
 
 // ==================== SELEÇÃO DE TIPO ====================
@@ -265,10 +313,14 @@ formCadastro.addEventListener('submit', async function(e) {
         const resultado = await response.json();
 
         if (response.ok) {
-            // Sucesso
+            // ✨ Sucesso - SALVAR DADOS COMPLETOS
             localStorage.setItem('cadastroSucesso', JSON.stringify({
                 tipo: tipoCadastro.value,
                 nome: nomeFormando,
+                nomeContato: nomeContato,
+                email: email,
+                whatsapp: whatsapp,
+                eventoId: document.getElementById('eventoId').value,
                 matricula: matricula,
                 id: resultado.id
             }));
