@@ -58,6 +58,7 @@ class Evento(db.Model):
     letra_turma = db.Column(db.String(2), nullable=False)
     data_evento = db.Column(db.Date)
     local_evento = db.Column(db.String(200))
+    endereco_evento = db.Column(db.String(255))  # endereço interno do evento
     tipo_formatura = db.Column(db.String(50))
     status = db.Column(db.String(20), default='ativo')
     vendedor_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'))
@@ -239,6 +240,7 @@ def criar_evento():
         letra_turma=letra_turma,
         data_evento=data.get('data_evento'),
         local_evento=data.get('local_evento'),
+        endereco_evento=data.get('endereco_evento'),  #  novo campo
         tipo_formatura=data.get('tipo_formatura'),
         status='ativo',
         vendedor_id=data.get('vendedor_id')
@@ -532,6 +534,36 @@ def estatisticas():
         'perdidos': perdidos,
         'taxa_conversao': round(taxa_conversao, 2)
     }), 200
+
+# ==================== ROTA EXTRA: BAIXAR QR CODE DIRETO ====================
+@app.route('/api/eventos/<int:evento_id>/qrcode/download', methods=['GET'])
+@jwt_required()
+def baixar_qrcode(evento_id):
+    """Permite baixar o QR Code direto (para banners)"""
+    evento = Evento.query.get_or_404(evento_id)
+    base_url = request.host_url
+    qr_url = f"{base_url}cadastro?e={evento.id}"
+
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_H,
+        box_size=12,
+        border=4,
+    )
+    qr.add_data(qr_url)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+
+    buffer = BytesIO()
+    img.save(buffer, format='PNG')
+    buffer.seek(0)
+
+    return send_file(
+        buffer,
+        mimetype='image/png',
+        as_attachment=True,
+        download_name=f'evento_{evento.id}_qrcode.png'
+    )
 
 # ==================== ROTAS ESTÁTICAS ====================
 

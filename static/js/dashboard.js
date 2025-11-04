@@ -289,3 +289,43 @@ document.addEventListener('DOMContentLoaded', function() {
     const filtroBusca = document.getElementById('filtroBusca');
     if (filtroBusca) filtroBusca.addEventListener('input', aplicarFiltros);
 });
+
+async function criarEvento() {
+  const form = document.getElementById('formNovoEvento');
+  const dados = Object.fromEntries(new FormData(form).entries());
+  const token = localStorage.getItem('token');
+
+  try {
+    const response = await fetch(`${API_URL}/eventos`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(dados)
+    });
+
+    const resultado = await response.json();
+
+    if (response.ok) {
+      // Mostra sucesso e QR Code
+      alert(`✅ Evento criado com sucesso!\nID: ${resultado.evento_id}`);
+
+      const qrLink = `${API_URL}/eventos/${resultado.evento_id}/qrcode/download`;
+      const a = document.createElement('a');
+      a.href = qrLink;
+      a.download = `evento_${resultado.evento_id}_qrcode.png`;
+      a.click();
+
+      form.reset();
+      const modal = bootstrap.Modal.getInstance(document.getElementById('modalNovoEvento'));
+      modal.hide();
+    } else {
+      alert('Erro: ' + (resultado.erro || 'Não foi possível criar o evento.'));
+    }
+
+  } catch (error) {
+    alert('Erro de conexão com o servidor.');
+    console.error(error);
+  }
+}
