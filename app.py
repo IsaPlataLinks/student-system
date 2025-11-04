@@ -53,21 +53,14 @@ class Evento(db.Model):
     __tablename__ = 'eventos'
     id = db.Column(db.Integer, primary_key=True)
     escola_id = db.Column(db.Integer, db.ForeignKey('escolas.id'), nullable=False)
-    ano_formatura = db.Column(db.Integer, nullable=False)
-    serie = db.Column(db.String(15), nullable=False)
-    letra_turma = db.Column(db.String(2), nullable=False)
     data_evento = db.Column(db.Date)
     local_evento = db.Column(db.String(200))
-    endereco_evento = db.Column(db.String(255))  # endereço interno do evento
+    endereco_evento = db.Column(db.String(255))
     tipo_formatura = db.Column(db.String(50))
     status = db.Column(db.String(20), default='ativo')
     vendedor_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'))
     criado_em = db.Column(db.DateTime, default=datetime.utcnow)
     leads = db.relationship('Lead', backref='evento', lazy=True)
-    
-    @property
-    def turma_completa(self):
-        return f"{self.serie} - {self.letra_turma}"
     
     @property
     def qr_url(self):
@@ -77,6 +70,9 @@ class Lead(db.Model):
     __tablename__ = 'leads'
     id = db.Column(db.Integer, primary_key=True)
     evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=False)
+    serie = db.Column(db.String(15))
+    letra_turma = db.Column(db.String(2))
+    ano_formatura = db.Column(db.Integer)
     
     # ✨ MATRÍCULA - IDENTIFICADOR ÚNICO
     matricula = db.Column(db.String(20), nullable=False)

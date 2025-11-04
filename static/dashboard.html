@@ -476,9 +476,16 @@
       <div class="modal-body">
         <form id="formNovoEvento">
           <div class="mb-3">
-            <label class="form-label">Escola</label>
-            <input type="text" class="form-control" name="escola" required>
-          </div>
+  <label class="form-label">Escola</label>
+  <input 
+    type="text" 
+    class="form-control" 
+    name="escola" 
+    maxlength="120" 
+    required
+    placeholder="Ex: Escola São José ou Colégio Monte Alegre">
+  <small class="text-muted">Máximo de 120 caracteres</small>
+</div>
           <div class="row">
             <div class="col-md-8 mb-3">
               <label class="form-label">Cidade</label>
