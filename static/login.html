@@ -8,12 +8,17 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #764800;
-            --secondary-color: #8b5a0b;
+            --gold: #F6A21E;
+            --gold-dark: #C57F17;
+            --background: #FFE0B3;
+            --black: #0D0D0D;
+            --gray-dark: #333333;
+            --white: #FFFFFF;
+            --gray-light: #E5E5E5;
         }
 
         body {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            background: var(--background);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -28,11 +33,12 @@
         }
 
         .login-card {
-            background: white;
+            background: var(--white);
             border-radius: 20px;
             padding: 3rem;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
             animation: fadeIn 0.5s ease-out;
+            border: 1px solid rgba(246, 162, 30, 0.25);
         }
 
         @keyframes fadeIn {
@@ -51,20 +57,10 @@
             margin-bottom: 2rem;
         }
 
-        .login-header .logo-container img {
-            max-width: 70px;
-            height: auto;
-        }
-
         .login-header h2 {
-            color: #1f2937;
+            color: var(--black);
             font-weight: 700;
             margin-bottom: 0.5rem;
-        }
-
-        .login-header p {
-            color: #6b7280;
-            font-size: 0.95rem;
         }
 
         .input-group {
@@ -73,19 +69,19 @@
 
         .form-control {
             border-radius: 10px;
-            border: 2px solid #e5e7eb;
+            border: 2px solid var(--gray-light);
             padding: 1rem 0.75rem;
             transition: all 0.3s ease;
         }
 
         .form-control:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.2rem rgba(30, 64, 175, 0.25);
+            border-color: var(--gold);
+            box-shadow: 0 0 0 0.2rem rgba(246, 162, 30, 0.25);
         }
 
         .input-group-text {
             background: transparent;
-            border: 2px solid #e5e7eb;
+            border: 2px solid var(--gray-light);
             border-right: none;
             border-radius: 10px 0 0 10px;
         }
@@ -96,19 +92,21 @@
         }
 
         .btn-login {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            background: var(--gold);
             border: none;
             padding: 0.85rem;
             border-radius: 10px;
             font-weight: 600;
-            color: white;
+            color: var(--black);
             width: 100%;
             transition: all 0.3s ease;
         }
 
         .btn-login:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(30, 64, 175, 0.4);
+            background: var(--black);
+            color: var(--gold);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
         }
 
         .btn-login:disabled {
@@ -122,17 +120,30 @@
         }
 
         .btn-voltar {
-            color: #ffffff;
+            color: var(--black);
             text-decoration: none;
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
             margin-bottom: 1rem;
             transition: color 0.3s ease;
+            font-weight: 500;
         }
 
         .btn-voltar:hover {
-            color: var(--primary-color);
+            color: var(--gold);
+        }
+
+        #toggleSenha {
+            color: var(--gray-dark);
+            border: 2px solid var(--gray-light);
+            border-left: none;
+            background: transparent;
+            transition: all 0.3s ease;
+        }
+
+        #toggleSenha:hover {
+            color: var(--gold);
         }
     </style>
 </head>
@@ -162,12 +173,12 @@
                         <i class="fas fa-lock"></i>
                     </span>
                     <input type="password" class="form-control" name="senha" id="inputSenha" placeholder="Senha" required>
-                    <button class="btn btn-outline-secondary" type="button" id="toggleSenha" style="border-radius: 0 10px 10px 0;">
+                    <button class="btn" type="button" id="toggleSenha" style="border-radius: 0 10px 10px 0;">
                         <i class="fas fa-eye" id="iconOlho"></i>
                     </button>
                 </div>
 
-                <button type="submit" class="btn btn-login" id="btnLogin">
+                <button type="submit" class="btn-login" id="btnLogin">
                     <i class="fas fa-sign-in-alt me-2"></i>Entrar
                 </button>
             </form>
@@ -178,7 +189,6 @@
     <script>
       const API_URL = `${window.location.origin}/api`;
 
-      // Toggle mostrar/ocultar senha
       document.getElementById('toggleSenha').addEventListener('click', function() {
           const inputSenha = document.getElementById('inputSenha');
           const iconOlho = document.getElementById('iconOlho');
@@ -194,7 +204,6 @@
           }
       });
 
-      // Envio do formulário
       document.getElementById('formLogin').addEventListener('submit', async function(e) {
           e.preventDefault();
 
