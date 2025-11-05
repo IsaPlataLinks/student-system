@@ -204,55 +204,60 @@ def criar_evento():
     """Admin cria novo evento de formatura"""
     vendedor_id = get_jwt_identity()
     vendedor = Usuario.query.get(vendedor_id)
-    
+
+    # Somente admin pode criar eventos
     if vendedor.tipo_usuario != 'admin':
         return jsonify({'erro': 'Apenas administradores podem criar eventos'}), 403
-    
+
     data = request.get_json()
-    
-    serie = data.get('serie')
-    if not validar_serie(serie):
-        return jsonify({'erro': 'Série inválida'}), 400
-    
-    letra_turma = data.get('letra_turma', '').upper()
-    if not validar_letra_turma(letra_turma):
-        return jsonify({'erro': 'Turma inválida (1-2 caracteres)'}), 400
-    
-    escola_nome = data.get('escola')
+
+    # Verifica e/ou cria escola
+    escola_nome = (data.get('escola') or '').strip()
+    if not escola_nome:
+        return jsonify({'erro': 'Informe o nome da escola'}), 400
+
     escola = Escola.query.filter_by(nome=escola_nome).first()
     if not escola:
         escola = Escola(
             nome=escola_nome,
             cidade=data.get('cidade'),
-            estado=data.get('estado')
+            estado=(data.get('estado') or '').upper()[:2]
         )
         db.session.add(escola)
         db.session.flush()
-    
+
+    # Data do evento (opcional)
+    data_evento = None
+    if data.get('data_evento'):
+        try:
+            data_evento = datetime.fromisoformat(data['data_evento']).date()
+        except ValueError:
+            return jsonify({'erro': 'Data do evento inválida (use YYYY-MM-DD)'}), 400
+
+    # Cria o evento
     evento = Evento(
         escola_id=escola.id,
-        ano_formatura=int(data.get('ano_formatura')),
-        serie=serie,
-        letra_turma=letra_turma,
-        data_evento=data.get('data_evento'),
+        data_evento=data_evento,
         local_evento=data.get('local_evento'),
-        endereco_evento=data.get('endereco_evento'),  #  novo campo
+        endereco_evento=data.get('endereco_evento'),
         tipo_formatura=data.get('tipo_formatura'),
         status='ativo',
-        vendedor_id=data.get('vendedor_id')
+        vendedor_id=vendedor_id
     )
-    
+
     db.session.add(evento)
     db.session.commit()
-    
+
+    # Gera QR Code público
     base_url = request.host_url
     qr_url = f"{base_url}cadastro?e={evento.id}"
-    
+
     return jsonify({
         'mensagem': 'Evento criado com sucesso!',
         'evento_id': evento.id,
         'qr_url': qr_url
     }), 201
+
 
 @app.route('/api/eventos/<int:evento_id>', methods=['GET'])
 def buscar_evento(evento_id):
