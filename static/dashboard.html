@@ -277,31 +277,42 @@
                     </button>
                 </div>
             </div>
-            <div class="row mt-3 align-items-center">
-                <div class="col-md-4">
-                    <button class="btn btn-limpar" onclick="limparFiltros()">
-                        <i class="fas fa-times me-1"></i>Limpar Filtros
-                    </button>
-                </div>
-                <div class="col-md-4 text-center">
-                    <button class="btn btn-filtrar shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNovoEvento">
-                        <i class="fas fa-plus me-2"></i>Novo Evento
-                    </button>
-                </div>
+<div class="row mt-3 justify-content-between">
+    <div class="col-md-4">
+        <button class="btn btn-limpar w-100" onclick="limparFiltros()">
+            <i class="fas fa-times me-1"></i>Limpar Filtros
+        </button>
+    </div>
+    <div class="col-md-4 d-flex justify-content-end gap-2">
+        <button class="btn btn-exportar" onclick="exportarExcel()">
+            <i class="fas fa-file-excel me-1"></i>Exportar Excel
+        </button>
+        <button class="btn btn-filtrar" data-bs-toggle="modal" data-bs-target="#modalNovoEvento">
+            <i class="fas fa-plus me-2"></i>Novo Evento
+        </button>
+    </div>
+</div>
+<div class="row mt-3 justify-content-between">
+    <div class="col-md-4">
+        <button class="btn btn-limpar w-100" onclick="limparFiltros()">
+            <i class="fas fa-times me-1"></i>Limpar Filtros
+        </button>
+    </div>
+    <div class="col-md-4 d-flex justify-content-end gap-2">
+        <button class="btn btn-exportar" onclick="exportarExcel()">
+            <i class="fas fa-file-excel me-1"></i>Exportar Excel
+        </button>
+        <button class="btn btn-filtrar" data-bs-toggle="modal" data-bs-target="#modalNovoEvento">
+            <i class="fas fa-plus me-2"></i>Novo Evento
+        </button>
+    </div>
+</div>
                 <div class="col-md-4 text-end">
                     <button class="btn btn-exportar" onclick="exportarExcel()">
                         <i class="fas fa-file-excel me-1"></i>Exportar Excel
                     </button>
                 </div>
             </div>
-        </div>
-
-
-        <!-- BOTÃO NOVO EVENTO -->
-        <div class="d-flex justify-content-end mb-3">
-            <button class="btn btn-filtrar shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNovoEvento">
-                <i class="fas fa-plus me-2"></i>Novo Evento
-            </button>
         </div>
 
         <!-- MODAL DE CRIAÇÃO DE EVENTO -->
