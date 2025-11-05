@@ -8,17 +8,17 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <style>
     :root {
+      --gold-light: #FFF8E1;
       --gold: #F6A21E;
       --gold-dark: #C57F17;
       --black: #0D0D0D;
       --gray-dark: #333333;
-      --gray-light: #F5F5F5;
       --white: #FFFFFF;
     }
 
     body {
       min-height: 100vh;
-      background: linear-gradient(135deg, var(--white) 0%, var(--gray-light) 60%, var(--white) 100%);
+      background: linear-gradient(135deg, var(--gold-light) 0%, var(--white) 40%, var(--gold) 100%);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -35,17 +35,16 @@
     .card-boas-vindas {
       background: var(--white);
       border-radius: 20px;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
       padding: 3rem;
       text-align: center;
       animation: fadeInDown 0.6s ease-out;
-      border: 1px solid rgba(0, 0, 0, 0.05);
+      border: 1px solid rgba(246, 162, 30, 0.2);
     }
 
-    .logo-icon {
-      font-size: 4rem;
-      color: var(--gold);
-      margin-bottom: 1rem;
+    .logo-container img {
+      max-width: 90px;
+      margin-bottom: 1.2rem;
     }
 
     .card-boas-vindas h1 {
@@ -63,7 +62,7 @@
     }
 
     .info-box {
-      background: #fff8ec;
+      background: #fff7e9;
       border-left: 4px solid var(--gold);
       padding: 1rem 1.2rem;
       border-radius: 10px;
@@ -124,13 +123,18 @@
       .card-boas-vindas {
         padding: 2rem;
       }
+      .logo-container img {
+        max-width: 70px;
+      }
     }
   </style>
 </head>
 <body>
   <div class="container-principal">
     <div class="card-boas-vindas">
-      <i class="fas fa-graduation-cap logo-icon"></i>
+      <div class="logo-container">
+        <img src="https://i.ibb.co/6RvMh1cL/logo.png" alt="Logo R3 Formaturas">
+      </div>
       <h1>Bem-vindo!</h1>
       <p>Sistema de Cadastro de Formandos<br>
       Registre seus dados e receba as fotos da formatura!</p>
