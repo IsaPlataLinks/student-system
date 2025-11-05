@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:5000/api';
+const API_URL = `${window.location.origin}/api`;
 let todosAlunos = [];
 let alunosFiltrados = [];
 
@@ -191,6 +191,7 @@ async function carregarEventos() {
         renderizarEventos(eventos);
     } catch (err) {
         console.error('Erro ao buscar eventos:', err);
+        alert('Erro ao carregar eventos. Verifique sua conexão.');
     }
 }
 
@@ -204,12 +205,16 @@ function renderizarEventos(eventos) {
             <tr>
                 <td>${e.id}</td>
                 <td>${e.escola}</td>
-                <td>${e.turma_completa}</td>
-                <td>${e.ano_formatura}</td>
+                <td>${e.tipo_formatura || '-'}</td>
+                <td>${e.data_evento ? new Date(e.data_evento).toLocaleDateString('pt-BR') : '-'}</td>
                 <td><span class="badge bg-${e.status === 'ativo' ? 'success' : 'secondary'}">${e.status}</span></td>
-                <td><button class="btn btn-sm btn-outline-primary" onclick="abrirQRCode(${e.id})">
-                    <i class="fas fa-qrcode"></i> Ver QR</button></td>
-            </tr>`).join('');
+                <td>
+                    <button class="btn btn-sm btn-outline-primary" onclick="abrirQRCode(${e.id})">
+                        <i class="fas fa-qrcode"></i> Ver QR
+                    </button>
+                </td>
+            </tr>
+        `).join('');
 }
 
 function abrirQRCode(eventoId) {
@@ -220,8 +225,10 @@ function abrirQRCode(eventoId) {
 
     const qrUrl = `${API_URL}/eventos/${eventoId}/qrcode`;
     const pageUrl = `${window.location.origin}/cadastro?e=${eventoId}`;
+
     img.src = qrUrl;
     link.textContent = pageUrl;
+    link.href = pageUrl;
     btnDownload.onclick = () => baixarQRCode(qrUrl, `evento-${eventoId}.png`);
 
     modal.show();
@@ -240,6 +247,7 @@ function abrirModalNovoEvento() {
     const modal = new bootstrap.Modal(document.getElementById('modalNovoEvento'));
     modal.show();
 }
+
 
 // ======================================================
 // 🚀 INICIALIZAÇÃO
