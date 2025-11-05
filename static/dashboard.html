@@ -3,14 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Sistema de Formandos</title>
+    <title>Dashboard - R3 Formaturas</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #4f46e5;
-            --secondary-color: #7c3aed;
-            --sidebar-bg: #1e293b;
+            --gold: #F6A21E;
+            --gold-dark: #C57F17;
+            --black: #0D0D0D;
+            --gray-dark: #1C1C1C;
+            --gray-light: #E5E5E5;
+            --white: #FFFFFF;
+            --bg-light: #F9F9F9;
         }
 
         * {
@@ -21,7 +25,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f1f5f9;
+            background: var(--bg-light);
         }
 
         /* Sidebar */
@@ -31,7 +35,7 @@
             top: 0;
             height: 100vh;
             width: 260px;
-            background: var(--sidebar-bg);
+            background: var(--gold);
             padding: 2rem 1rem;
             box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
             z-index: 1000;
@@ -41,29 +45,33 @@
             text-align: center;
             margin-bottom: 2rem;
             padding-bottom: 1.5rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
         }
 
-        .sidebar-header i {
-            font-size: 2.5rem;
-            color: var(--primary-color);
-            margin-bottom: 0.5rem;
+        .sidebar-header img {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: white;
+            padding: 10px;
+            margin-bottom: 0.8rem;
         }
 
         .sidebar-header h4 {
-            color: white;
+            color: var(--black);
             font-weight: 700;
             font-size: 1.2rem;
         }
 
         .sidebar-header p {
-            color: #94a3b8;
+            color: var(--black);
             font-size: 0.85rem;
             margin: 0;
+            opacity: 0.8;
         }
 
         .user-info {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.4);
             padding: 1rem;
             border-radius: 10px;
             margin-bottom: 2rem;
@@ -72,26 +80,27 @@
 
         .user-info i {
             font-size: 2rem;
-            color: var(--primary-color);
+            color: var(--black);
             margin-bottom: 0.5rem;
         }
 
         .user-info .user-name {
-            color: white;
+            color: var(--black);
             font-weight: 600;
             font-size: 0.95rem;
         }
 
         .user-info .user-type {
-            color: #94a3b8;
+            color: var(--black);
             font-size: 0.8rem;
+            opacity: 0.9;
         }
 
         .btn-logout {
             width: 100%;
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            color: #ef4444;
+            background: rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(0, 0, 0, 0.2);
+            color: var(--black);
             padding: 0.75rem;
             border-radius: 10px;
             font-weight: 600;
@@ -99,8 +108,8 @@
         }
 
         .btn-logout:hover {
-            background: #ef4444;
-            color: white;
+            background: var(--black);
+            color: var(--white);
         }
 
         /* Main Content */
@@ -111,7 +120,7 @@
         }
 
         .top-bar {
-            background: white;
+            background: var(--white);
             padding: 1.5rem;
             border-radius: 15px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
@@ -119,14 +128,14 @@
         }
 
         .top-bar h2 {
-            color: #1e293b;
+            color: var(--black);
             font-weight: 700;
             margin: 0;
         }
 
         /* Filtros */
         .filtros-container {
-            background: white;
+            background: var(--white);
             padding: 1.5rem;
             border-radius: 15px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
@@ -134,7 +143,7 @@
         }
 
         .filtros-container h5 {
-            color: #1e293b;
+            color: var(--black);
             font-weight: 600;
             margin-bottom: 1rem;
         }
@@ -146,17 +155,22 @@
         }
 
         .form-control:focus, .form-select:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.2rem rgba(79, 70, 229, 0.15);
+            border-color: var(--gold);
+            box-shadow: 0 0 0 0.15rem rgba(246, 162, 30, 0.25);
         }
 
         .btn-filtrar {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            background: var(--gold);
             border: none;
-            color: white;
+            color: var(--black);
             padding: 0.6rem 1.5rem;
             border-radius: 10px;
             font-weight: 600;
+        }
+
+        .btn-filtrar:hover {
+            background: var(--gold-dark);
+            color: var(--white);
         }
 
         .btn-limpar {
@@ -169,12 +183,30 @@
         }
 
         .btn-exportar {
-            background: #10b981;
+            background: var(--gold);
             border: none;
-            color: white;
+            color: var(--black);
             padding: 0.6rem 1.5rem;
             border-radius: 10px;
             font-weight: 600;
+        }
+
+        .btn-exportar:hover {
+            background: var(--gold-dark);
+            color: var(--white);
+        }
+
+        /* Botão Novo Evento */
+        .btn-primary {
+            background: var(--gold);
+            border: none;
+            color: var(--black);
+            font-weight: 600;
+        }
+
+        .btn-primary:hover {
+            background: var(--gold-dark);
+            color: var(--white);
         }
 
         /* Stats Cards */
@@ -186,7 +218,7 @@
         }
 
         .stat-card {
-            background: white;
+            background: var(--white);
             padding: 1.5rem;
             border-radius: 15px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
@@ -206,24 +238,24 @@
         }
 
         .stat-icon.alunos {
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
-            color: white;
+            background: var(--gold);
+            color: var(--black);
         }
 
         .stat-icon.escolas {
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: white;
+            background: var(--gold);
+            color: var(--black);
         }
 
         .stat-icon.fotos {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-            color: white;
+            background: var(--gold);
+            color: var(--black);
         }
 
         .stat-info h3 {
             font-size: 2rem;
             font-weight: 700;
-            color: #1e293b;
+            color: var(--black);
             margin: 0;
         }
 
@@ -233,7 +265,6 @@
             font-size: 0.9rem;
         }
 
-        /* Cards dos Alunos */
         .alunos-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -251,27 +282,15 @@
 
         .aluno-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(79, 70, 229, 0.15);
-            border-color: var(--primary-color);
+            border-color: var(--gold);
         }
 
         .card-header-custom {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            background: var(--gold);
             padding: 1rem;
             text-align: center;
-            color: white;
-        }
-
-        .card-header-custom h6 {
-            margin: 0;
+            color: var(--black);
             font-weight: 600;
-            font-size: 0.9rem;
-        }
-
-        .card-body-custom {
-            padding: 1.5rem;
-            display: flex;
-            gap: 1rem;
         }
 
         .foto-container {
@@ -287,42 +306,6 @@
             border: 2px solid #e2e8f0;
         }
 
-        .foto-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .foto-container i {
-            font-size: 2rem;
-            color: #cbd5e1;
-        }
-
-        .info-container {
-            flex: 1;
-        }
-
-        .aluno-nome {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #1e293b;
-            margin-bottom: 0.5rem;
-        }
-
-        .aluno-info {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 0.4rem;
-            color: #64748b;
-            font-size: 0.85rem;
-        }
-
-        .aluno-info i {
-            color: var(--primary-color);
-            width: 16px;
-        }
-
         .empty-state {
             text-align: center;
             padding: 4rem 2rem;
@@ -332,17 +315,13 @@
 
         .empty-state i {
             font-size: 4rem;
-            color: #cbd5e1;
+            color: var(--gold);
             margin-bottom: 1rem;
         }
 
         .empty-state h4 {
             color: #64748b;
             margin-bottom: 0.5rem;
-        }
-
-        .empty-state p {
-            color: #94a3b8;
         }
 
         @media (max-width: 768px) {
@@ -364,8 +343,8 @@
     <!-- Sidebar -->
     <div class="sidebar">
         <div class="sidebar-header">
-            <i class="fas fa-graduation-cap"></i>
-            <h4>Sistema de Formandos</h4>
+            <img src="https://i.ibb.co/6RvMh1cL/logo.png" alt="Logo R3 Formaturas">
+            <h4>R3 Formaturas</h4>
             <p>Painel Administrativo</p>
         </div>
 
@@ -382,12 +361,10 @@
 
     <!-- Main Content -->
     <div class="main-content">
-        <!-- Top Bar -->
         <div class="top-bar">
             <h2><i class="fas fa-chart-line me-2"></i>Dashboard</h2>
         </div>
 
-        <!-- Stats Cards -->
         <div class="stats-container">
             <div class="stat-card">
                 <div class="stat-icon alunos">
@@ -420,7 +397,6 @@
             </div>
         </div>
 
-        <!-- Filtros -->
         <div class="filtros-container">
             <h5><i class="fas fa-filter me-2"></i>Filtros de Busca</h5>
             <div class="row g-3">
@@ -458,91 +434,70 @@
             </div>
         </div>
 
-<!-- BOTÃO NOVO EVENTO -->
-<div class="d-flex justify-content-end mb-3">
-  <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNovoEvento">
-    <i class="fas fa-plus me-2"></i>Novo Evento
-  </button>
-</div>
+        <!-- BOTÃO NOVO EVENTO -->
+        <div class="d-flex justify-content-end mb-3">
+            <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNovoEvento">
+                <i class="fas fa-plus me-2"></i>Novo Evento
+            </button>
+        </div>
 
-<!-- MODAL DE CRIAÇÃO DE EVENTO -->
-<div class="modal fade" id="modalNovoEvento" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header bg-primary text-white">
-        <h5 class="modal-title">Criar Novo Evento</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <form id="formNovoEvento">
-          <div class="mb-3">
-  <label class="form-label">Escola</label>
-  <input 
-    type="text" 
-    class="form-control" 
-    name="escola" 
-    maxlength="120" 
-    required
-    placeholder="Ex: Escola São José ou Colégio Monte Alegre">
-  <small class="text-muted">Máximo de 120 caracteres</small>
-</div>
-          <div class="row">
-            <div class="col-md-8 mb-3">
-              <label class="form-label">Cidade</label>
-              <input type="text" class="form-control" name="cidade" required>
+        <!-- MODAL DE CRIAÇÃO DE EVENTO -->
+        <div class="modal fade" id="modalNovoEvento" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header" style="background: var(--gold); color: var(--black);">
+                        <h5 class="modal-title">Criar Novo Evento</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="formNovoEvento">
+                            <div class="mb-3">
+                                <label class="form-label">Escola</label>
+                                <input type="text" class="form-control" name="escola" maxlength="120" required placeholder="Ex: Escola São José ou Colégio Monte Alegre">
+                                <small class="text-muted">Máximo de 120 caracteres</small>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-8 mb-3">
+                                    <label class="form-label">Cidade</label>
+                                    <input type="text" class="form-control" name="cidade" required>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Estado</label>
+                                    <input type="text" class="form-control" name="estado" maxlength="2" required>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Tipo de Formatura</label>
+                                <select class="form-select" name="tipo_formatura" required>
+                                    <option value="Fundamental">Fundamental</option>
+                                    <option value="Médio">Médio</option>
+                                    <option value="Infantil">Infantil</option>
+                                </select>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Ano de Formatura</label>
+                                    <input type="number" class="form-control" name="ano_formatura" required minlength="4" maxlength="4" oninput="if(this.value.length>4)this.value=this.value.slice(0,4)" placeholder="Ex: 2025">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Data do Evento</label>
+                                    <input type="date" class="form-control" name="data_evento">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Local do Evento</label>
+                                <input type="text" class="form-control" name="local_evento" placeholder="Ex: Auditório Central — Escola São José" required>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-success" onclick="criarEvento()">Salvar</button>
+                    </div>
+                </div>
             </div>
-            <div class="col-md-4 mb-3">
-              <label class="form-label">Estado</label>
-              <input type="text" class="form-control" name="estado" maxlength="2" required>
-            </div>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Tipo de Formatura</label>
-            <select class="form-select" name="tipo_formatura" required>
-              <option value="Fundamental">Fundamental</option>
-              <option value="Médio">Médio</option>
-              <option value="Infantil">Infantil</option>
-            </select>
-          </div>
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Ano de Formatura</label>
-              <input 
-  type="number" 
-  class="form-control" 
-  name="ano_formatura" 
-  required 
-  minlength="4" 
-  maxlength="4" 
-  oninput="if(this.value.length>4)this.value=this.value.slice(0,4)"
-  placeholder="Ex: 2025">
-            </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Data do Evento</label>
-              <input type="date" class="form-control" name="data_evento">
-            </div>
-          </div>
-          <div class="mb-3">
-  <label class="form-label">Local do Evento</label>
-  <input 
-    type="text" 
-    class="form-control" 
-    name="local_evento"
-    placeholder="Ex: Auditório Central — Escola São José ou Buffet Alegria, Centro - Guarulhos/SP"
-    required>
-</div>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button type="button" class="btn btn-success" onclick="criarEvento()">Salvar</button>
-      </div>
-    </div>
-  </div>
-</div>
+        </div>
 
-
-        <!-- Grid de Alunos -->
         <div id="alunosContainer">
             <div class="alunos-grid" id="alunosGrid"></div>
         </div>
