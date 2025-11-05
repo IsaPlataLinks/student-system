@@ -578,6 +578,39 @@ def index():
 def static_files(path):
     return send_from_directory('static', path)
 
+# ==================== ROTA DE ALUNOS (LEADS) ====================
+
+@app.route('/api/alunos', methods=['GET'])
+@jwt_required()
+def listar_alunos():
+    """Lista todos os leads como 'alunos' para o dashboard"""
+    vendedor_id = get_jwt_identity()
+    vendedor = Usuario.query.get(vendedor_id)
+    
+    # Admin vê todos, vendedor vê só os seus
+    if vendedor.tipo_usuario == 'admin':
+        leads = Lead.query.all()
+    else:
+        leads = Lead.query.filter(
+            (Lead.vendedor_id == vendedor_id) | (Lead.vendedor_id == None)
+        ).all()
+    
+    resultado = []
+    for lead in leads:
+        resultado.append({
+            'id': lead.id,
+            'nome': lead.nome_formando,
+            'escola': lead.evento.escola.nome,
+            'turma': f"{lead.serie or ''} {lead.letra_turma or ''}".strip() or 'Não informada',
+            'ano_formatura': lead.ano_formatura or lead.evento.data_evento.year if lead.evento.data_evento else None,
+            'email': lead.email,
+            'whatsapp': lead.whatsapp,
+            'responsavel': lead.nome_contato if lead.tipo_cadastro == 'responsavel' else None,
+            'foto': f'/static/uploads/{lead.foto}' if lead.foto else None
+        })
+    
+    return jsonify(resultado), 200
+
 # ==================== INICIALIZAÇÃO ====================
 
 def criar_usuario_admin():
