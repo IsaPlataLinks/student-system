@@ -198,6 +198,8 @@ def login():
 
 # ==================== ROTAS DE EVENTOS ====================
 
+# ==================== ROTAS DE EVENTOS ====================
+
 @app.route('/api/eventos', methods=['POST'])
 @jwt_required()
 def criar_evento():
@@ -275,14 +277,13 @@ def buscar_evento(evento_id):
             'cidade': evento.escola.cidade,
             'estado': evento.escola.estado
         },
-        'serie': evento.serie,
-        'letra_turma': evento.letra_turma,
-        'turma_completa': evento.turma_completa,
-        'ano_formatura': evento.ano_formatura,
+        # 🔧 Removidos campos inexistentes: serie, letra_turma, turma_completa, ano_formatura
         'data_evento': evento.data_evento.isoformat() if evento.data_evento else None,
         'local_evento': evento.local_evento,
+        'endereco_evento': evento.endereco_evento,
         'tipo_formatura': evento.tipo_formatura
     }), 200
+
 
 @app.route('/api/eventos', methods=['GET'])
 @jwt_required()
@@ -295,15 +296,16 @@ def listar_eventos():
         resultado.append({
             'id': evento.id,
             'escola': evento.escola.nome,
-            'turma_completa': evento.turma_completa,
-            'ano_formatura': evento.ano_formatura,
+            # 🔧 Removidos campos inexistentes: turma_completa, ano_formatura
             'data_evento': evento.data_evento.isoformat() if evento.data_evento else None,
+            'local_evento': evento.local_evento,
             'status': evento.status,
             'total_leads': len(evento.leads),
             'qr_url': f"{request.host_url}cadastro?e={evento.id}"
         })
     
     return jsonify(resultado), 200
+
 
 @app.route('/api/eventos/<int:evento_id>/qrcode', methods=['GET'])
 @jwt_required()
