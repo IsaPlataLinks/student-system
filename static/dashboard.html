@@ -111,12 +111,13 @@
             transform: translateY(-2px);
         }
 
-        .logout-container {
-            position: absolute;
-            bottom: 2rem;
-            left: 1rem;
-            width: calc(100% - 2rem);
-        }
+.logout-container {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 1rem;
+    width: calc(260px - 2rem);
+    background: var(--white);
+}
 
         .btn-logout {
             width: 100%;
@@ -276,19 +277,25 @@
                     </button>
                 </div>
             </div>
-            <div class="row mt-3">
-                <div class="col-md-6">
+            <div class="row mt-3 align-items-center">
+                <div class="col-md-4">
                     <button class="btn btn-limpar" onclick="limparFiltros()">
                         <i class="fas fa-times me-1"></i>Limpar Filtros
                     </button>
                 </div>
-                <div class="col-md-6 text-end">
+                <div class="col-md-4 text-center">
+                    <button class="btn btn-filtrar shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNovoEvento">
+                        <i class="fas fa-plus me-2"></i>Novo Evento
+                    </button>
+                </div>
+                <div class="col-md-4 text-end">
                     <button class="btn btn-exportar" onclick="exportarExcel()">
                         <i class="fas fa-file-excel me-1"></i>Exportar Excel
                     </button>
                 </div>
             </div>
         </div>
+
 
         <!-- BOTÃO NOVO EVENTO -->
         <div class="d-flex justify-content-end mb-3">
