@@ -3,18 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - R3 Formaturas</title>
+    <title>Dashboard - Sistema de Formandos</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --gold: #F6A21E;
-            --gold-dark: #C57F17;
-            --black: #0D0D0D;
-            --gray-dark: #1C1C1C;
-            --gray-light: #E5E5E5;
-            --white: #FFFFFF;
-            --bg-light: #F9F9F9;
+            --primary-color: #E2A539;      /* Dourado elegante */
+            --secondary-color: #C28F28;    /* Dourado escuro (hover) */
+            --sidebar-bg: #FFF7E5;         /* Fundo suave */
         }
 
         * {
@@ -25,7 +21,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: var(--bg-light);
+            background: #FDFCF9;
         }
 
         /* Sidebar */
@@ -35,9 +31,9 @@
             top: 0;
             height: 100vh;
             width: 260px;
-            background: var(--gold);
+            background: var(--sidebar-bg);
             padding: 2rem 1rem;
-            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.08);
             z-index: 1000;
         }
 
@@ -45,62 +41,58 @@
             text-align: center;
             margin-bottom: 2rem;
             padding-bottom: 1.5rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
         }
 
-        .sidebar-header img {
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            background: white;
-            padding: 10px;
-            margin-bottom: 0.8rem;
+        .sidebar-header i {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
         }
 
         .sidebar-header h4 {
-            color: var(--black);
+            color: #1E1E1E;
             font-weight: 700;
             font-size: 1.2rem;
         }
 
         .sidebar-header p {
-            color: var(--black);
+            color: #6B6B6B;
             font-size: 0.85rem;
             margin: 0;
-            opacity: 0.8;
         }
 
         .user-info {
-            background: rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.7);
             padding: 1rem;
             border-radius: 10px;
             margin-bottom: 2rem;
             text-align: center;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
         }
 
         .user-info i {
             font-size: 2rem;
-            color: var(--black);
+            color: var(--primary-color);
             margin-bottom: 0.5rem;
         }
 
         .user-info .user-name {
-            color: var(--black);
+            color: #1E1E1E;
             font-weight: 600;
             font-size: 0.95rem;
         }
 
         .user-info .user-type {
-            color: var(--black);
+            color: #6B6B6B;
             font-size: 0.8rem;
-            opacity: 0.9;
         }
 
         .btn-logout {
             width: 100%;
-            background: rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(0, 0, 0, 0.2);
-            color: var(--black);
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #EF4444;
             padding: 0.75rem;
             border-radius: 10px;
             font-weight: 600;
@@ -108,8 +100,8 @@
         }
 
         .btn-logout:hover {
-            background: var(--black);
-            color: var(--white);
+            background: #EF4444;
+            color: white;
         }
 
         /* Main Content */
@@ -120,7 +112,7 @@
         }
 
         .top-bar {
-            background: var(--white);
+            background: white;
             padding: 1.5rem;
             border-radius: 15px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
@@ -128,14 +120,14 @@
         }
 
         .top-bar h2 {
-            color: var(--black);
+            color: #1E1E1E;
             font-weight: 700;
             margin: 0;
         }
 
         /* Filtros */
         .filtros-container {
-            background: var(--white);
+            background: white;
             padding: 1.5rem;
             border-radius: 15px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
@@ -143,7 +135,7 @@
         }
 
         .filtros-container h5 {
-            color: var(--black);
+            color: #1E1E1E;
             font-weight: 600;
             margin-bottom: 1rem;
         }
@@ -155,22 +147,18 @@
         }
 
         .form-control:focus, .form-select:focus {
-            border-color: var(--gold);
-            box-shadow: 0 0 0 0.15rem rgba(246, 162, 30, 0.25);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(226, 165, 57, 0.25);
         }
 
         .btn-filtrar {
-            background: var(--gold);
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             border: none;
-            color: var(--black);
+            color: white;
             padding: 0.6rem 1.5rem;
             border-radius: 10px;
             font-weight: 600;
-        }
-
-        .btn-filtrar:hover {
-            background: var(--gold-dark);
-            color: var(--white);
+            box-shadow: 0 3px 10px rgba(226, 165, 57, 0.3);
         }
 
         .btn-limpar {
@@ -183,30 +171,13 @@
         }
 
         .btn-exportar {
-            background: var(--gold);
+            background: #10B981;
             border: none;
-            color: var(--black);
+            color: white;
             padding: 0.6rem 1.5rem;
             border-radius: 10px;
             font-weight: 600;
-        }
-
-        .btn-exportar:hover {
-            background: var(--gold-dark);
-            color: var(--white);
-        }
-
-        /* Botão Novo Evento */
-        .btn-primary {
-            background: var(--gold);
-            border: none;
-            color: var(--black);
-            font-weight: 600;
-        }
-
-        .btn-primary:hover {
-            background: var(--gold-dark);
-            color: var(--white);
+            box-shadow: 0 3px 10px rgba(16, 185, 129, 0.3);
         }
 
         /* Stats Cards */
@@ -218,13 +189,19 @@
         }
 
         .stat-card {
-            background: var(--white);
+            background: white;
             padding: 1.5rem;
             border-radius: 15px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
             display: flex;
             align-items: center;
             gap: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 18px rgba(226, 165, 57, 0.2);
         }
 
         .stat-icon {
@@ -238,33 +215,34 @@
         }
 
         .stat-icon.alunos {
-            background: var(--gold);
-            color: var(--black);
+            background: linear-gradient(135deg, #E2A539, #C28F28);
+            color: white;
         }
 
         .stat-icon.escolas {
-            background: var(--gold);
-            color: var(--black);
+            background: linear-gradient(135deg, #10B981, #059669);
+            color: white;
         }
 
         .stat-icon.fotos {
-            background: var(--gold);
-            color: var(--black);
+            background: linear-gradient(135deg, #F6C453, #D9A63F);
+            color: white;
         }
 
         .stat-info h3 {
             font-size: 2rem;
             font-weight: 700;
-            color: var(--black);
+            color: #1E1E1E;
             margin: 0;
         }
 
         .stat-info p {
-            color: #64748b;
+            color: #6B6B6B;
             margin: 0;
             font-size: 0.9rem;
         }
 
+        /* Cards de Alunos */
         .alunos-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -282,15 +260,27 @@
 
         .aluno-card:hover {
             transform: translateY(-5px);
-            border-color: var(--gold);
+            box-shadow: 0 8px 25px rgba(226, 165, 57, 0.15);
+            border-color: var(--primary-color);
         }
 
         .card-header-custom {
-            background: var(--gold);
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             padding: 1rem;
             text-align: center;
-            color: var(--black);
+            color: white;
+        }
+
+        .card-header-custom h6 {
+            margin: 0;
             font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .card-body-custom {
+            padding: 1.5rem;
+            display: flex;
+            gap: 1rem;
         }
 
         .foto-container {
@@ -306,6 +296,42 @@
             border: 2px solid #e2e8f0;
         }
 
+        .foto-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .foto-container i {
+            font-size: 2rem;
+            color: #cbd5e1;
+        }
+
+        .info-container {
+            flex: 1;
+        }
+
+        .aluno-nome {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1E1E1E;
+            margin-bottom: 0.5rem;
+        }
+
+        .aluno-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.4rem;
+            color: #6B6B6B;
+            font-size: 0.85rem;
+        }
+
+        .aluno-info i {
+            color: var(--primary-color);
+            width: 16px;
+        }
+
         .empty-state {
             text-align: center;
             padding: 4rem 2rem;
@@ -315,13 +341,17 @@
 
         .empty-state i {
             font-size: 4rem;
-            color: var(--gold);
+            color: #d4d4d4;
             margin-bottom: 1rem;
         }
 
         .empty-state h4 {
-            color: #64748b;
+            color: #6B6B6B;
             margin-bottom: 0.5rem;
+        }
+
+        .empty-state p {
+            color: #9ca3af;
         }
 
         @media (max-width: 768px) {
@@ -343,7 +373,7 @@
     <!-- Sidebar -->
     <div class="sidebar">
         <div class="sidebar-header">
-            <img src="https://i.ibb.co/6RvMh1cL/logo.png" alt="Logo R3 Formaturas">
+            <i class="fas fa-graduation-cap"></i>
             <h4>R3 Formaturas</h4>
             <p>Painel Administrativo</p>
         </div>
@@ -397,6 +427,7 @@
             </div>
         </div>
 
+        <!-- Filtros -->
         <div class="filtros-container">
             <h5><i class="fas fa-filter me-2"></i>Filtros de Busca</h5>
             <div class="row g-3">
@@ -434,20 +465,20 @@
             </div>
         </div>
 
-        <!-- BOTÃO NOVO EVENTO -->
+        <!-- Botão Novo Evento -->
         <div class="d-flex justify-content-end mb-3">
             <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNovoEvento">
                 <i class="fas fa-plus me-2"></i>Novo Evento
             </button>
         </div>
 
-        <!-- MODAL DE CRIAÇÃO DE EVENTO -->
+        <!-- Modal -->
         <div class="modal fade" id="modalNovoEvento" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
-                    <div class="modal-header" style="background: var(--gold); color: var(--black);">
+                    <div class="modal-header bg-primary text-white">
                         <h5 class="modal-title">Criar Novo Evento</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
                         <form id="formNovoEvento">
@@ -486,7 +517,7 @@
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Local do Evento</label>
-                                <input type="text" class="form-control" name="local_evento" placeholder="Ex: Auditório Central — Escola São José" required>
+                                <input type="text" class="form-control" name="local_evento" placeholder="Ex: Auditório Central — Escola São José ou Buffet Alegria, Centro - Guarulhos/SP" required>
                             </div>
                         </form>
                     </div>
@@ -498,6 +529,7 @@
             </div>
         </div>
 
+        <!-- Grid -->
         <div id="alunosContainer">
             <div class="alunos-grid" id="alunosGrid"></div>
         </div>
