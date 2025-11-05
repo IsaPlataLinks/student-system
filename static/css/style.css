@@ -638,3 +638,8 @@ body {
     background: var(--warning-color);
     color: white;
 }
+
+.btn-exportar,
+.btn-filtrar {
+    min-width: 150px;
+}
