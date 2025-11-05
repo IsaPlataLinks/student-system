@@ -260,13 +260,19 @@ document.addEventListener('DOMContentLoaded', function() {
     carregarEventos();
 
     // Listener de criação do evento
-    const formEvento = document.getElementById('formNovoEvento');
-    if (formEvento) {
-        formEvento.addEventListener('submit', async function (e) {
-            e.preventDefault();
-            const token = localStorage.getItem('token');
-            const dados = Object.fromEntries(new FormData(e.target).entries());
+// Listener de criação do evento
+const formEvento = document.getElementById('formNovoEvento');
+if (formEvento) {
+    formEvento.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const token = localStorage.getItem('token');
+        const dados = Object.fromEntries(new FormData(e.target).entries());
 
+        // ✅ Corrige formato da data (de DD/MM/YYYY → YYYY-MM-DD)
+        if (dados.data_evento && dados.data_evento.includes('/')) {
+            const [dia, mes, ano] = dados.data_evento.split('/');
+            dados.data_evento = `${ano}-${mes}-${dia}`;
+        }
             try {
                 const response = await fetch(`${API_URL}/eventos`, {
                     method: 'POST',
