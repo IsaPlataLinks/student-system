@@ -74,10 +74,13 @@
             transition: all 0.3s ease;
         }
 
-        .form-control:focus {
-            border-color: var(--gold);
-            box-shadow: 0 0 0 0.2rem rgba(246, 162, 30, 0.25);
-        }
+.form-control:focus {
+    border-color: var(--gold-dark);
+    box-shadow: none;
+    outline: none;
+    transition: border-color 0.2s ease-in-out;
+}
+
 
         .input-group-text {
             background: transparent;
