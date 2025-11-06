@@ -26,12 +26,22 @@ def current_user_id() -> int | None:
 app = Flask(__name__, static_folder='static')
 CORS(app)
 
-uri = os.getenv('DATABASE_URL', 'sqlite:///instance/student_system.db')
-# Render/Heroku expõem "postgres://"; SQLAlchemy prefere "postgresql+psycopg2://"
+# 1) Garante que a pasta 'instance' existe ANTES de montar a URI
+os.makedirs(app.instance_path, exist_ok=True)
+
+# 2) Define o SQLite default usando caminho absoluto dentro de instance/
+default_sqlite_path = os.path.join(app.instance_path, 'student_system.db')
+default_uri = f"sqlite:///{default_sqlite_path}"
+
+# 3) Usa DATABASE_URL se existir (Render/Heroku), senão cai no SQLite
+uri = os.getenv('DATABASE_URL', default_uri)
+
+# 4) Normaliza prefixo do Postgres para SQLAlchemy
 if uri.startswith('postgres://'):
     uri = uri.replace('postgres://', 'postgresql+psycopg2://', 1)
-# (opcional) força SSL em alguns providers
-# if uri.startswith('postgresql') and '?sslmode=' not in uri:
+
+# (opcional – só se seu Postgres exigir SSL e a string não trouxer):
+# if uri.startswith('postgresql') and 'sslmode=' not in uri:
 #     uri += '?sslmode=require'
 
 app.config['SQLALCHEMY_DATABASE_URI'] = uri
@@ -44,6 +54,7 @@ app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5MB
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
 
 # ==================== MODELS ====================
 

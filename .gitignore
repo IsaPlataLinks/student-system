@@ -1,43 +1,13 @@
-# Segredos
 .env
-*.env
-*.env.*
-.env.local
-
-# Python
 __pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-*.so
-*.egg-info/
+*.pyc
 .venv/
 venv/
-pip-wheel-metadata/
+.vscode/
+.idea/
 
-# Banco / runtime
-instance/*
-!instance/.gitkeep
-student_system.db
-*.sqlite*
-*.db
-*.db-journal
-*.log
-
-# Uploads (mantém a pasta no repo)
 static/uploads/*
 !static/uploads/.gitkeep
 
-# Testes / Tipagem / Cache
-.pytest_cache/
-.coverage
-htmlcov/
-.mypy_cache/
-.cache/
-
-# IDE/SO
-.vscode/
-.idea/
-*.swp
-.DS_Store
-Thumbs.db
+instance/*
+!instance/.gitkeep
