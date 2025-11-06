@@ -32,13 +32,41 @@ function carregarDadosUsuario() {
     tipoUsuario === 'admin' ? 'Administrador' : 'Vendedor';
 }
 
-// Utilitário: tenta parsear JSON; se vier HTML/texto (500) devolve {erro:texto}
-async function parseResposta(response) {
+// ======================================================
+// 🛠️ PARSE DE RESPOSTA (à prova de HTML/500)
+// ======================================================
+async function parseResposta(resp) {
+  if (resp.status === 204) return {};
+  
+  const ct = (resp.headers.get('content-type') || '').toLowerCase();
+  const backup = resp.clone(); // ✅ Clone ANTES de qualquer leitura
+
+  // Tenta JSON primeiro
+  if (ct.includes('application/json')) {
+    try {
+      return await resp.json();
+    } catch {
+      // Falhou JSON, tenta texto no backup
+      try {
+        const txt = await backup.text();
+        return { erro: txt || 'Resposta JSON inválida do servidor.' };
+      } catch {
+        return { erro: 'Falha ao ler resposta do servidor.' };
+      }
+    }
+  }
+
+  // Não é JSON, lê como texto direto
   try {
-    return await response.json();
-  } catch (_) {
-    const texto = await response.text();
-    return { erro: texto };
+    const txt = await resp.text();
+    if (!txt.trim()) return {};
+    try {
+      return JSON.parse(txt); // Tenta parsear se for JSON disfarçado
+    } catch {
+      return { erro: txt };
+    }
+  } catch {
+    return { erro: 'Falha ao ler resposta do servidor.' };
   }
 }
 
@@ -52,7 +80,10 @@ async function carregarAlunos() {
 
   try {
     const response = await fetch(`${API_URL}/alunos`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+      },
     });
 
     if (response.status === 401) {
@@ -71,7 +102,7 @@ async function carregarAlunos() {
       carregarEscolasNoFiltro();
     } else {
       console.error('Erro ao carregar alunos:', payload.erro || payload);
-      alert('Erro ao carregar alunos.');
+      alert(`Erro ao carregar alunos: ${payload.erro || 'Erro desconhecido'}`);
     }
   } catch (error) {
     console.error('Erro:', error);
@@ -111,7 +142,7 @@ function renderizarAlunos(alunos) {
           <div class="info-container">
             <div class="aluno-nome">${aluno.nome}</div>
             <div class="aluno-info"><i class="fas fa-chalkboard-teacher"></i><span>${aluno.turma}</span></div>
-            <div class="aluno-info"><i class="fas fa-calendar"></i><span>${aluno.ano_formatura}</span></div>
+            <div class="aluno-info"><i class="fas fa-calendar"></i><span>${aluno.ano_formatura || 'N/A'}</span></div>
             ${
               aluno.whatsapp
                 ? `<div class="aluno-info"><i class="fab fa-whatsapp"></i><span>${aluno.whatsapp}</span></div>`
@@ -196,7 +227,7 @@ function exportarExcel() {
         <tr>
           <td>${a.nome}</td>
           <td>${a.turma}</td>
-          <td>${a.ano_formatura}</td>
+          <td>${a.ano_formatura || 'N/A'}</td>
           <td>${a.escola || ''}</td>
           <td>${a.email || ''}</td>
           <td>${a.whatsapp || ''}</td>
@@ -222,18 +253,33 @@ function exportarExcel() {
 async function carregarEventos() {
   const token = verificarAutenticacao();
   if (!token) return;
+  
   try {
     const response = await fetch(`${API_URL}/eventos`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+      },
     });
-    const payload = await parseResposta(response);
-    if (!response.ok) {
-      console.error('Erro ao buscar eventos:', payload.erro || payload);
+
+    if (response.status === 401) {
+      alert('Sessão expirada. Faça login novamente.');
+      logout();
       return;
     }
+
+    const payload = await parseResposta(response);
+    
+    if (!response.ok) {
+      console.error('Erro ao buscar eventos:', payload.erro || payload);
+      alert(`Erro ao carregar eventos: ${payload.erro || 'Erro desconhecido'}`);
+      return;
+    }
+    
     renderizarEventos(payload);
   } catch (err) {
     console.error('Erro ao buscar eventos:', err);
+    alert('Erro ao conectar com o servidor.');
   }
 }
 
@@ -290,7 +336,7 @@ function baixarQRCode(url, filename) {
 }
 
 // ======================================================
-// ✅ CRIAR EVENTO (FUNÇÃO ÚNICA)
+// ✅ CRIAR EVENTO
 // ======================================================
 
 async function criarEvento() {
@@ -310,9 +356,6 @@ async function criarEvento() {
     return;
   }
 
-  // ⛔️ Não enviamos mais ano_formatura
-  delete dados.ano_formatura;
-
   // Normaliza UF
   if (dados.estado) dados.estado = dados.estado.trim().toUpperCase().slice(0, 2);
 
@@ -321,6 +364,7 @@ async function criarEvento() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        Accept: 'application/json',
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify(dados),

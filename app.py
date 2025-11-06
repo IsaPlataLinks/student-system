@@ -5,24 +5,27 @@ from flask_jwt_extended import JWTManager, create_access_token, jwt_required, ge
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from datetime import datetime, timedelta
+from sqlalchemy.orm import joinedload
 from PIL import Image
 import qrcode
 from io import BytesIO
 import os
 import re
 
+# ==================== HELPERS/JWT ====================
+
 def current_user_id() -> int | None:
+    """Converte o sub do JWT para int com segurança"""
     try:
         return int(get_jwt_identity())
     except (TypeError, ValueError):
         return None
-    
-# ==================== CONFIGURAÇÃO ====================
+
+# ==================== CONFIG ====================
 
 app = Flask(__name__, static_folder='static')
 CORS(app)
 
-# Configurações
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///student_system.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'r3-formaturas-secret-2024')
@@ -30,10 +33,8 @@ app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=8)
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5MB
 
-# Inicialização
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
-
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # ==================== MODELS ====================
@@ -67,7 +68,7 @@ class Evento(db.Model):
     vendedor_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'))
     criado_em = db.Column(db.DateTime, default=datetime.utcnow)
     leads = db.relationship('Lead', backref='evento', lazy=True)
-    
+
     @property
     def qr_url(self):
         return f"/cadastro?e={self.id}"
@@ -76,60 +77,57 @@ class Lead(db.Model):
     __tablename__ = 'leads'
     id = db.Column(db.Integer, primary_key=True)
     evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=False)
+
     serie = db.Column(db.String(15))
     letra_turma = db.Column(db.String(2))
     ano_formatura = db.Column(db.Integer)
+
     matricula = db.Column(db.String(20), nullable=False)
     nome_formando = db.Column(db.String(100), nullable=False)
     foto = db.Column(db.String(255))
+
     nome_contato = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), nullable=False)
     whatsapp = db.Column(db.String(20), nullable=False)
     tipo_cadastro = db.Column(db.String(20))
+
     cep = db.Column(db.String(10))
     endereco = db.Column(db.String(300))
+
     status_lead = db.Column(db.String(20), default='novo')
     observacoes = db.Column(db.Text)
     data_contato = db.Column(db.DateTime)
     vendedor_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'))
+
     criado_em = db.Column(db.DateTime, default=datetime.utcnow)
     atualizado_em = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
     __table_args__ = (
         db.UniqueConstraint('matricula', 'evento_id', name='unique_matricula_evento'),
     )
 
 # ==================== VALIDAÇÕES ====================
 
-def validar_nome(nome):
-    if not nome or len(nome) < 3:
-        return False
-    return re.match(r"^[a-zA-ZÀ-ÿ\s']+$", nome) is not None
+def validar_nome(nome: str) -> bool:
+    return bool(nome and len(nome) >= 3 and re.match(r"^[a-zA-ZÀ-ÿ\s']+$", nome))
 
-def validar_email(email):
-    if not email:
-        return False
-    return re.match(r'^[^\s@]+@[^\s@]+\.[^\s@]+$', email) is not None
+def validar_email(email: str) -> bool:
+    return bool(email and re.match(r'^[^\s@]+@[^\s@]+\.[^\s@]+$', email))
 
-def validar_whatsapp(whatsapp):
-    if not whatsapp:
-        return False
-    return re.match(r'^\(\d{2}\)\s?\d{5}-\d{4}$', whatsapp) is not None
+def validar_whatsapp(whatsapp: str) -> bool:
+    return bool(whatsapp and re.match(r'^\(\d{2}\)\s?\d{5}-\d{4}$', whatsapp))
 
-def validar_cep(cep):
-    if not cep:
-        return True
-    return re.match(r'^\d{5}-\d{3}$', cep) is not None
+def validar_cep(cep: str) -> bool:
+    return bool((not cep) or re.match(r'^\d{5}-\d{3}$', cep))
 
-def validar_serie(serie):
-    series_validas = ['6º ano','7º ano','8º ano','9º ano','1º ano EM','2º ano EM','3º ano EM']
+def validar_serie(serie: str) -> bool:
+    series_validas = ['6º ano', '7º ano', '8º ano', '9º ano', '1º ano EM', '2º ano EM', '3º ano EM']
     return serie in series_validas
 
-def validar_letra_turma(letra):
-    if not letra or len(letra) > 2:
-        return False
-    return letra.isalnum()
+def validar_letra_turma(letra: str) -> bool:
+    return bool(letra and len(letra) <= 2 and letra.isalnum())
 
-def validar_matricula(matricula):
+def validar_matricula(matricula: str) -> bool:
     if not matricula or len(matricula) < 3:
         return False
     matricula = matricula.strip().replace(' ', '')
@@ -143,46 +141,84 @@ def processar_foto(file):
     nome_arquivo = f"{timestamp}_{filename}"
     caminho = os.path.join(app.config['UPLOAD_FOLDER'], nome_arquivo)
     file.save(caminho)
+
     img = Image.open(caminho)
     img.thumbnail((300, 400), Image.Resampling.LANCZOS)
+
     nova_img = Image.new('RGB', (300, 400), (255, 255, 255))
     offset = ((300 - img.width) // 2, (400 - img.height) // 2)
     nova_img.paste(img, offset)
     nova_img.save(caminho, 'JPEG', quality=85, optimize=True)
     return nome_arquivo
 
-# ==================== ROTAS DE AUTENTICAÇÃO ====================
+# ==================== ERROR HANDLERS ====================
+
+@app.errorhandler(Exception)
+def handle_error(e):
+    """Captura qualquer erro não tratado e retorna JSON"""
+    print(f"❌ ERRO NÃO TRATADO: {str(e)}")
+    import traceback
+    traceback.print_exc()
+    
+    return jsonify({
+        'erro': 'Erro interno do servidor',
+        'detalhes': str(e) if app.debug else None
+    }), 500
+
+@app.errorhandler(404)
+def not_found(e):
+    return jsonify({'erro': 'Recurso não encontrado'}), 404
+
+@app.errorhandler(401)
+def unauthorized(e):
+    return jsonify({'erro': 'Não autorizado'}), 401
+
+# ==================== AUTENTICAÇÃO ====================
 
 @app.route('/api/login', methods=['POST'])
 def login():
     data = request.get_json()
     usuario = Usuario.query.filter_by(login=data.get('login')).first()
     if usuario and check_password_hash(usuario.senha_hash, data.get('senha')):
-        token = create_access_token(identity=str(usuario.id))  # sub precisa ser string
+        token = create_access_token(identity=str(usuario.id))
         return jsonify({'token': token, 'nome': usuario.nome, 'tipo_usuario': usuario.tipo_usuario}), 200
     return jsonify({'erro': 'Login ou senha inválidos'}), 401
 
-# ==================== ROTAS DE EVENTOS ====================
+# Helper para aceitar "YYYY-MM-DD" (e opcionalmente "DD/MM/YYYY")
+def _parse_data_evento(valor):
+    if not valor:
+        return None
+    s = str(valor).strip()
+    try:
+        return datetime.fromisoformat(s).date()
+    except ValueError:
+        try:
+            return datetime.strptime(s, "%d/%m/%Y").date()
+        except ValueError:
+            return None
+
+# ==================== EVENTOS ====================
 
 @app.route('/api/eventos', methods=['POST'])
 @jwt_required()
 def criar_evento():
-    vendedor_id = current_user_id()
-    if vendedor_id is None:
+    uid = current_user_id()
+    if uid is None:
         return jsonify({'erro': 'Token inválido'}), 401
 
-    vendedor = Usuario.query.get(vendedor_id)
-    if not vendedor:
+    user = Usuario.query.get(uid)
+    if not user:
         return jsonify({'erro': 'Usuário não encontrado'}), 404
-    if vendedor.tipo_usuario != 'admin':
+    if user.tipo_usuario != 'admin':
         return jsonify({'erro': 'Apenas administradores podem criar eventos'}), 403
 
-    data = request.get_json()
+    data = (request.get_json(silent=True) or {})
 
     escola_nome = (data.get('escola') or '').strip()
     if not escola_nome:
         return jsonify({'erro': 'Informe o nome da escola'}), 400
 
+    # Busca ou cria a escola
     escola = Escola.query.filter_by(nome=escola_nome).first()
     if not escola:
         escola = Escola(
@@ -191,98 +227,95 @@ def criar_evento():
             estado=(data.get('estado') or '').upper()[:2]
         )
         db.session.add(escola)
-        db.session.flush()
 
+    # Data do evento (opcional), com validação
     data_evento = None
     if data.get('data_evento'):
-        try:
-            data_evento = datetime.fromisoformat(data['data_evento']).date()
-        except ValueError:
+        data_evento = _parse_data_evento(data['data_evento'])
+        if not data_evento:
             return jsonify({'erro': 'Data do evento inválida (use YYYY-MM-DD)'}), 400
         if data_evento.year < datetime.utcnow().year:
             return jsonify({'erro': 'Ano da data do evento não pode ser anterior ao ano atual'}), 400
 
     evento = Evento(
-        escola_id=escola.id,
+        escola=escola,
         data_evento=data_evento,
         local_evento=data.get('local_evento'),
         endereco_evento=data.get('endereco_evento'),
         tipo_formatura=data.get('tipo_formatura'),
         status='ativo',
-        vendedor_id=vendedor_id
+        vendedor_id=uid
     )
     db.session.add(evento)
     db.session.commit()
 
     qr_url = f"{request.host_url}cadastro?e={evento.id}"
-    return jsonify({'mensagem': 'Evento criado com sucesso!', 'evento_id': evento.id, 'qr_url': qr_url}), 201
-
-    # Cria evento (sem campo "ano")
-    evento = Evento(
-        escola_id=escola.id,
-        data_evento=data_evento,
-        local_evento=data.get('local_evento'),
-        endereco_evento=data.get('endereco_evento'),
-        tipo_formatura=data.get('tipo_formatura'),
-        status='ativo',
-        vendedor_id=vendedor_id
-    )
-    db.session.add(evento)
-    db.session.commit()
-
-    qr_url = f"{request.host_url}cadastro?e={evento.id}"
-    return jsonify({'mensagem': 'Evento criado com sucesso!', 'evento_id': evento.id, 'qr_url': qr_url}), 201
-
-    evento = Evento(
-        escola_id=escola.id,
-        data_evento=data_evento,
-        local_evento=data.get('local_evento'),
-        endereco_evento=data.get('endereco_evento'),
-        tipo_formatura=data.get('tipo_formatura'),
-        status='ativo',
-        vendedor_id=vendedor_id
-    )
-
-    db.session.add(evento)
-    db.session.commit()
-
-    base_url = request.host_url
-    qr_url = f"{base_url}cadastro?e={evento.id}"
-
-    return jsonify({'mensagem': 'Evento criado com sucesso!','evento_id': evento.id,'qr_url': qr_url}), 201
-
-@app.route('/api/eventos/<int:evento_id>', methods=['GET'])
-def buscar_evento(evento_id):
-    evento = Evento.query.get_or_404(evento_id)
-    if evento.status != 'ativo':
-        return jsonify({'erro': 'Este evento não está mais disponível'}), 400
     return jsonify({
-        'id': evento.id,
-        'escola': {'id': evento.escola.id,'nome': evento.escola.nome,'cidade': evento.escola.cidade,'estado': evento.escola.estado},
-        'data_evento': evento.data_evento.isoformat() if evento.data_evento else None,
-        'local_evento': evento.local_evento,
-        'endereco_evento': evento.endereco_evento,
-        'tipo_formatura': evento.tipo_formatura
-    }), 200
+        'mensagem': 'Evento criado com sucesso!',
+        'evento_id': evento.id,
+        'qr_url': qr_url
+    }), 201
+
 
 @app.route('/api/eventos', methods=['GET'])
 @jwt_required()
 def listar_eventos():
-    eventos = Evento.query.order_by(Evento.criado_em.desc()).all()
-    resultado = []
-    for e in eventos:
-        escola_nome = e.escola.nome if e.escola else None
-        resultado.append({
-            'id': e.id,
-            'escola': escola_nome,
-            'tipo_formatura': e.tipo_formatura,
-            'data_evento': e.data_evento.isoformat() if e.data_evento else None,
-            'local_evento': e.local_evento,
-            'status': e.status,
-            'total_leads': len(e.leads),
-            'qr_url': f"{request.host_url}cadastro?e={e.id}"
-        })
-    return jsonify(resultado), 200
+    try:
+        # ✅ joinedload evita N+1 e AttributeError
+        eventos = (Evento.query
+                   .options(joinedload(Evento.escola))
+                   .order_by(Evento.criado_em.desc())
+                   .all())
+
+        payload = []
+        for e in eventos:
+            payload.append({
+                'id': e.id,
+                'escola': e.escola.nome if e.escola else None,
+                'tipo_formatura': e.tipo_formatura,
+                'data_evento': e.data_evento.isoformat() if e.data_evento else None,
+                'local_evento': e.local_evento,
+                'status': e.status,
+                'total_leads': len(e.leads),
+                'qr_url': f"{request.host_url}cadastro?e={e.id}"
+            })
+        return jsonify(payload), 200
+    except Exception as e:
+        print(f"❌ Erro em listar_eventos: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'erro': 'Erro ao listar eventos', 'detalhes': str(e)}), 500
+
+@app.route('/api/eventos/<int:evento_id>', methods=['GET'])
+def buscar_evento(evento_id):
+    try:
+        # ✅ Adicionar joinedload para evitar AttributeError
+        evento = (Evento.query
+                  .options(joinedload(Evento.escola))
+                  .filter_by(id=evento_id)
+                  .first_or_404())
+        
+        if evento.status != 'ativo':
+            return jsonify({'erro': 'Este evento não está mais disponível'}), 400
+        
+        return jsonify({
+            'id': evento.id,
+            'escola': {
+                'id': evento.escola.id if evento.escola else None,
+                'nome': evento.escola.nome if evento.escola else None,
+                'cidade': evento.escola.cidade if evento.escola else None,
+                'estado': evento.escola.estado if evento.escola else None
+            },
+            'data_evento': evento.data_evento.isoformat() if evento.data_evento else None,
+            'local_evento': evento.local_evento,
+            'endereco_evento': evento.endereco_evento,
+            'tipo_formatura': evento.tipo_formatura
+        }), 200
+    except Exception as e:
+        print(f"❌ Erro em buscar_evento: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'erro': 'Erro ao buscar evento', 'detalhes': str(e)}), 500
 
 
 @app.route('/api/eventos/<int:evento_id>/qrcode', methods=['GET'])
@@ -291,16 +324,23 @@ def gerar_qrcode(evento_id):
     evento = Evento.query.get_or_404(evento_id)
     base_url = request.host_url
     qr_url = f"{base_url}cadastro?e={evento.id}"
-    qr = qrcode.QRCode(version=1,error_correction=qrcode.constants.ERROR_CORRECT_L,box_size=10,border=4)
+
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4
+    )
     qr.add_data(qr_url)
     qr.make(fit=True)
     img = qr.make_image(fill_color="black", back_color="white")
+
     buffer = BytesIO()
     img.save(buffer, format='PNG')
     buffer.seek(0)
     return send_file(buffer, mimetype='image/png', download_name=f'qrcode-evento-{evento_id}.png')
 
-# ==================== ROTAS DE CADASTRO ====================
+# ==================== CADASTRO PÚBLICO ====================
 
 @app.route('/api/cadastro', methods=['POST'])
 def cadastrar_lead():
@@ -309,11 +349,12 @@ def cadastrar_lead():
         evento_id = data.get('evento_id')
         if not evento_id:
             return jsonify({'erro': 'Evento não identificado'}), 400
+
         evento = Evento.query.get(evento_id)
         if not evento or evento.status != 'ativo':
             return jsonify({'erro': 'Evento não disponível'}), 400
 
-        matricula = data.get('matricula', '').strip().upper()
+        matricula = (data.get('matricula') or '').strip().upper()
         nome_formando = data.get('nome_formando')
         nome_contato = data.get('nome_contato')
         email = data.get('email')
@@ -325,10 +366,8 @@ def cadastrar_lead():
         if not validar_matricula(matricula):
             return jsonify({'erro': 'Matrícula inválida! Digite pelo menos 3 caracteres'}), 400
 
-        lead_existente = Lead.query.filter_by(matricula=matricula, evento_id=evento_id).first()
-        if lead_existente:
+        if Lead.query.filter_by(matricula=matricula, evento_id=evento_id).first():
             return jsonify({'erro': f'Matrícula {matricula} já cadastrada neste evento!'}), 400
-
         if not validar_nome(nome_formando):
             return jsonify({'erro': 'Nome do formando inválido! Use apenas letras'}), 400
         if not validar_nome(nome_contato):
@@ -358,74 +397,89 @@ def cadastrar_lead():
         db.session.add(lead)
         db.session.commit()
 
-        return jsonify({'mensagem': 'Cadastro realizado com sucesso!','id': lead.id,'matricula': matricula}), 201
+        return jsonify({'mensagem': 'Cadastro realizado com sucesso!', 'id': lead.id, 'matricula': matricula}), 201
     except Exception as e:
         db.session.rollback()
         print(f"❌ ERRO: {str(e)}")
         return jsonify({'erro': 'Erro ao processar cadastro'}), 500
 
-# ==================== ROTAS DE LEADS ====================
+# ==================== LEADS/CRM ====================
 
 @app.route('/api/leads', methods=['GET'])
 @jwt_required()
 def listar_leads():
-    vendedor_id = current_user_id()
-    if vendedor_id is None:
-        return jsonify({'erro': 'Token inválido'}), 401
-    vendedor = Usuario.query.get(vendedor_id)
-    if not vendedor:
-        return jsonify({'erro': 'Usuário não encontrado'}), 404
+    try:
+        vendedor_id = current_user_id()
+        if vendedor_id is None:
+            return jsonify({'erro': 'Token inválido'}), 401
+        vendedor = Usuario.query.get(vendedor_id)
+        if not vendedor:
+            return jsonify({'erro': 'Usuário não encontrado'}), 404
 
-    evento_id = request.args.get('evento_id')
-    status = request.args.get('status')
-    busca = request.args.get('busca', '')
+        # Filtros
+        evento_id = request.args.get('evento_id')
+        status = request.args.get('status')
+        busca = request.args.get('busca', '')
 
-    query = Lead.query
-    if vendedor.tipo_usuario != 'admin':
-        query = query.filter((Lead.vendedor_id == vendedor_id) | (Lead.vendedor_id == None))
-    if evento_id:
-        query = query.filter_by(evento_id=evento_id)
-    if status:
-        query = query.filter_by(status_lead=status)
-    if busca:
-        query = query.filter(
-            (Lead.nome_formando.ilike(f'%{busca}%')) |
-            (Lead.nome_contato.ilike(f'%{busca}%')) |
-            (Lead.email.ilike(f'%{busca}%')) |
-            (Lead.matricula.ilike(f'%{busca}%'))
-        )
+        q = (Lead.query
+             .options(joinedload(Lead.evento).joinedload(Evento.escola))
+             .order_by(Lead.criado_em.desc()))
 
-    leads = query.order_by(Lead.criado_em.desc()).all()
-    resultado = []
-    for lead in leads:
-        evento = lead.evento
-        resultado.append({
-            'id': lead.id,
-            'matricula': lead.matricula,
-            'nome_formando': lead.nome_formando,
-            'nome_contato': lead.nome_contato,
-            'email': lead.email,
-            'whatsapp': lead.whatsapp,
-            'tipo_cadastro': lead.tipo_cadastro,
-            'status_lead': lead.status_lead,
-            'observacoes': lead.observacoes,
-            'foto': f'/static/uploads/{lead.foto}' if lead.foto else None,
-            'evento': {
-                'id': evento.id if evento else None,
-                'escola': evento.escola.nome if (evento and evento.escola) else None,
-                'tipo_formatura': evento.tipo_formatura if evento else None,
-                'data_evento': evento.data_evento.isoformat() if (evento and evento.data_evento) else None
-            },
-            'criado_em': lead.criado_em.isoformat()
-        })
-    return jsonify(resultado), 200
+        if vendedor.tipo_usuario != 'admin':
+            q = q.filter((Lead.vendedor_id == vendedor_id) | (Lead.vendedor_id == None))
+        if evento_id:
+            q = q.filter(Lead.evento_id == evento_id)
+        if status:
+            q = q.filter(Lead.status_lead == status)
+        if busca:
+            like = f'%{busca}%'
+            q = q.filter((Lead.nome_formando.ilike(like)) |
+                         (Lead.nome_contato.ilike(like)) |
+                         (Lead.email.ilike(like)) |
+                         (Lead.matricula.ilike(like)))
+
+        resultado = []
+        for lead in q.all():
+            ev = lead.evento
+            escola = ev.escola.nome if (ev and ev.escola) else None
+            data_iso = ev.data_evento.isoformat() if (ev and ev.data_evento) else None
+            resultado.append({
+                'id': lead.id,
+                'matricula': lead.matricula,
+                'nome_formando': lead.nome_formando,
+                'nome_contato': lead.nome_contato,
+                'email': lead.email,
+                'whatsapp': lead.whatsapp,
+                'tipo_cadastro': lead.tipo_cadastro,
+                'status_lead': lead.status_lead,
+                'observacoes': lead.observacoes,
+                'foto': f'/static/uploads/{lead.foto}' if lead.foto else None,
+                'evento': {
+                    'id': ev.id if ev else None,
+                    'escola': escola,
+                    'tipo_formatura': ev.tipo_formatura if ev else None,
+                    'data_evento': data_iso
+                },
+                'criado_em': lead.criado_em.isoformat()
+            })
+        return jsonify(resultado), 200
+    except Exception as e:
+        print(f"❌ Erro em listar_leads: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'erro': 'Erro ao listar leads', 'detalhes': str(e)}), 500
+
 
 @app.route('/api/leads/<int:lead_id>', methods=['PATCH'])
 @jwt_required()
 def atualizar_lead(lead_id):
-    vendedor_id = int(get_jwt_identity())
+    vendedor_id = current_user_id()
+    if vendedor_id is None:
+        return jsonify({'erro': 'Token inválido'}), 401
+
     lead = Lead.query.get_or_404(lead_id)
-    data = request.get_json()
+    data = request.get_json() or {}
+
     if 'status_lead' in data:
         lead.status_lead = data['status_lead']
     if 'observacoes' in data:
@@ -434,8 +488,10 @@ def atualizar_lead(lead_id):
         lead.data_contato = datetime.utcnow()
     if not lead.vendedor_id:
         lead.vendedor_id = vendedor_id
+
     db.session.commit()
     return jsonify({'mensagem': 'Lead atualizado!'}), 200
+
 
 @app.route('/api/estatisticas', methods=['GET'])
 @jwt_required()
@@ -443,6 +499,7 @@ def estatisticas():
     vendedor_id = current_user_id()
     if vendedor_id is None:
         return jsonify({'erro': 'Token inválido'}), 401
+
     vendedor = Usuario.query.get(vendedor_id)
     if not vendedor:
         return jsonify({'erro': 'Usuário não encontrado'}), 404
@@ -466,6 +523,7 @@ def estatisticas():
         'taxa_conversao': round(taxa_conversao, 2)
     }), 200
 
+# ==================== QR DOWNLOAD ====================
 
 @app.route('/api/eventos/<int:evento_id>/qrcode/download', methods=['GET'])
 @jwt_required()
@@ -473,16 +531,23 @@ def baixar_qrcode(evento_id):
     evento = Evento.query.get_or_404(evento_id)
     base_url = request.host_url
     qr_url = f"{base_url}cadastro?e={evento.id}"
-    qr = qrcode.QRCode(version=1,error_correction=qrcode.constants.ERROR_CORRECT_H,box_size=12,border=4)
+
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_H,
+        box_size=12,
+        border=4
+    )
     qr.add_data(qr_url)
     qr.make(fit=True)
     img = qr.make_image(fill_color="black", back_color="white")
+
     buffer = BytesIO()
     img.save(buffer, format='PNG')
     buffer.seek(0)
-    return send_file(buffer,mimetype='image/png',as_attachment=True,download_name=f'evento_{evento.id}_qrcode.png')
+    return send_file(buffer, mimetype='image/png', as_attachment=True, download_name=f'evento_{evento.id}_qrcode.png')
 
-# ==================== ROTAS ESTÁTICAS ====================
+# ==================== ESTÁTICOS ====================
 
 @app.route('/')
 def index():
@@ -492,47 +557,60 @@ def index():
 def static_files(path):
     return send_from_directory('static', path)
 
-# ==================== ROTA DE ALUNOS (LEADS) ====================
+# ==================== ALUNOS (VIEW DO DASHBOARD) ====================
 
 @app.route('/api/alunos', methods=['GET'])
 @jwt_required()
 def listar_alunos():
-    vendedor_id = current_user_id()
-    if vendedor_id is None:
-        return jsonify({'erro': 'Token inválido'}), 401
+    try:
+        vendedor_id = current_user_id()
+        if vendedor_id is None:
+            return jsonify({'erro': 'Token inválido'}), 401
 
-    vendedor = Usuario.query.get(vendedor_id)
-    if not vendedor:
-        return jsonify({'erro': 'Usuário não encontrado'}), 404
+        vendedor = Usuario.query.get(vendedor_id)
+        if not vendedor:
+            return jsonify({'erro': 'Usuário não encontrado'}), 404
 
-    if vendedor.tipo_usuario == 'admin':
-        leads = Lead.query.all()
-    else:
-        leads = Lead.query.filter((Lead.vendedor_id == vendedor_id) | (Lead.vendedor_id == None)).all()
+        # ✅ joinedload para evitar N+1
+        q = Lead.query.options(joinedload(Lead.evento).joinedload(Evento.escola))
+        leads = q.all() if vendedor.tipo_usuario == 'admin' else q.filter(
+            (Lead.vendedor_id == vendedor_id) | (Lead.vendedor_id == None)
+        ).all()
 
-    alunos = []
-    for lead in leads:
-        evento = lead.evento
-        escola = evento.escola.nome if (evento and evento.escola) else None
-        ano_evento = evento.data_evento.year if (evento and evento.data_evento) else None
-        alunos.append({
-            'id': lead.id,
-            'nome': lead.nome_formando,
-            'escola': escola,
-            'turma': f"{lead.serie or ''} {lead.letra_turma or ''}".strip() or 'Não informada',
-            'ano_formatura': lead.ano_formatura or ano_evento,
-            'email': lead.email,
-            'whatsapp': lead.whatsapp,
-            'responsavel': lead.nome_contato if lead.tipo_cadastro == 'responsavel' else None,
-            'foto': f'/static/uploads/{lead.foto}' if lead.foto else None
-        })
-    return jsonify(alunos), 200
+        alunos = []
+        for lead in leads:
+            ev = lead.evento
+            escola_nome = ev.escola.nome if (ev and ev.escola) else None
+            ano_evento = ev.data_evento.year if (ev and ev.data_evento) else None
 
-# ==================== INICIALIZAÇÃO ====================
+            alunos.append({
+                'id': lead.id,
+                'nome': lead.nome_formando,
+                'escola': escola_nome,
+                'turma': (f"{lead.serie or ''} {lead.letra_turma or ''}").strip() or 'Não informada',
+                'ano_formatura': lead.ano_formatura or ano_evento,
+                'email': lead.email,
+                'whatsapp': lead.whatsapp,
+                'responsavel': lead.nome_contato if lead.tipo_cadastro == 'responsavel' else None,
+                'foto': f'/static/uploads/{lead.foto}' if lead.foto else None
+            })
+        return jsonify(alunos), 200
+    except Exception as e:
+        print(f"❌ Erro em listar_alunos: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'erro': 'Erro ao listar alunos', 'detalhes': str(e)}), 500
+
+# ==================== INIT ====================
 
 def criar_usuario_admin():
     if not Usuario.query.filter_by(login='admin').first():
-        admin = Usuario(nome='Administrador',login='admin',senha_hash=generate_password_hash('admin123'),tipo_usuario='admin')
+        admin = Usuario(
+            nome='Administrador',
+            login='admin',
+            senha_hash=generate_password_hash('admin123'),
+            tipo_usuario='admin'
+        )
         db.session.add(admin)
         db.session.commit()
         print("✅ Usuário admin criado: login='admin', senha='admin123'")
