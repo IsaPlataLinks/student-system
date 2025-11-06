@@ -191,7 +191,6 @@ async function carregarEventos() {
         renderizarEventos(eventos);
     } catch (err) {
         console.error('Erro ao buscar eventos:', err);
-        alert('Erro ao carregar eventos. Verifique sua conexão.');
     }
 }
 
@@ -243,25 +242,9 @@ function baixarQRCode(url, filename) {
     link.remove();
 }
 
-function abrirModalNovoEvento() {
-    const modal = new bootstrap.Modal(document.getElementById('modalNovoEvento'));
-    modal.show();
-}
-
-
 // ======================================================
-// 🚀 INICIALIZAÇÃO
+// ✅ CRIAR EVENTO (FUNÇÃO ÚNICA)
 // ======================================================
-
-document.addEventListener('DOMContentLoaded', function() {
-    verificarAutenticacao();
-    carregarDadosUsuario();
-    carregarAlunos();
-    carregarEventos();
-
-    const filtroBusca = document.getElementById('filtroBusca');
-    if (filtroBusca) filtroBusca.addEventListener('input', aplicarFiltros);
-});
 
 async function criarEvento() {
     const form = document.getElementById('formNovoEvento');
@@ -269,13 +252,24 @@ async function criarEvento() {
     const dados = Object.fromEntries(formData.entries());
     const token = localStorage.getItem('token');
 
+    // ✅ Verificar se está logado
+    if (!token) {
+        alert('❌ Você precisa fazer login primeiro!');
+        window.location.href = 'login.html';
+        return;
+    }
+
     // ✅ Validação básica
     if (!dados.escola || !dados.cidade || !dados.estado) {
         alert('❌ Preencha todos os campos obrigatórios!');
         return;
     }
 
-    // ✅ Log para debug
+    // ✅ Converter ano_formatura para número
+    if (dados.ano_formatura) {
+        dados.ano_formatura = parseInt(dados.ano_formatura, 10);
+    }
+
     console.log('📤 Enviando dados:', dados);
     console.log('🔑 Token:', token ? 'presente' : 'ausente');
 
@@ -298,7 +292,7 @@ async function criarEvento() {
             
             // Fecha o modal
             const modal = bootstrap.Modal.getInstance(document.getElementById('modalNovoEvento'));
-            modal.hide();
+            if (modal) modal.hide();
             
             // Limpa o formulário
             form.reset();
@@ -307,7 +301,7 @@ async function criarEvento() {
             carregarEventos();
             
         } else {
-            alert(`❌ Erro: ${resultado.erro || 'Não foi possível criar o evento'}`);
+            alert(`❌ Erro: ${resultado.erro || resultado.msg || 'Não foi possível criar o evento'}`);
         }
 
     } catch (error) {
@@ -315,3 +309,17 @@ async function criarEvento() {
         alert('❌ Erro de conexão com o servidor.');
     }
 }
+
+// ======================================================
+// 🚀 INICIALIZAÇÃO
+// ======================================================
+
+document.addEventListener('DOMContentLoaded', function() {
+    verificarAutenticacao();
+    carregarDadosUsuario();
+    carregarAlunos();
+    carregarEventos();
+
+    const filtroBusca = document.getElementById('filtroBusca');
+    if (filtroBusca) filtroBusca.addEventListener('input', aplicarFiltros);
+});
