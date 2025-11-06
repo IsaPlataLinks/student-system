@@ -151,17 +151,25 @@ def processar_foto(file):
 def login():
     data = request.get_json()
     usuario = Usuario.query.filter_by(login=data.get('login')).first()
+
     if usuario and check_password_hash(usuario.senha_hash, data.get('senha')):
-        token = create_access_token(identity=usuario.id)
-        return jsonify({'token': token,'nome': usuario.nome,'tipo_usuario': usuario.tipo_usuario}), 200
+        # 👇 identity como string
+        token = create_access_token(identity=str(usuario.id))
+        return jsonify({
+            'token': token,
+            'nome': usuario.nome,
+            'tipo_usuario': usuario.tipo_usuario
+        }), 200
+
     return jsonify({'erro': 'Login ou senha inválidos'}), 401
+
 
 # ==================== ROTAS DE EVENTOS ====================
 
 @app.route('/api/eventos', methods=['POST'])
 @jwt_required()
 def criar_evento():
-    vendedor_id = get_jwt_identity()
+    vendedor_id = int(get_jwt_identity())
     vendedor = Usuario.query.get(vendedor_id)
     if vendedor.tipo_usuario != 'admin':
         return jsonify({'erro': 'Apenas administradores podem criar eventos'}), 403
@@ -343,7 +351,7 @@ def cadastrar_lead():
 @app.route('/api/leads', methods=['GET'])
 @jwt_required()
 def listar_leads():
-    vendedor_id = get_jwt_identity()
+    vendedor_id = int(get_jwt_identity())
     vendedor = Usuario.query.get(vendedor_id)
     evento_id = request.args.get('evento_id')
     status = request.args.get('status')
@@ -392,7 +400,7 @@ def listar_leads():
 @app.route('/api/leads/<int:lead_id>', methods=['PATCH'])
 @jwt_required()
 def atualizar_lead(lead_id):
-    vendedor_id = get_jwt_identity()
+    vendedor_id = int(get_jwt_identity())
     lead = Lead.query.get_or_404(lead_id)
     data = request.get_json()
     if 'status_lead' in data:
@@ -409,7 +417,7 @@ def atualizar_lead(lead_id):
 @app.route('/api/estatisticas', methods=['GET'])
 @jwt_required()
 def estatisticas():
-    vendedor_id = get_jwt_identity()
+    vendedor_id = int(get_jwt_identity())
     vendedor = Usuario.query.get(vendedor_id)
     leads_query = Lead.query if vendedor.tipo_usuario == 'admin' else Lead.query.filter_by(vendedor_id=vendedor_id)
     novos = leads_query.filter_by(status_lead='novo').count()
@@ -451,7 +459,7 @@ def static_files(path):
 @app.route('/api/alunos', methods=['GET'])
 @jwt_required()
 def listar_alunos():
-    vendedor_id = get_jwt_identity()
+    vendedor_id = int(get_jwt_identity())
     vendedor = Usuario.query.get(vendedor_id)
 
     # Admin vê todos; vendedor vê seus leads ou não atribuídos
