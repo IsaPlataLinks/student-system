@@ -259,87 +259,59 @@ document.addEventListener('DOMContentLoaded', function() {
     carregarAlunos();
     carregarEventos();
 
-    // Listener de criação do evento
-// Listener de criação do evento
-const formEvento = document.getElementById('formNovoEvento');
-if (formEvento) {
-    formEvento.addEventListener('submit', async function (e) {
-        e.preventDefault();
-        const token = localStorage.getItem('token');
-        const dados = Object.fromEntries(new FormData(e.target).entries());
-
-        // ✅ Corrige formato da data (de DD/MM/YYYY → YYYY-MM-DD)
-        if (dados.data_evento && dados.data_evento.includes('/')) {
-            const [dia, mes, ano] = dados.data_evento.split('/');
-            dados.data_evento = `${ano}-${mes}-${dia}`;
-        }
-            try {
-                const response = await fetch(`${API_URL}/eventos`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify(dados)
-                });
-
-                const resultado = await response.json();
-
-                if (response.ok) {
-                    alert('✅ Evento criado com sucesso!');
-                    e.target.reset();
-                    carregarEventos();
-                    bootstrap.Modal.getInstance(document.getElementById('modalNovoEvento')).hide();
-                } else {
-                    alert(`Erro: ${resultado.erro || 'Falha ao criar evento'}`);
-                }
-            } catch (err) {
-                console.error(err);
-                alert('Erro ao criar evento');
-            }
-        });
-    }
-
     const filtroBusca = document.getElementById('filtroBusca');
     if (filtroBusca) filtroBusca.addEventListener('input', aplicarFiltros);
 });
 
 async function criarEvento() {
-  const form = document.getElementById('formNovoEvento');
-  const dados = Object.fromEntries(new FormData(form).entries());
-  const token = localStorage.getItem('token');
+    const form = document.getElementById('formNovoEvento');
+    const formData = new FormData(form);
+    const dados = Object.fromEntries(formData.entries());
+    const token = localStorage.getItem('token');
 
-  try {
-    const response = await fetch(`${API_URL}/eventos`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(dados)
-    });
-
-    const resultado = await response.json();
-
-    if (response.ok) {
-      // Mostra sucesso e QR Code
-      alert(`✅ Evento criado com sucesso!\nID: ${resultado.evento_id}`);
-
-      const qrLink = `${API_URL}/eventos/${resultado.evento_id}/qrcode/download`;
-      const a = document.createElement('a');
-      a.href = qrLink;
-      a.download = `evento_${resultado.evento_id}_qrcode.png`;
-      a.click();
-
-      form.reset();
-      const modal = bootstrap.Modal.getInstance(document.getElementById('modalNovoEvento'));
-      modal.hide();
-    } else {
-      alert('Erro: ' + (resultado.erro || 'Não foi possível criar o evento.'));
+    // ✅ Validação básica
+    if (!dados.escola || !dados.cidade || !dados.estado) {
+        alert('❌ Preencha todos os campos obrigatórios!');
+        return;
     }
 
-  } catch (error) {
-    alert('Erro de conexão com o servidor.');
-    console.error(error);
-  }
+    // ✅ Log para debug
+    console.log('📤 Enviando dados:', dados);
+    console.log('🔑 Token:', token ? 'presente' : 'ausente');
+
+    try {
+        const response = await fetch(`${API_URL}/eventos`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(dados)
+        });
+
+        console.log('📥 Status da resposta:', response.status);
+        const resultado = await response.json();
+        console.log('📥 Resposta completa:', resultado);
+
+        if (response.ok) {
+            alert(`✅ Evento criado com sucesso!\n\nID: ${resultado.evento_id}\nQR Code: ${resultado.qr_url}`);
+            
+            // Fecha o modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('modalNovoEvento'));
+            modal.hide();
+            
+            // Limpa o formulário
+            form.reset();
+            
+            // Recarrega a lista de eventos
+            carregarEventos();
+            
+        } else {
+            alert(`❌ Erro: ${resultado.erro || 'Não foi possível criar o evento'}`);
+        }
+
+    } catch (error) {
+        console.error('❌ Erro na requisição:', error);
+        alert('❌ Erro de conexão com o servidor.');
+    }
 }
