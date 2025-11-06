@@ -474,8 +474,8 @@ def listar_leads():
             'evento': {
                 'id': lead.evento.id,
                 'escola': lead.evento.escola.nome,
-                'turma_completa': lead.evento.turma_completa,
-                'ano': lead.evento.ano_formatura
+                'tipo_formatura': lead.evento.tipo_formatura,
+                'data_evento': lead.evento.data_evento.isoformat() if lead.evento.data_evento else None
             },
             'criado_em': lead.criado_em.isoformat()
         })
