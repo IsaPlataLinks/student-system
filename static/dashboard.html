@@ -41,6 +41,7 @@
             padding: 2rem 1rem 5rem 1rem;
             box-shadow: 2px 0 12px rgba(0, 0, 0, 0.1);
             border-right: 4px solid rgba(246, 162, 30, 0.2);
+            overflow-y: auto;
         }
 
         .sidebar-header {
@@ -184,20 +185,6 @@
             align-items: center;
             justify-content: center;
             font-size: 1.5rem;
-        }
-
-        /* ✅ ÍCONES COM CORES DOURADAS */
-        .stat-icon.alunos {
-            background: var(--gold);
-            color: white;
-        }
-
-.stat-icon.escolas {
-    background: var(--gold);
-    color: white;
-}
-
-        .stat-icon.fotos {
             background: var(--gold);
             color: white;
         }
@@ -265,7 +252,10 @@
             font-weight: 600;
         }
 
-        /* ✅ BOTÃO EXPORTAR DOURADO */
+        .btn-limpar:hover {
+            background: #e2e8f0;
+        }
+
         .btn-exportar {
             background: var(--gold);
             border: none;
@@ -389,6 +379,7 @@
             padding: 4rem 2rem;
             background: white;
             border-radius: 15px;
+            grid-column: 1 / -1;
         }
 
         .empty-state i {
@@ -409,6 +400,7 @@
         @media (max-width: 768px) {
             .sidebar {
                 transform: translateX(-100%);
+                z-index: 1000;
             }
 
             .main-content {
@@ -416,6 +408,10 @@
             }
 
             .alunos-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-container {
                 grid-template-columns: 1fr;
             }
         }
@@ -456,7 +452,7 @@
         <!-- Stats Cards -->
         <div class="stats-container">
             <div class="stat-card">
-                <div class="stat-icon alunos">
+                <div class="stat-icon">
                     <i class="fas fa-user-graduate"></i>
                 </div>
                 <div class="stat-info">
@@ -466,7 +462,7 @@
             </div>
 
             <div class="stat-card">
-                <div class="stat-icon escolas">
+                <div class="stat-icon">
                     <i class="fas fa-school"></i>
                 </div>
                 <div class="stat-info">
@@ -476,7 +472,7 @@
             </div>
 
             <div class="stat-card">
-                <div class="stat-icon fotos">
+                <div class="stat-icon">
                     <i class="fas fa-camera"></i>
                 </div>
                 <div class="stat-info">
@@ -530,12 +526,12 @@
                 <div class="modal-content">
                     <div class="modal-header" style="background: var(--gold); color: var(--black);">
                         <h5 class="modal-title">Criar Novo Evento</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
                     </div>
                     <div class="modal-body">
                         <form id="formNovoEvento">
                             <div class="mb-3">
-                                <label class="form-label">Escola</label>
+                                <label class="form-label">Escola *</label>
                                 <input 
                                     type="text" 
                                     class="form-control" 
@@ -548,42 +544,33 @@
 
                             <div class="row">
                                 <div class="col-md-8 mb-3">
-                                    <label class="form-label">Cidade</label>
-                                    <input type="text" class="form-control" name="cidade" required>
+                                    <label class="form-label">Cidade *</label>
+                                    <input type="text" class="form-control" name="cidade" required placeholder="Ex: São Paulo">
                                 </div>
                                 <div class="col-md-4 mb-3">
-                                    <label class="form-label">Estado</label>
-                                    <input type="text" class="form-control" name="estado" maxlength="2" required>
+                                    <label class="form-label">Estado (UF) *</label>
+                                    <input type="text" class="form-control" name="estado" maxlength="2" required placeholder="Ex: SP" style="text-transform: uppercase;">
                                 </div>
                             </div>
+
                             <div class="mb-3">
-                                <label class="form-label">Tipo de Formatura</label>
+                                <label class="form-label">Tipo de Formatura *</label>
                                 <select class="form-select" name="tipo_formatura" required>
+                                    <option value="">Selecione...</option>
                                     <option value="Fundamental">Fundamental</option>
                                     <option value="Médio">Médio</option>
                                     <option value="Infantil">Infantil</option>
                                 </select>
                             </div>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Ano de Formatura</label>
-                                    <input 
-                                        type="number" 
-                                        class="form-control" 
-                                        name="ano_formatura" 
-                                        required 
-                                        minlength="4" 
-                                        maxlength="4" 
-                                        oninput="if(this.value.length>4)this.value=this.value.slice(0,4)"
-                                        placeholder="Ex: 2025">
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Data do Evento</label>
-                                    <input type="date" class="form-control" name="data_evento">
-                                </div>
-                            </div>
+
                             <div class="mb-3">
-                                <label class="form-label">Local do Evento</label>
+                                <label class="form-label">Data do Evento</label>
+                                <input type="date" class="form-control" name="data_evento">
+                                <small class="text-muted">Opcional</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Local do Evento *</label>
                                 <input 
                                     type="text" 
                                     class="form-control" 
@@ -595,7 +582,9 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="button" class="btn btn-success" onclick="criarEvento()">Salvar</button>
+                        <button type="button" class="btn btn-success" onclick="criarEvento()">
+                            <i class="fas fa-save me-1"></i>Salvar Evento
+                        </button>
                     </div>
                 </div>
             </div>
@@ -603,7 +592,14 @@
 
         <!-- Grid de Alunos -->
         <div id="alunosContainer">
-            <div class="alunos-grid" id="alunosGrid"></div>
+            <div class="alunos-grid" id="alunosGrid">
+                <!-- Preloader -->
+                <div class="empty-state">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <h4>Carregando alunos...</h4>
+                    <p>Aguarde um momento</p>
+                </div>
+            </div>
         </div>
     </div>
 

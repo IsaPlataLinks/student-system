@@ -26,7 +26,15 @@ def current_user_id() -> int | None:
 app = Flask(__name__, static_folder='static')
 CORS(app)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///student_system.db')
+uri = os.getenv('DATABASE_URL', 'sqlite:///instance/student_system.db')
+# Render/Heroku expõem "postgres://"; SQLAlchemy prefere "postgresql+psycopg2://"
+if uri.startswith('postgres://'):
+    uri = uri.replace('postgres://', 'postgresql+psycopg2://', 1)
+# (opcional) força SSL em alguns providers
+# if uri.startswith('postgresql') and '?sslmode=' not in uri:
+#     uri += '?sslmode=require'
+
+app.config['SQLALCHEMY_DATABASE_URI'] = uri
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'r3-formaturas-secret-2024')
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=8)
@@ -136,34 +144,40 @@ def validar_matricula(matricula: str) -> bool:
 def processar_foto(file):
     if not file:
         return None
-    filename = secure_filename(file.filename)
+
+    filename = secure_filename(file.filename or 'foto.jpg')
     timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
     nome_arquivo = f"{timestamp}_{filename}"
     caminho = os.path.join(app.config['UPLOAD_FOLDER'], nome_arquivo)
+
+    # salva original
     file.save(caminho)
 
-    img = Image.open(caminho)
-    img.thumbnail((300, 400), Image.Resampling.LANCZOS)
+    # abre, normaliza e salva como JPEG 300x400 com fundo branco
+    with Image.open(caminho) as img:
+        if img.mode != 'RGB':           # evita erro ao salvar/pastar JPEG
+            img = img.convert('RGB')
+        img.thumbnail((300, 400), Image.Resampling.LANCZOS)
 
-    nova_img = Image.new('RGB', (300, 400), (255, 255, 255))
-    offset = ((300 - img.width) // 2, (400 - img.height) // 2)
-    nova_img.paste(img, offset)
-    nova_img.save(caminho, 'JPEG', quality=85, optimize=True)
+        nova_img = Image.new('RGB', (300, 400), (255, 255, 255))
+        offset = ((300 - img.width) // 2, (400 - img.height) // 2)
+        nova_img.paste(img, offset)
+        nova_img.save(caminho, 'JPEG', quality=85, optimize=True)
+
     return nome_arquivo
 
 # ==================== ERROR HANDLERS ====================
 
+from werkzeug.exceptions import HTTPException
+
 @app.errorhandler(Exception)
 def handle_error(e):
-    """Captura qualquer erro não tratado e retorna JSON"""
-    print(f"❌ ERRO NÃO TRATADO: {str(e)}")
-    import traceback
-    traceback.print_exc()
-    
-    return jsonify({
-        'erro': 'Erro interno do servidor',
-        'detalhes': str(e) if app.debug else None
-    }), 500
+    # Mantém status codes corretos (404, 401, 400, etc.) e retorna JSON
+    if isinstance(e, HTTPException):
+        return jsonify({'erro': e.description}), e.code
+    # Log do stacktrace:
+    import traceback; traceback.print_exc()
+    return jsonify({'erro': 'Erro interno do servidor'}), 500
 
 @app.errorhandler(404)
 def not_found(e):
@@ -318,12 +332,13 @@ def buscar_evento(evento_id):
         return jsonify({'erro': 'Erro ao buscar evento', 'detalhes': str(e)}), 500
 
 
+# ==================== QR CODE PÚBLICO ====================
 @app.route('/api/eventos/<int:evento_id>/qrcode', methods=['GET'])
-@jwt_required()
 def gerar_qrcode(evento_id):
     evento = Evento.query.get_or_404(evento_id)
-    base_url = request.host_url
-    qr_url = f"{base_url}cadastro?e={evento.id}"
+
+    base_url = request.host_url.rstrip('/')     # evita //cadastro
+    qr_url = f"{base_url}/cadastro?e={evento.id}"
 
     qr = qrcode.QRCode(
         version=1,
@@ -339,6 +354,7 @@ def gerar_qrcode(evento_id):
     img.save(buffer, format='PNG')
     buffer.seek(0)
     return send_file(buffer, mimetype='image/png', download_name=f'qrcode-evento-{evento_id}.png')
+
 
 # ==================== CADASTRO PÚBLICO ====================
 
@@ -614,6 +630,12 @@ def criar_usuario_admin():
         db.session.add(admin)
         db.session.commit()
         print("✅ Usuário admin criado: login='admin', senha='admin123'")
+
+# --- Auto-init também quando o app é importado (Render/Gunicorn) ---
+with app.app_context():
+    db.create_all()
+    criar_usuario_admin()
+    print("✅ DB inicializado (auto-init)")
 
 if __name__ == '__main__':
     with app.app_context():
