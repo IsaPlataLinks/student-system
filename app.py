@@ -168,6 +168,7 @@ def criar_evento():
 
     data = request.get_json()
 
+    # Escola
     escola_nome = (data.get('escola') or '').strip()
     if not escola_nome:
         return jsonify({'erro': 'Informe o nome da escola'}), 400
@@ -182,12 +183,31 @@ def criar_evento():
         db.session.add(escola)
         db.session.flush()
 
+    # Data do evento (opcional) — valida formato e ano
     data_evento = None
     if data.get('data_evento'):
         try:
             data_evento = datetime.fromisoformat(data['data_evento']).date()
         except ValueError:
             return jsonify({'erro': 'Data do evento inválida (use YYYY-MM-DD)'}), 400
+        if data_evento.year < datetime.utcnow().year:
+            return jsonify({'erro': 'Ano da data do evento não pode ser anterior ao ano atual'}), 400
+
+    # Cria evento (sem campo "ano")
+    evento = Evento(
+        escola_id=escola.id,
+        data_evento=data_evento,
+        local_evento=data.get('local_evento'),
+        endereco_evento=data.get('endereco_evento'),
+        tipo_formatura=data.get('tipo_formatura'),
+        status='ativo',
+        vendedor_id=vendedor_id
+    )
+    db.session.add(evento)
+    db.session.commit()
+
+    qr_url = f"{request.host_url}cadastro?e={evento.id}"
+    return jsonify({'mensagem': 'Evento criado com sucesso!', 'evento_id': evento.id, 'qr_url': qr_url}), 201
 
     evento = Evento(
         escola_id=escola.id,
@@ -230,12 +250,12 @@ def listar_eventos():
         resultado.append({
             'id': evento.id,
             'escola': evento.escola.nome,
+            'tipo_formatura': evento.tipo_formatura,
             'data_evento': evento.data_evento.isoformat() if evento.data_evento else None,
             'local_evento': evento.local_evento,
             'status': evento.status,
             'total_leads': len(evento.leads),
-            'qr_url': f"{request.host_url}cadastro?e={evento.id}",
-            'tipo_formatura': evento.tipo_formatura
+            'qr_url': f"{request.host_url}cadastro?e={evento.id}"
         })
     return jsonify(resultado), 200
 
@@ -430,25 +450,34 @@ def static_files(path):
 
 @app.route('/api/alunos', methods=['GET'])
 @jwt_required()
-def listar_alunos_dashboard():
+def listar_alunos():
     vendedor_id = get_jwt_identity()
     vendedor = Usuario.query.get(vendedor_id)
-    leads = Lead.query.all() if vendedor.tipo_usuario == 'admin' else Lead.query.filter((Lead.vendedor_id == vendedor_id) | (Lead.vendedor_id == None)).all()
-    resultado = []
+
+    # Admin vê todos; vendedor vê seus leads ou não atribuídos
+    if vendedor.tipo_usuario == 'admin':
+        leads = Lead.query.all()
+    else:
+        leads = Lead.query.filter(
+            (Lead.vendedor_id == vendedor_id) | (Lead.vendedor_id == None)
+        ).all()
+
+    alunos = []
     for lead in leads:
         ano_evento = lead.evento.data_evento.year if lead.evento and lead.evento.data_evento else None
-        resultado.append({
+        alunos.append({
             'id': lead.id,
             'nome': lead.nome_formando,
             'escola': lead.evento.escola.nome,
             'turma': f"{lead.serie or ''} {lead.letra_turma or ''}".strip() or 'Não informada',
-            'ano_formatura': lead.ano_formatura or ano_evento,
+            'ano_formatura': lead.ano_formatura or ano_evento,  # ← origem única do ano agora
             'email': lead.email,
             'whatsapp': lead.whatsapp,
             'responsavel': lead.nome_contato if lead.tipo_cadastro == 'responsavel' else None,
             'foto': f'/static/uploads/{lead.foto}' if lead.foto else None
         })
-    return jsonify(resultado), 200
+    return jsonify(alunos), 200
+
 
 # ==================== INICIALIZAÇÃO ====================
 
