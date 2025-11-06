@@ -11,6 +11,9 @@ import qrcode
 from io import BytesIO
 import os
 import re
+from sqlalchemy import extract, or_
+from sqlalchemy.exc import IntegrityError
+
 
 # ==================== HELPERS/JWT ====================
 
@@ -253,14 +256,33 @@ def criar_evento():
         )
         db.session.add(escola)
 
-    # Data do evento (opcional), com validação
-    data_evento = None
-    if data.get('data_evento'):
-        data_evento = _parse_data_evento(data['data_evento'])
-        if not data_evento:
-            return jsonify({'erro': 'Data do evento inválida (use YYYY-MM-DD)'}), 400
-        if data_evento.year < datetime.utcnow().year:
-            return jsonify({'erro': 'Ano da data do evento não pode ser anterior ao ano atual'}), 400
+# Data do evento (OBRIGATÓRIA)
+if not data.get('data_evento'):
+    return jsonify({'erro': 'Data do evento é obrigatória (dd/mm/aaaa ou YYYY-MM-DD)'}), 400
+
+data_evento = _parse_data_evento(data['data_evento'])
+if not data_evento:
+    return jsonify({'erro': 'Data do evento inválida (use dd/mm/aaaa ou YYYY-MM-DD)'}), 400
+if data_evento.year < datetime.utcnow().year:
+    return jsonify({'erro': 'Ano da data do evento não pode ser anterior ao ano atual'}), 400
+
+evento = Evento(
+    escola=escola,
+    data_evento=data_evento,
+    local_evento=data.get('local_evento'),
+    endereco_evento=data.get('endereco_evento'),
+    tipo_formatura=data.get('tipo_formatura'),
+    status='ativo',
+    vendedor_id=uid
+)
+
+try:
+    db.session.add(evento)
+    db.session.commit()
+except IntegrityError:
+    db.session.rollback()
+    return jsonify({'erro': 'Já existe um evento para esta escola nesta data'}), 400
+
 
     evento = Evento(
         escola=escola,
@@ -579,6 +601,26 @@ def baixar_qrcode(evento_id):
 @app.route('/')
 def index():
     return send_from_directory('static', 'index.html')
+# ==================== PÁGINAS (URLs bonitas) ====================
+@app.route('/cadastro')
+def page_cadastro():
+    return send_from_directory('static', 'cadastro.html')
+
+@app.route('/dashboard')
+def page_dashboard():
+    return send_from_directory('static', 'dashboard.html')
+
+@app.route('/eventos')
+def page_eventos():
+    return send_from_directory('static', 'eventos.html')
+
+@app.route('/login')
+def page_login():
+    return send_from_directory('static', 'login.html')
+
+@app.route('/sucesso')
+def page_sucesso():
+    return send_from_directory('static', 'sucesso.html')
 
 @app.route('/<path:path>')
 def static_files(path):

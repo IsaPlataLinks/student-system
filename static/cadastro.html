@@ -1,613 +1,388 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Sistema de Formandos</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <style>
-        :root {
-            --gold: #F6A21E;
-            --gold-dark: #C57F17;
-            --gold-light: #FFB84D;
-            --background: #FFE0B3;
-            --white: #FFFFFF;
-            --black: #0D0D0D;
-            --gray-dark: #333333;
-            --gray-light: #E5E5E5;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: var(--background);
-            color: var(--black);
-        }
-
-        /* SIDEBAR */
-        .sidebar {
-            position: fixed;
-            left: 0;
-            top: 0;
-            height: 100vh;
-            width: 260px;
-            background: var(--white);
-            padding: 2rem 1rem 5rem 1rem;
-            box-shadow: 2px 0 12px rgba(0, 0, 0, 0.1);
-            border-right: 4px solid rgba(246, 162, 30, 0.2);
-        }
-
-        .sidebar-header {
-            text-align: center;
-            margin-bottom: 2rem;
-            padding-bottom: 1.5rem;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-        }
-
-        .sidebar-header img {
-            width: 80px;
-            height: auto;
-            margin-bottom: 0.75rem;
-        }
-
-        .sidebar-header h4 {
-            color: var(--black);
-            font-weight: 700;
-            font-size: 1.1rem;
-        }
-
-        .sidebar-header p {
-            color: var(--gray-dark);
-            font-size: 0.85rem;
-            margin: 0;
-        }
-
-        .user-info {
-            background: rgba(255, 224, 179, 0.4);
-            padding: 1rem;
-            border-radius: 10px;
-            margin-bottom: 1.5rem;
-            text-align: center;
-            border: 1px solid rgba(246, 162, 30, 0.3);
-        }
-
-        .user-info i {
-            font-size: 2rem;
-            color: var(--gold);
-            margin-bottom: 0.5rem;
-        }
-
-        .user-info .user-name {
-            color: var(--black);
-            font-weight: 600;
-            font-size: 0.95rem;
-        }
-
-        .user-info .user-type {
-            color: var(--gray-dark);
-            font-size: 0.8rem;
-        }
-
-        .btn-novo-evento {
-            width: 100%;
-            background: var(--gold);
-            color: var(--black);
-            border: none;
-            padding: 0.85rem;
-            border-radius: 10px;
-            font-weight: 600;
-            margin-bottom: 1.5rem;
-            transition: all 0.3s ease;
-        }
-
-        .btn-novo-evento:hover {
-            background: var(--gold-dark);
-            color: var(--white);
-            transform: translateY(-2px);
-        }
-
-        .logout-container {
-            position: fixed;
-            bottom: 1.5rem;
-            left: 1rem;
-            width: calc(260px - 2rem);
-            background: var(--white);
-        }
-
-.btn-logout {
-    width: 100%;
-    background: rgba(246, 162, 30, 0.15);
-    border: 1px solid rgba(246, 162, 30, 0.3);
-    color: var(--gold-dark);
-    padding: 0.75rem;
-    border-radius: 10px;
-    font-weight: 600;
-    transition: all 0.3s ease;
-}
-
-.btn-logout:hover {
-    background: var(--gold-dark);
-    color: white;
-}
-
-        /* CONTEÚDO PRINCIPAL */
-        .main-content {
-            margin-left: 260px;
-            padding: 2rem;
-            min-height: 100vh;
-        }
-
-        .top-bar {
-            background: var(--white);
-            padding: 1.5rem;
-            border-radius: 15px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            margin-bottom: 2rem;
-            border: 1px solid rgba(246, 162, 30, 0.2);
-        }
-
-        .top-bar h2 {
-            color: var(--black);
-            font-weight: 700;
-            margin: 0;
-        }
-
-        /* Stats Cards */
-        .stats-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .stat-card {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 15px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .stat-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-        }
-
-        /* ✅ ÍCONES COM CORES CORRETAS */
-        .stat-icon.alunos {
-            background: var(--gold);
-            color: white;
-        }
-
-        .stat-icon.escolas {
-            background: var(--green);
-            color: white;
-        }
-
-        .stat-icon.fotos {
-            background: var(--gold);
-            color: white;
-        }
-
-        .stat-info h3 {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--black);
-            margin: 0;
-        }
-
-        .stat-info p {
-            color: #64748b;
-            margin: 0;
-            font-size: 0.9rem;
-        }
-
-        /* Filtros */
-        .filtros-container {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 15px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            margin-bottom: 2rem;
-        }
-
-        .filtros-container h5 {
-            color: var(--black);
-            font-weight: 600;
-            margin-bottom: 1rem;
-        }
-
-        .form-control, .form-select {
-            border-radius: 10px;
-            border: 2px solid #e2e8f0;
-            padding: 0.6rem 1rem;
-        }
-
-        .form-control:focus, .form-select:focus {
-            border-color: var(--gold);
-            box-shadow: 0 0 0 0.2rem rgba(246, 162, 30, 0.15);
-        }
-
-        .btn-filtrar, .btn-success {
-            background: var(--gold);
-            border: none;
-            color: var(--black);
-            padding: 0.6rem 1.5rem;
-            border-radius: 10px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .btn-filtrar:hover, .btn-success:hover {
-            background: var(--gold-dark);
-            color: var(--white);
-        }
-
-        .btn-limpar {
-            background: #f1f5f9;
-            border: none;
-            color: #64748b;
-            padding: 0.6rem 1.5rem;
-            border-radius: 10px;
-            font-weight: 600;
-        }
-
-        /* ✅ BOTÃO EXPORTAR VERDE */
-        .btn-exportar {
-            background: var(--green);
-            border: none;
-            color: white;
-            padding: 0.6rem 1.5rem;
-            border-radius: 10px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .btn-exportar:hover {
-            background: var(--green-dark);
-            color: white;
-        }
-
-        .btn-secondary {
-            background: #f1f5f9;
-            border: none;
-            color: var(--gray-dark);
-            padding: 0.6rem 1.5rem;
-            border-radius: 10px;
-            font-weight: 600;
-        }
-
-        .btn-secondary:hover {
-            background: #e2e8f0;
-        }
-
-        /* Cards dos Alunos */
-        .alunos-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .aluno-card {
-            background: white;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-            transition: all 0.3s ease;
-            border: 2px solid transparent;
-        }
-
-        .aluno-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(246, 162, 30, 0.15);
-            border-color: var(--gold);
-        }
-
-        .card-header-custom {
-            background: linear-gradient(135deg, var(--gold), var(--gold-dark));
-            padding: 1rem;
-            text-align: center;
-            color: white;
-        }
-
-        .card-header-custom h6 {
-            margin: 0;
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-
-        .card-body-custom {
-            padding: 1.5rem;
-            display: flex;
-            gap: 1rem;
-        }
-
-        .foto-container {
-            flex-shrink: 0;
-            width: 90px;
-            height: 120px;
-            border-radius: 10px;
-            overflow: hidden;
-            background: #f1f5f9;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 2px solid #e2e8f0;
-        }
-
-        .foto-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .foto-container i {
-            font-size: 2rem;
-            color: #cbd5e1;
-        }
-
-        .info-container {
-            flex: 1;
-        }
-
-        .aluno-nome {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--black);
-            margin-bottom: 0.5rem;
-        }
-
-        .aluno-info {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 0.4rem;
-            color: #64748b;
-            font-size: 0.85rem;
-        }
-
-        .aluno-info i {
-            color: var(--gold);
-            width: 16px;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 4rem 2rem;
-            background: white;
-            border-radius: 15px;
-        }
-
-        .empty-state i {
-            font-size: 4rem;
-            color: #cbd5e1;
-            margin-bottom: 1rem;
-        }
-
-        .empty-state h4 {
-            color: #64748b;
-            margin-bottom: 0.5rem;
-        }
-
-        .empty-state p {
-            color: #94a3b8;
-        }
-
-        @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-100%);
-            }
-
-            .main-content {
-                margin-left: 0;
-            }
-
-            .alunos-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cadastro de Formandos - R3 Formaturas</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+  <style>
+    :root{
+      --background-gold:#FFE0B3; --gold:#F6A21E; --gold-dark:#C57F17;
+      --black:#0D0D0D; --gray-dark:#333333; --white:#FFFFFF;
+    }
+    body{
+      min-height:100vh;background:var(--background-gold);
+      display:flex;align-items:center;justify-content:center;
+      font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;color:var(--black);
+      padding:2rem 1rem;
+    }
+    .card-form{
+      width:100%;max-width:760px;background:var(--white);border-radius:20px;padding:2rem;
+      box-shadow:0 8px 30px rgba(0,0,0,.1);border:1px solid rgba(246,162,30,.2);
+      animation:fadeInDown .5s ease-out;
+    }
+    .brand{
+      text-align:center;margin-bottom:1rem;
+    }
+    .brand img{max-width:110px}
+    .title{font-weight:700;margin:0.25rem 0 0.75rem 0;text-align:center}
+    .subtitle{color:var(--gray-dark);text-align:center;margin-bottom:1.25rem}
+    .badge-evento{
+      display:inline-block;background:#fff7e9;border-left:4px solid var(--gold);
+      padding:.5rem .75rem;border-radius:10px;font-weight:600;margin-bottom:1rem;
+      box-shadow:0 2px 8px rgba(246,162,30,.15);
+    }
+    .form-label{font-weight:600}
+    .input-icon{
+      position:relative;
+    }
+    .input-icon .state{
+      position:absolute;right:12px;top:50%;transform:translateY(-50%);
+      font-size:1.05rem;opacity:.8;pointer-events:none;
+    }
+    .is-valid + .state{color:#198754} /* check */
+    .is-invalid + .state{color:#dc3545} /* x */
+    .btn-primary{
+      background:var(--gold);border:none;color:var(--black);font-weight:700;
+      padding:.9rem 1.25rem;border-radius:12px;transition:all .25s ease;
+      box-shadow:0 4px 15px rgba(246,162,30,.3);
+    }
+    .btn-primary:hover{background:var(--gold-dark);color:#fff;transform:translateY(-2px)}
+    .btn-outline-dark{
+      border:2px solid var(--black);color:var(--black);font-weight:700;border-radius:12px;
+    }
+    .btn-outline-dark:hover{background:var(--black);color:var(--gold)}
+    .foto-box{
+      display:flex;gap:1rem;align-items:center
+    }
+    .foto-preview{
+      width:90px;height:120px;border-radius:10px;overflow:hidden;background:#f1f5f9;
+      border:2px solid #e2e8f0;display:flex;align-items:center;justify-content:center;
+    }
+    .foto-preview img{width:100%;height:100%;object-fit:cover}
+    .info-box{
+      background:#fff7e9;border-left:4px solid var(--gold);padding: .85rem 1rem;border-radius:10px;
+      box-shadow:0 2px 8px rgba(246,162,30,.15);color:var(--gray-dark);font-size:.95rem;
+    }
+    .small-hint{color:#6b7280}
+    .required::after{content:" *";color:#dc3545;font-weight:700}
+    @keyframes fadeInDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+    @media (max-width:576px){.foto-box{flex-direction:column;align-items:flex-start}}
+  </style>
 </head>
 <body>
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="sidebar-header">
-            <img src="https://i.ibb.co/6RvMh1cL/logo.png" alt="Logo R3 Formaturas">
-            <h4>Sistema de Formandos</h4>
-            <p>Painel Administrativo</p>
+  <div class="card-form">
+    <div class="brand">
+      <img src="https://i.ibb.co/6RvMh1cL/logo.png" alt="R3 Formaturas"/>
+    </div>
+    <h1 class="title">Cadastro de Formandos</h1>
+    <p class="subtitle"></p>
+
+    <div id="eventoBadge" class="text-center"></div>
+
+    <form id="formCadastro" enctype="multipart/form-data" novalidate>
+      <!-- evento_id (URL ?e=ID) -->
+      <input type="hidden" name="evento_id" id="eventoId"/>
+
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label required">Você é</label>
+          <select class="form-select" name="tipo_cadastro" id="tipoCadastro" required>
+            <option value="">Selecione</option>
+            <option value="aluno">Aluno</option>
+            <option value="responsavel">Responsável</option>
+          </select>
         </div>
 
-        <div class="user-info">
-            <i class="fas fa-user-circle"></i>
-            <div class="user-name" id="nomeUsuario">Carregando...</div>
-            <div class="user-type" id="tipoUsuario">Carregando...</div>
+        <div class="col-md-4">
+          <label class="form-label required">Matrícula do aluno</label>
+          <div class="input-icon">
+            <input type="text" class="form-control" name="matricula" id="matricula" maxlength="20" required placeholder="Ex: 00894156"/>
+            <i class="state"></i>
+          </div>
+          <small class="small-hint">Não use caracteres especiais.</small>
         </div>
 
-        <button class="btn btn-novo-evento" data-bs-toggle="modal" data-bs-target="#modalNovoEvento">
-            <i class="fas fa-plus me-2"></i>Novo Evento
+        <div class="col-md-4">
+          <label class="form-label required">WhatsApp</label>
+          <div class="input-icon">
+            <input type="tel" class="form-control" name="whatsapp" id="whatsapp" inputmode="numeric" maxlength="16" required placeholder="Ex: (11) 98765-4321"/>
+            <i class="state"></i>
+          </div>
+          <small class="small-hint"></small>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label required">Nome do formando</label>
+          <div class="input-icon">
+            <input type="text" class="form-control" name="nome_formando" id="nomeFormando" maxlength="120" required placeholder=""/>
+            <i class="state"></i>
+          </div>
+        </div>
+
+        <div class="col-md-6" id="grupoNomeContato">
+          <label class="form-label required">Nome do responsável</label>
+          <div class="input-icon">
+            <input type="text" class="form-control" name="nome_contato" id="nomeContato" maxlength="120" placeholder="" required/>
+            <i class="state"></i>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label required">E-mail</label>
+          <div class="input-icon">
+            <input type="email" class="form-control" name="email" id="email" maxlength="120" required placeholder="seu_email@outlook.com"/>
+            <i class="state"></i>
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">CEP</label>
+          <div class="input-icon">
+            <input type="text" class="form-control" name="cep" id="cep" inputmode="numeric" maxlength="9" placeholder="00000-000"/>
+            <i class="state"></i>
+          </div>
+        </div>
+
+        <div class="col-md-9">
+          <label class="form-label">Endereço</label>
+          <input type="text" class="form-control" name="endereco" id="endereco" maxlength="200" placeholder="Rua, número, bairro, cidade - UF"/>
+        </div>
+
+        <div class="col-12">
+          <label class="form-label">Foto (opcional)</label>
+          <div class="foto-box">
+            <div class="foto-preview" id="previewBox">
+              <i class="fa-solid fa-camera-retro fa-2x" style="color:#cbd5e1"></i>
+            </div>
+            <div>
+              <input class="form-control" type="file" name="foto" id="foto" accept="image/jpeg,image/png"/>
+              <small class="small-hint d-block mt-1">JPG/PNG até 5MB. A imagem será ajustada automaticamente pelo sistema.</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-4 info-box">
+        <i class="fa-solid fa-shield-halved me-2" style="color:var(--gold)"></i>
+        Seus dados são usados apenas para identificação e entrega das fotos, conforme a política da R3 Formaturas.
+      </div>
+
+      <div class="d-flex gap-2 mt-4">
+        <button type="submit" id="btnEnviar" class="btn btn-primary">
+          <i class="fa-solid fa-paper-plane me-2"></i>Concluir cadastro
         </button>
+        <a href="/index.html" class="btn btn-outline-dark"><i class="fa-solid fa-home me-2"></i>Início</a>
+      </div>
 
-        <div class="logout-container">
-            <button class="btn btn-logout" onclick="logout()">
-                <i class="fas fa-sign-out-alt me-2"></i>Sair
-            </button>
-        </div>
-    </div>
+      <div id="alerta" class="alert alert-danger mt-3 d-none" role="alert"></div>
+      <div id="ok" class="alert alert-success mt-3 d-none" role="alert"></div>
+    </form>
+  </div>
 
-    <!-- Main Content -->
-    <div class="main-content">
-        <div class="top-bar">
-            <h2><i class="fas fa-chart-line me-2"></i>Dashboard</h2>
-        </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+  // ---------- Helpers UI ----------
+  const qs = new URLSearchParams(location.search);
+  const byId = (id) => document.getElementById(id);
+  const setBadge = (id) => {
+    if(!id){ return; }
+    byId('eventoBadge').innerHTML =
+      '<span class="badge-evento"><i class="fa-solid fa-qrcode me-1" style="color:var(--gold)"></i>Evento: ' + id + '</span>';
+  };
+  const showErr = (msg) => { const a=byId('alerta'); a.textContent=msg; a.classList.remove('d-none'); };
+  const hideErr = () => byId('alerta').classList.add('d-none');
+  const showOk  = (msg) => { const a=byId('ok'); a.textContent=msg; a.classList.remove('d-none'); };
 
-        <!-- Stats Cards -->
-        <div class="stats-container">
-            <div class="stat-card">
-                <div class="stat-icon alunos">
-                    <i class="fas fa-user-graduate"></i>
-                </div>
-                <div class="stat-info">
-                    <h3 id="totalAlunos">0</h3>
-                    <p>Total de Alunos</p>
-                </div>
-            </div>
+  // ---------- Pré-carregar evento e dados do responsável ----------
+  const eventoId = qs.get('e') || '';
+  byId('eventoId').value = eventoId;
+  setBadge(eventoId);
 
-            <div class="stat-card">
-                <div class="stat-icon escolas">
-                    <i class="fas fa-school"></i>
-                </div>
-                <div class="stat-info">
-                    <h3 id="totalEscolas">0</h3>
-                    <p>Escolas Cadastradas</p>
-                </div>
-            </div>
+  // Preenche dados do responsável (cadastro em sequência)
+  try{
+    const r = JSON.parse(localStorage.getItem('dadosResponsavel') || 'null');
+    if(r){
+      byId('tipoCadastro').value = 'responsavel';
+      byId('nomeContato').value = r.nomeContato || '';
+      byId('email').value = r.email || '';
+      byId('whatsapp').value = maskPhone(r.whatsapp || '');
+      if(r.eventoId && !eventoId){ byId('eventoId').value = r.eventoId; setBadge(r.eventoId); }
+    }
+  }catch(e){}
 
-            <div class="stat-card">
-                <div class="stat-icon fotos">
-                    <i class="fas fa-camera"></i>
-                </div>
-                <div class="stat-info">
-                    <h3 id="totalFotos">0</h3>
-                    <p>Fotos Enviadas</p>
-                </div>
-            </div>
-        </div>
+  // ---------- Validações em tempo real ----------
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
+  const onlyDigits = (s) => s.replace(/\D+/g,'');
+  const onlyLetters = (s) => s.replace(/[0-9]/g,'');
+  function setState(input, valid){
+    input.classList.remove('is-valid','is-invalid');
+    if(input.value.trim()===''){ return; }
+    input.classList.add(valid ? 'is-valid':'is-invalid');
+    const icon = input.parentElement?.querySelector('.state');
+    if(icon){ icon.className = 'state fa-solid ' + (valid ? 'fa-circle-check':'fa-circle-xmark'); }
+  }
+  function maskPhone(v){
+    v = onlyDigits(v).slice(0,11);
+    if(v.length <= 10){ // Ex: (11) 98765-4321
+      return v.replace(/^(\d{0,2})(\d{0,4})(\d{0,4}).*/, function(_,a,b,c){
+        return (a?`(${a}`:'') + (a.length===2?') ':'') + (b||'') + (b.length===4?'-':'') + (c||'');
+      });
+    } else { // (11) 00000-0000
+      return v.replace(/^(\d{0,2})(\d{0,5})(\d{0,4}).*/, function(_,a,b,c){
+        return (a?`(${a}`:'') + (a.length===2?') ':'') + (b||'') + (b.length>=5?'-':'') + (c||'');
+      });
+    }
+  }
 
-        <!-- Filtros -->
-        <div class="filtros-container">
-            <h5><i class="fas fa-filter me-2"></i>Filtros de Busca</h5>
-            <div class="row g-3">
-                <div class="col-md-3">
-                    <input type="text" class="form-control" id="filtroBusca" placeholder="Buscar por nome...">
-                </div>
-                <div class="col-md-3">
-                    <select class="form-select" id="filtroEscola">
-                        <option value="">Todas as Escolas</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <input type="text" class="form-control" id="filtroTurma" placeholder="Turma">
-                </div>
-                <div class="col-md-2">
-                    <input type="number" class="form-control" id="filtroAno" placeholder="Ano">
-                </div>
-                <div class="col-md-2">
-                    <button class="btn btn-filtrar w-100" onclick="aplicarFiltros()">
-                        <i class="fas fa-search me-1"></i>Buscar
-                    </button>
-                </div>
-            </div>
-            <div class="row mt-3">
-                <div class="col-md-6">
-                    <button class="btn btn-limpar" onclick="limparFiltros()">
-                        <i class="fas fa-times me-1"></i>Limpar Filtros
-                    </button>
-                </div>
-                <div class="col-md-6 text-end">
-                    <button class="btn btn-exportar" onclick="exportarExcel()">
-                        <i class="fas fa-file-excel me-1"></i>Exportar Excel
-                    </button>
-                </div>
-            </div>
-        </div>
+  // Bloqueio de números nos nomes
+  byId('nomeFormando').addEventListener('input', (e)=>{ e.target.value = onlyLetters(e.target.value); setState(e.target, e.target.value.trim().length>=3); });
+  byId('nomeContato').addEventListener('input', (e)=>{ e.target.value = onlyLetters(e.target.value); setState(e.target, e.target.value.trim().length>=3); });
 
-        <!-- MODAL DE CRIAÇÃO DE EVENTO -->
-        <div class="modal fade" id="modalNovoEvento" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header" style="background: var(--gold); color: var(--black);">
-                        <h5 class="modal-title">Criar Novo Evento</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="formNovoEvento">
-                            <div class="mb-3">
-                                <label class="form-label">Escola</label>
-                                <input 
-                                    type="text" 
-                                    class="form-control" 
-                                    name="escola" 
-                                    maxlength="120" 
-                                    required
-                                    placeholder="Ex: Escola São José ou Colégio Monte Alegre">
-                                <small class="text-muted">Máximo de 120 caracteres</small>
-                            </div>
+  // Matrícula (sem caracteres especiais)
+  byId('matricula').addEventListener('input', (e)=>{ e.target.value = e.target.value.replace(/[^a-zA-Z0-9\-_.]/g,''); setState(e.target, e.target.value.trim().length>=3); });
 
-                            <div class="row">
-                                <div class="col-md-8 mb-3">
-                                    <label class="form-label">Cidade</label>
-                                    <input type="text" class="form-control" name="cidade" required>
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label">Estado</label>
-                                    <input type="text" class="form-control" name="estado" maxlength="2" required>
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Tipo de Formatura</label>
-                                <select class="form-select" name="tipo_formatura" required>
-                                    <option value="Fundamental">Fundamental</option>
-                                    <option value="Médio">Médio</option>
-                                    <option value="Infantil">Infantil</option>
-                                </select>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Ano de Formatura</label>
-                                    <input 
-                                        type="number" 
-                                        class="form-control" 
-                                        name="ano_formatura" 
-                                        required 
-                                        minlength="4" 
-                                        maxlength="4" 
-                                        oninput="if(this.value.length>4)this.value=this.value.slice(0,4)"
-                                        placeholder="Ex: 2025">
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Data do Evento</label>
-                                    <input type="date" class="form-control" name="data_evento">
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Local do Evento</label>
-                                <input 
-                                    type="text" 
-                                    class="form-control" 
-                                    name="local_evento"
-                                    placeholder="Ex: Auditório Central — Escola São José"
-                                    required>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="button" class="btn btn-filtrar" onclick="criarEvento()">Salvar</button>
-                    </div>
-                </div>
-            </div>
-        </div>
+  // E-mail
+  byId('email').addEventListener('input', (e)=> setState(e.target, emailRe.test(e.target.value)));
 
-        <!-- Grid de Alunos -->
-        <div id="alunosContainer">
-            <div class="alunos-grid" id="alunosGrid"></div>
-        </div>
-    </div>
+  // WhatsApp + máscara
+  byId('whatsapp').addEventListener('input', (e)=>{ e.target.value = maskPhone(e.target.value); const d=onlyDigits(e.target.value); setState(e.target, d.length>=10); });
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/dashboard.js"></script>
+  // CEP + ViaCEP
+  byId('cep').addEventListener('input', (e)=>{ e.target.value = e.target.value.replace(/\D/g,'').slice(0,8).replace(/^(\d{5})(\d{0,3})/, '$1-$2'); });
+  byId('cep').addEventListener('blur', async (e)=>{
+    const cepDigits = onlyDigits(e.target.value);
+    if(cepDigits.length !== 8) return;
+    try{
+      const r = await fetch(`https://viacep.com.br/ws/${cepDigits}/json/`);
+      const j = await r.json();
+      if(j && !j.erro){
+        const uf = (j.uf||'').toUpperCase().slice(0,2);
+        byId('endereco').value = `${j.logradouro||''}, ${j.bairro||''}, ${j.localidade||''} - ${uf}`.replace(/^[, ]+|[, ]+$/g,'');
+        setState(byId('cep'), true);
+      }else{
+        setState(byId('cep'), false);
+      }
+    }catch(err){
+      setState(byId('cep'), false);
+    }
+  });
+
+  // Mostrar/ocultar Nome do Contato conforme tipo
+  const tipoEl = byId('tipoCadastro');
+  const grupoContato = byId('grupoNomeContato');
+  function toggleContato(){
+    const isResp = (tipoEl.value === 'responsavel');
+    grupoContato.style.display = isResp ? 'block' : 'block'; // Mantemos visível e obrigatório
+    byId('nomeContato').required = true; // manter como obrigatório para alinhamento de dados
+  }
+  tipoEl.addEventListener('change', toggleContato);
+  toggleContato();
+
+  // Preview da foto + limite de 5MB
+  byId('foto').addEventListener('change', (e)=>{
+    const f = e.target.files[0];
+    const box = byId('previewBox');
+    box.innerHTML = '<i class="fa-solid fa-camera-retro fa-2x" style="color:#cbd5e1"></i>';
+    if(!f) return;
+    if(!['image/jpeg','image/png'].includes(f.type) || f.size > 5*1024*1024){
+      e.target.value = '';
+      showErr('Envie JPG ou PNG de até 5MB.');
+      return;
+    }
+    hideErr();
+    const img = document.createElement('img');
+    img.src = URL.createObjectURL(f);
+    img.onload = ()=> URL.revokeObjectURL(img.src);
+    box.innerHTML = '';
+    box.appendChild(img);
+  });
+
+  // Valida tudo antes de enviar
+  function validarFormulario(){
+    hideErr();
+    let ok = true;
+    if(!eventoId && !byId('eventoId').value){ showErr('Link inválido: evento não identificado. Acesse pelo QR do evento.'); return false; }
+
+    const v = {
+      tipo: byId('tipoCadastro').value,
+      matricula: byId('matricula').value.trim(),
+      nome_formando: byId('nomeFormando').value.trim(),
+      nome_contato: byId('nomeContato').value.trim(),
+      email: byId('email').value.trim(),
+      whatsapp: onlyDigits(byId('whatsapp').value),
+    };
+    // checks
+    if(!v.tipo) ok=false;
+    if(v.matricula.length < 3) ok=false;
+    if(v.nome_formando.length < 3) ok=false;
+    if(v.nome_contato.length < 3) ok=false;
+    if(!emailRe.test(v.email)) ok=false;
+    if(v.whatsapp.length < 10) ok=false;
+
+    // marca estados
+    setState(byId('matricula'), v.matricula.length>=3);
+    setState(byId('nomeFormando'), v.nome_formando.length>=3);
+    setState(byId('nomeContato'), v.nome_contato.length>=3);
+    setState(byId('email'), emailRe.test(v.email));
+    setState(byId('whatsapp'), v.whatsapp.length>=10);
+
+    if(!ok) showErr('Confira os campos destacados e tente novamente.');
+    return ok;
+  }
+
+  // Envio
+  const form = byId('formCadastro');
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    if(!validarFormulario()) return;
+
+    const btn = byId('btnEnviar');
+    btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Enviando...';
+
+    const data = new FormData();
+    data.append('evento_id', byId('eventoId').value || eventoId);
+    data.append('tipo_cadastro', byId('tipoCadastro').value);
+    data.append('matricula', byId('matricula').value.trim());
+    data.append('nome_formando', byId('nomeFormando').value.trim());
+    data.append('nome_contato', byId('nomeContato').value.trim());
+    data.append('email', byId('email').value.trim().toLowerCase());
+    data.append('whatsapp', (byId('whatsapp').value||'').replace(/\D/g,''));
+    data.append('cep', byId('cep').value.trim());
+    data.append('endereco', byId('endereco').value.trim());
+    if(byId('foto').files[0]) data.append('foto', byId('foto').files[0]);
+
+    try{
+      const resp = await fetch('/api/leads', { method:'POST', body:data });
+      const json = await resp.json().catch(()=> ({}));
+
+      if(!resp.ok){
+        // mensagens comuns do backend
+        const msg = (json && (json.error || json.message)) || 'Não foi possível salvar seu cadastro.';
+        showErr(msg);
+        btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-paper-plane me-2"></i>Concluir cadastro';
+        return;
+      }
+
+      // sucesso → salva infos pro sucesso.html
+      const tipo = byId('tipoCadastro').value;
+      const payload = {
+        tipo,
+        nome: tipo === 'aluno' ? byId('nomeFormando').value.trim() : byId('nomeContato').value.trim(),
+        eventoId: byId('eventoId').value || eventoId,
+        nomeContato: byId('nomeContato').value.trim(),
+        email: byId('email').value.trim(),
+        whatsapp: (byId('whatsapp').value||'').replace(/\D/g,'')
+      };
+      localStorage.setItem('cadastroSucesso', JSON.stringify(payload));
+      showOk('Cadastro realizado! Redirecionando...');
+      setTimeout(()=> location.href = '/sucesso', 700);
+    }catch(err){
+      showErr('Erro de conexão. Tente novamente em instantes.');
+      btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-paper-plane me-2"></i>Concluir cadastro';
+    }
+  });
+  </script>
 </body>
 </html>

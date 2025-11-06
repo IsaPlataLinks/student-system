@@ -8,31 +8,36 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #10b981;
-            --secondary-color: #059669;
-            --accent-color: #4f46e5;
+            --background-gold: #FFE0B3;
+            --gold: #F6A21E;
+            --gold-dark: #C57F17;
+            --black: #0D0D0D;
+            --gray-dark: #333333;
+            --white: #FFFFFF;
         }
 
         body {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
             min-height: 100vh;
+            background: var(--background-gold);
             display: flex;
             align-items: center;
             justify-content: center;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--black);
             padding: 2rem 0;
         }
 
         .sucesso-container {
             max-width: 650px;
-            background: white;
+            background: var(--white);
             border-radius: 24px;
             padding: 3rem;
             text-align: center;
-            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.15);
             animation: bounceIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
             position: relative;
             overflow: hidden;
+            border: 1px solid rgba(246, 162, 30, 0.2);
         }
 
         @keyframes bounceIn {
@@ -49,7 +54,7 @@
             left: -50%;
             width: 200%;
             height: 200%;
-            background: linear-gradient(45deg, transparent, rgba(16, 185, 129, 0.1), transparent);
+            background: linear-gradient(45deg, transparent, rgba(246, 162, 30, 0.08), transparent);
             animation: shine 3s infinite;
         }
 
@@ -58,13 +63,24 @@
             50% { transform: translateX(100%) translateY(100%) rotate(45deg); }
         }
 
+        .logo-container {
+            margin-bottom: 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo-container img {
+            max-width: 110px;
+            animation: fadeInDown 0.6s ease-out;
+        }
+
         .icone-sucesso {
-            width: 150px;
-            height: 150px;
+            width: 120px;
+            height: 120px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 2rem;
+            margin: 0 auto 1.5rem;
             position: relative;
             z-index: 1;
             animation: checkmarkDraw 0.8s ease-out;
@@ -77,9 +93,9 @@
         }
 
         .icone-sucesso i {
-            font-size: 8rem;
-            color: var(--primary-color);
-            text-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+            font-size: 7rem;
+            color: var(--gold);
+            text-shadow: 0 0 20px rgba(246, 162, 30, 0.3);
             animation: pulse 2s infinite;
         }
 
@@ -89,17 +105,18 @@
         }
 
         h1 {
-            color: #1f2937;
+            color: var(--black);
             font-weight: 700;
             margin-bottom: 1rem;
             font-size: 2.2rem;
             position: relative;
             z-index: 1;
+            letter-spacing: 0.5px;
         }
 
         .mensagem {
-            color: #6b7280;
-            font-size: 1.15rem;
+            color: var(--gray-dark);
+            font-size: 1.1rem;
             margin-bottom: 2rem;
             line-height: 1.6;
             position: relative;
@@ -107,17 +124,18 @@
         }
 
         .nome-cadastrado {
-            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
-            border-left: 5px solid var(--primary-color);
+            background: #fff7e9;
+            border-left: 5px solid var(--gold);
             padding: 1.2rem 1.5rem;
             border-radius: 12px;
             margin: 2rem 0;
-            color: #065f46;
+            color: var(--black);
             font-weight: 600;
             font-size: 1.1rem;
             position: relative;
             z-index: 1;
             animation: slideInLeft 0.6s ease-out 0.3s both;
+            box-shadow: 0 2px 8px rgba(246, 162, 30, 0.15);
         }
 
         @keyframes slideInLeft {
@@ -125,7 +143,10 @@
             to { opacity: 1; transform: translateX(0); }
         }
 
-        /* ✨ NOVO: CARD DE OPÇÕES */
+        .nome-cadastrado i {
+            color: var(--gold);
+        }
+
         .opcoes-container {
             position: relative;
             z-index: 1;
@@ -143,19 +164,19 @@
         .divider::after {
             content: '';
             flex: 1;
-            border-bottom: 2px solid #e5e7eb;
+            border-bottom: 2px solid rgba(246, 162, 30, 0.2);
         }
 
         .divider span {
             padding: 0 1rem;
-            color: #6b7280;
+            color: var(--gray-dark);
             font-weight: 600;
             font-size: 0.9rem;
         }
 
         .btn-cadastrar-outro {
-            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-            color: white;
+            background: var(--gold);
+            color: var(--black);
             border: none;
             padding: 1rem 2rem;
             border-radius: 12px;
@@ -166,7 +187,7 @@
             gap: 0.5rem;
             transition: all 0.3s ease;
             font-size: 1.1rem;
-            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+            box-shadow: 0 4px 15px rgba(246, 162, 30, 0.3);
             animation: fadeInUp 0.6s ease-out 0.7s both;
         }
 
@@ -177,8 +198,9 @@
 
         .btn-cadastrar-outro:hover {
             transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.5);
-            color: white;
+            background: var(--gold-dark);
+            color: var(--white);
+            box-shadow: 0 10px 30px rgba(246, 162, 30, 0.5);
         }
 
         .btn-cadastrar-outro i {
@@ -186,8 +208,8 @@
         }
 
         .info-box {
-            background: #fef3c7;
-            border-left: 4px solid #f59e0b;
+            background: #fff7e9;
+            border-left: 4px solid var(--gold);
             padding: 1rem 1.2rem;
             border-radius: 10px;
             margin-bottom: 1.5rem;
@@ -195,6 +217,7 @@
             position: relative;
             z-index: 1;
             animation: fadeIn 0.6s ease-out 0.9s both;
+            box-shadow: 0 2px 8px rgba(246, 162, 30, 0.15);
         }
 
         @keyframes fadeIn {
@@ -203,18 +226,18 @@
         }
 
         .info-box i {
-            color: #d97706;
+            color: var(--gold);
         }
 
         .info-box small {
-            color: #92400e;
+            color: var(--gray-dark);
             font-size: 0.9rem;
             line-height: 1.5;
         }
 
         .btn-voltar {
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
-            color: white;
+            background: var(--gold);
+            color: var(--black);
             border: none;
             padding: 0.85rem 2.5rem;
             border-radius: 12px;
@@ -224,13 +247,14 @@
             transition: all 0.3s ease;
             position: relative;
             z-index: 1;
-            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+            box-shadow: 0 4px 15px rgba(246, 162, 30, 0.3);
         }
 
         .btn-voltar:hover {
             transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(79, 70, 229, 0.4);
-            color: white;
+            background: var(--black);
+            color: var(--gold);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
         }
 
         .btn-voltar i {
@@ -239,6 +263,19 @@
 
         .btn-voltar:hover i {
             transform: translateX(-3px);
+        }
+
+        .footer-text {
+            margin-top: 2rem;
+            color: var(--gray-dark);
+            font-size: 0.9rem;
+            position: relative;
+            z-index: 1;
+            opacity: 0.9;
+        }
+
+        .footer-text i {
+            color: var(--gold);
         }
 
         @media (max-width: 768px) {
@@ -251,21 +288,28 @@
                 font-size: 1.8rem;
             }
 
+            .logo-container img {
+                max-width: 80px;
+            }
+
             .icone-sucesso {
                 width: 100px;
                 height: 100px;
             }
 
             .icone-sucesso i {
-                font-size: 3.5rem;
+                font-size: 5rem;
             }
         }
     </style>
 </head>
 <body>
     <div class="sucesso-container">
+        <div class="logo-container">
+            <img src="https://i.ibb.co/6RvMh1cL/logo.png" alt="Logo R3 Formaturas">
+        </div>
+
         <div class="icone-sucesso">
-            <img src="https://i.ibb.co/6RvMh1cL/logo-r3.png" alt="R3 Formaturas" style="max-width: 120px; margin-bottom: 1rem;">
             <i class="fas fa-check-circle"></i>
         </div>
 
@@ -278,7 +322,6 @@
             <span id="nomeExibir">Carregando...</span>
         </div>
 
-        <!-- ✨ NOVO: OPÇÕES -->
         <div class="opcoes-container">
             <!-- Mostrar apenas se for RESPONSÁVEL -->
             <div id="opcaoOutroFilho" style="display: none;">
@@ -305,9 +348,9 @@
             </a>
         </div>
 
-        <p class="mt-4" style="color: #9ca3af; font-size: 0.9rem; position: relative; z-index: 1;">
+        <p class="footer-text">
             <i class="fas fa-shield-alt me-1"></i>
-            Em breve entraremos em contato com você
+            Em breve entraremos em contato com você!
         </p>
     </div>
 
@@ -320,16 +363,15 @@
                 const tipoTexto = dadosCadastro.tipo === 'aluno' ? 'Aluno' : 'Responsável';
                 document.getElementById('nomeExibir').textContent = `${tipoTexto}: ${dadosCadastro.nome}`;
                 
-                // ✨ MOSTRAR OPÇÃO APENAS SE FOR RESPONSÁVEL
+                // Mostrar opção apenas se for responsável
                 if (dadosCadastro.tipo === 'responsavel') {
                     document.getElementById('opcaoOutroFilho').style.display = 'block';
                     
-                    // Configurar botão
                     const btnCadastrarOutro = document.getElementById('btnCadastrarOutro');
                     btnCadastrarOutro.addEventListener('click', function(e) {
                         e.preventDefault();
                         
-                        // ✨ SALVAR DADOS DO RESPONSÁVEL PARA PRÉ-PREENCHER
+                        // Salvar dados do responsável para pré-preencher
                         const dadosResponsavel = {
                             eventoId: dadosCadastro.eventoId,
                             nomeContato: dadosCadastro.nomeContato,
@@ -339,26 +381,19 @@
                         };
                         
                         localStorage.setItem('dadosResponsavel', JSON.stringify(dadosResponsavel));
-                        
-                        // Redirecionar para o formulário
                         window.location.href = `cadastro.html?e=${dadosCadastro.eventoId}`;
                     });
                 }
-                
-                // NÃO limpar localStorage aqui (só limpar ao voltar pro início)
-                
             } else {
-                // Se não houver dados, redirecionar
                 window.location.href = 'index.html';
             }
 
-            // Efeito de confete
             criarConfete();
         });
 
-        // Efeito de confete
+        // Efeito de confete dourado
         function criarConfete() {
-            const cores = ['#4f46e5', '#7c3aed', '#ec4899', '#10b981', '#f59e0b', '#ef4444'];
+            const cores = ['#F6A21E', '#C57F17', '#FFB84D', '#0D0D0D', '#FFE0B3'];
             const formas = ['circle', 'square'];
             
             for (let i = 0; i < 60; i++) {
