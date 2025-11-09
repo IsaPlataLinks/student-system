@@ -82,7 +82,7 @@ class Evento(db.Model):
     __tablename__ = 'eventos'
     id = db.Column(db.Integer, primary_key=True)
     escola_id = db.Column(db.Integer, db.ForeignKey('escolas.id'), nullable=False)
-    data_evento = db.Column(db.Date)
+    data_evento = db.Column(db.Date, nullable=False)  # agora OBRIGATÓRIA
     local_evento = db.Column(db.String(200))
     endereco_evento = db.Column(db.String(255))
     tipo_formatura = db.Column(db.String(50))
@@ -90,6 +90,10 @@ class Evento(db.Model):
     vendedor_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'))
     criado_em = db.Column(db.DateTime, default=datetime.utcnow)
     leads = db.relationship('Lead', backref='evento', lazy=True)
+
+    __table_args__ = (
+        db.UniqueConstraint('escola_id', 'data_evento', name='unique_evento_escola_data'),
+    )
 
     @property
     def qr_url(self):
@@ -256,33 +260,16 @@ def criar_evento():
         )
         db.session.add(escola)
 
-# Data do evento (OBRIGATÓRIA)
-if not data.get('data_evento'):
-    return jsonify({'erro': 'Data do evento é obrigatória (dd/mm/aaaa ou YYYY-MM-DD)'}), 400
+    # -------- DAQUI PRA BAIXO PRECISA FICAR DENTRO DA FUNÇÃO --------
+    # Data do evento (OBRIGATÓRIA)
+    if not data.get('data_evento'):
+        return jsonify({'erro': 'Data do evento é obrigatória (dd/mm/aaaa ou YYYY-MM-DD)'}), 400
 
-data_evento = _parse_data_evento(data['data_evento'])
-if not data_evento:
-    return jsonify({'erro': 'Data do evento inválida (use dd/mm/aaaa ou YYYY-MM-DD)'}), 400
-if data_evento.year < datetime.utcnow().year:
-    return jsonify({'erro': 'Ano da data do evento não pode ser anterior ao ano atual'}), 400
-
-evento = Evento(
-    escola=escola,
-    data_evento=data_evento,
-    local_evento=data.get('local_evento'),
-    endereco_evento=data.get('endereco_evento'),
-    tipo_formatura=data.get('tipo_formatura'),
-    status='ativo',
-    vendedor_id=uid
-)
-
-try:
-    db.session.add(evento)
-    db.session.commit()
-except IntegrityError:
-    db.session.rollback()
-    return jsonify({'erro': 'Já existe um evento para esta escola nesta data'}), 400
-
+    data_evento = _parse_data_evento(data['data_evento'])
+    if not data_evento:
+        return jsonify({'erro': 'Data do evento inválida (use dd/mm/aaaa ou YYYY-MM-DD)'}), 400
+    if data_evento.year < datetime.utcnow().year:
+        return jsonify({'erro': 'Ano da data do evento não pode ser anterior ao ano atual'}), 400
 
     evento = Evento(
         escola=escola,
@@ -293,8 +280,13 @@ except IntegrityError:
         status='ativo',
         vendedor_id=uid
     )
-    db.session.add(evento)
-    db.session.commit()
+
+    try:
+        db.session.add(evento)
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({'erro': 'Já existe um evento para esta escola nesta data'}), 409
 
     qr_url = f"{request.host_url}cadastro?e={evento.id}"
     return jsonify({
@@ -302,7 +294,6 @@ except IntegrityError:
         'evento_id': evento.id,
         'qr_url': qr_url
     }), 201
-
 
 @app.route('/api/eventos', methods=['GET'])
 @jwt_required()
