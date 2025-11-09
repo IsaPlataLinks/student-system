@@ -591,6 +591,59 @@ def atualizar_lead(lead_id):
     lead = Lead.query.get_or_404(lead_id)
     data = request.get_json() or {}
 
+    # Campos de contato do responsável
+    if 'nome_contato' in data:
+        nome = (data['nome_contato'] or '').strip()
+        if nome and not validar_nome(nome):
+            return jsonify({'erro': 'Nome do responsável inválido! Use apenas letras'}), 400
+        lead.nome_contato = nome
+    
+    if 'email' in data:
+        email = (data['email'] or '').strip()
+        if email and not validar_email(email):
+            return jsonify({'erro': 'E-mail inválido'}), 400
+        lead.email = email
+    
+    if 'whatsapp' in data:
+        whatsapp = (data['whatsapp'] or '').strip()
+        if whatsapp and not validar_whatsapp(whatsapp):
+            return jsonify({'erro': 'WhatsApp inválido! Formato: (11) 98765-4321'}), 400
+        lead.whatsapp = whatsapp
+
+    # Dados do formando
+    if 'nome_formando' in data:
+        nome = (data['nome_formando'] or '').strip()
+        if nome and not validar_nome(nome):
+            return jsonify({'erro': 'Nome do formando inválido! Use apenas letras'}), 400
+        lead.nome_formando = nome
+    
+    if 'matricula' in data:
+        matricula = (data['matricula'] or '').strip().upper()
+        if matricula and not validar_matricula(matricula):
+            return jsonify({'erro': 'Matrícula inválida! Use apenas números (máximo 10 dígitos)'}), 400
+        # Verifica se a nova matrícula já existe para outro lead no mesmo evento
+        existente = Lead.query.filter(
+            Lead.matricula == matricula,
+            Lead.evento_id == lead.evento_id,
+            Lead.id != lead_id
+        ).first()
+        if existente:
+            return jsonify({'erro': f'Matrícula {matricula} já cadastrada neste evento!'}), 400
+        lead.matricula = matricula
+    
+    if 'serie' in data:
+        serie = (data['serie'] or '').strip()
+        if serie and not validar_serie(serie):
+            return jsonify({'erro': 'Série inválida!'}), 400
+        lead.serie = serie
+    
+    if 'letra_turma' in data:
+        turma = (data['letra_turma'] or '').strip().upper()
+        if turma and not validar_letra_turma(turma):
+            return jsonify({'erro': 'Turma inválida! Use apenas letras e números'}), 400
+        lead.letra_turma = turma
+
+    # Campos existentes
     if 'status_lead' in data:
         lead.status_lead = data['status_lead']
     if 'observacoes' in data:
@@ -600,8 +653,16 @@ def atualizar_lead(lead_id):
     if not lead.vendedor_id:
         lead.vendedor_id = vendedor_id
 
-    db.session.commit()
-    return jsonify({'mensagem': 'Lead atualizado!'}), 200
+    try:
+        db.session.commit()
+        return jsonify({'mensagem': 'Lead atualizado com sucesso!'}), 200
+    except IntegrityError as e:
+        db.session.rollback()
+        return jsonify({'erro': 'Erro ao atualizar: matrícula duplicada ou conflito de dados'}), 409
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Erro ao atualizar lead: {str(e)}")
+        return jsonify({'erro': 'Erro ao atualizar lead'}), 500
 
 
 @app.route('/api/estatisticas', methods=['GET'])
