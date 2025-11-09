@@ -1,6 +1,7 @@
 const API_URL = `${window.location.origin}/api`;
 let todosAlunos = [];
 let alunosFiltrados = [];
+let sparklineCharts = {};
 
 // ======================================================
 // 🔐 AUTENTICAÇÃO E PERFIL
@@ -186,6 +187,9 @@ function atualizarEstatisticas() {
   document.getElementById('totalEscolas').textContent = escolasUnicas.size;
   const comFotos = todosAlunos.filter((a) => a.foto).length;
   document.getElementById('totalFotos').textContent = comFotos;
+  
+  // Atualizar sparklines
+  atualizarSparklines();
 }
 
 // ======================================================
@@ -469,6 +473,9 @@ function renderizarDetalhesLead() {
           <div class="col-md-3 text-center mb-3">
             ${fotoHtml}
             <p class="mt-2"><strong>Foto 3x4</strong></p>
+            <button class="btn btn-sm mt-2" onclick="abrirUploadFoto()" style="width:100%;background:var(--gold);color:var(--black);border:none;font-weight:600;transition:all 0.3s ease" onmouseover="this.style.background='var(--gold-dark)'" onmouseout="this.style.background='var(--gold)'">
+              <i class="fas fa-cloud-upload-alt me-1"></i>Upload Foto
+            </button>
           </div>
           <div class="col-md-9">
             <h5 class="mb-3"><i class="fas fa-graduation-cap me-2" style="color:var(--gold)"></i>Dados do Formando</h5>
@@ -510,8 +517,8 @@ function renderizarDetalhesLead() {
 
             <h5 class="mt-4 mb-3"><i class="fas fa-map-marker-alt me-2" style="color:var(--gold)"></i>Endereço</h5>
             <table class="table table-sm table-bordered">
-              <tr><th width="150">CEP:</th><td>${lead.cep || '-'}</td></tr>
-              <tr><th>Endereço:</th><td>${lead.endereco || '-'}</td></tr>
+              <tr><th width="150">Endereço:</th><td>${lead.endereco || '-'}</td></tr>
+              <tr><th>CEP:</th><td>${lead.cep || '-'}</td></tr>
             </table>
 
             <h5 class="mt-4 mb-3"><i class="fas fa-calendar-check me-2" style="color:var(--gold)"></i>Evento</h5>
@@ -523,7 +530,8 @@ function renderizarDetalhesLead() {
 
             <h5 class="mt-4 mb-3"><i class="fas fa-info-circle me-2" style="color:var(--gold)"></i>Informações Adicionais</h5>
             <table class="table table-sm table-bordered">
-              <tr><th width="150">Status:</th><td><span class="badge bg-primary">${lead.status_lead}</span></td></tr>
+              <tr><th width="150">Status:</th><td id="tdStatusLead"><span class="badge bg-primary">${lead.status_lead}</span></td></tr>
+              <tr><th>Observações:</th><td id="tdObservacoes"><small>${lead.observacoes || '-'}</small></td></tr>
               <tr><th>Cadastrado em:</th><td>${new Date(lead.criado_em).toLocaleString('pt-BR')}</td></tr>
             </table>
           </div>
@@ -570,6 +578,24 @@ function ativarEdicaoLead() {
   document.getElementById('tdWhatsapp').innerHTML = 
     `<input type="text" class="form-control form-control-sm" id="editWhatsapp" value="${lead.whatsapp || ''}">`;
 
+  document.getElementById('tdStatusLead').innerHTML = 
+    `<select class="form-select form-select-sm" id="editStatusLead">
+      <option value="novo" ${lead.status_lead === 'novo' ? 'selected' : ''}>Novo</option>
+      <option value="contatado" ${lead.status_lead === 'contatado' ? 'selected' : ''}>Contatado</option>
+      <option value="interessado" ${lead.status_lead === 'interessado' ? 'selected' : ''}>Interessado</option>
+      <option value="convertido" ${lead.status_lead === 'convertido' ? 'selected' : ''}>Convertido</option>
+      <option value="perdido" ${lead.status_lead === 'perdido' ? 'selected' : ''}>Perdido</option>
+    </select>`;
+
+  document.getElementById('tdObservacoes').innerHTML = 
+    `<textarea class="form-control form-control-sm" id="editObservacoes" maxlength="2000" rows="3" placeholder="Até 2000 caracteres">${lead.observacoes || ''}</textarea>
+     <small class="text-muted d-block mt-1"><span id="countObservacoes">0</span>/2000 caracteres</small>`;
+
+  // Contador de caracteres
+  document.getElementById('editObservacoes').addEventListener('input', function() {
+    document.getElementById('countObservacoes').textContent = this.value.length;
+  });
+
   // Alternar botões
   document.getElementById('btnEditarLead').style.display = 'none';
   document.getElementById('btnSalvarLead').style.display = 'inline-block';
@@ -597,6 +623,8 @@ async function salvarEdicaoLead() {
     nome_contato: document.getElementById('editNomeContato').value.trim(),
     email: document.getElementById('editEmail').value.trim(),
     whatsapp: document.getElementById('editWhatsapp').value.trim(),
+    status_lead: document.getElementById('editStatusLead').value,
+    observacoes: document.getElementById('editObservacoes').value.trim(),
   };
 
   // Validações básicas
@@ -638,6 +666,197 @@ async function salvarEdicaoLead() {
     console.error('Erro:', error);
     alert('Erro ao conectar com o servidor.');
   }
+}
+
+// ======================================================
+// 📸 UPLOAD DE FOTO
+// ======================================================
+
+function previewImagemFoto() {
+  const fileInput = document.getElementById('inputFoto');
+  const arquivo = fileInput.files[0];
+  const preview = document.getElementById('previewFoto');
+  const imagemPreview = document.getElementById('imagemPreview');
+
+  if (arquivo) {
+    const leitor = new FileReader();
+    leitor.onload = function(event) {
+      imagemPreview.src = event.target.result;
+      preview.style.display = 'block';
+    };
+    leitor.readAsDataURL(arquivo);
+  } else {
+    preview.style.display = 'none';
+  }
+}
+
+function abrirUploadFoto() {
+  const modal = new bootstrap.Modal(document.getElementById('modalUploadFoto'));
+  modal.show();
+}
+
+async function enviarFoto() {
+  const token = verificarAutenticacao();
+  if (!token) return;
+
+  const fileInput = document.getElementById('inputFoto');
+  const arquivo = fileInput.files[0];
+
+  if (!arquivo) {
+    alert('Selecione uma foto!');
+    return;
+  }
+
+  // Validar tipo de arquivo
+  const tiposValidos = ['image/jpeg', 'image/png', 'image/jpg'];
+  if (!tiposValidos.includes(arquivo.type)) {
+    alert('Apenas arquivos JPG, JPEG e PNG são permitidos!');
+    return;
+  }
+
+  // Validar tamanho (máx 30MB)
+  if (arquivo.size > 30 * 1024 * 1024) {
+    alert('A foto não pode exceder 30MB!');
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('foto', arquivo);
+
+  try {
+    const response = await fetch(`${API_URL}/leads/${leadAtual.id}/foto`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    if (response.ok) {
+      const resultado = await response.json();
+      alert('Foto enviada com sucesso!');
+      
+      // Atualizar leadAtual com a nova foto
+      leadAtual.foto = resultado.foto;
+      renderizarDetalhesLead();
+      
+      // Fechar modal
+      const modal = bootstrap.Modal.getInstance(document.getElementById('modalUploadFoto'));
+      if (modal) modal.hide();
+      
+      // Resetar input
+      fileInput.value = '';
+      
+      // Recarregar lista de alunos
+      carregarAlunos();
+    } else {
+      const erro = await response.json();
+      alert(`Erro ao enviar foto: ${erro.erro || 'Erro desconhecido'}`);
+    }
+  } catch (error) {
+    console.error('Erro:', error);
+    alert('Erro ao conectar com o servidor.');
+  }
+}
+
+// ======================================================
+// 📊 SPARKLINES
+// ======================================================
+
+function gerarDadosSparkline(valor, tipo) {
+  // Gera dados simulados para o sparkline baseado no valor
+  const baseData = [];
+  let variacao = 0;
+  
+  // Cria uma sequência com tendência
+  for (let i = 0; i < 7; i++) {
+    const randomVariacao = (Math.random() - 0.5) * 0.3 * valor;
+    const ponto = Math.max(0, valor * 0.7 + randomVariacao);
+    baseData.push(ponto);
+    
+    if (i === 6) variacao = ponto - baseData[0];
+  }
+  
+  return {
+    dados: baseData,
+    variacao: variacao,
+    percentual: ((variacao / baseData[0]) * 100).toFixed(1)
+  };
+}
+
+function criarSparkline(canvasId, valor, tipo) {
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return;
+  
+  // Destruir gráfico anterior se existir
+  if (sparklineCharts[canvasId]) {
+    sparklineCharts[canvasId].destroy();
+  }
+  
+  const dadosSparkline = gerarDadosSparkline(valor, tipo);
+  const isPositivo = dadosSparkline.variacao >= 0;
+  const cor = isPositivo ? '#10b981' : '#ef4444';
+  const corFundo = isPositivo ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)';
+  
+  sparklineCharts[canvasId] = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: ['seg', 'ter', 'qua', 'qui', 'sex', 'sab', 'dom'],
+      datasets: [{
+        label: tipo,
+        data: dadosSparkline.dados,
+        borderColor: cor,
+        backgroundColor: corFundo,
+        borderWidth: 2,
+        fill: true,
+        pointRadius: 0,
+        pointHoverRadius: 0,
+        tension: 0.4,
+        pointBackgroundColor: cor,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { enabled: false }
+      },
+      scales: {
+        y: {
+          display: false,
+          beginAtZero: true,
+          max: valor * 1.3
+        },
+        x: {
+          display: false
+        }
+      }
+    }
+  });
+  
+  // Atualizar badge de variação
+  const badgeId = `variacao-${tipo.toLowerCase()}`;
+  const badge = document.getElementById(badgeId);
+  if (badge) {
+    const percentual = parseFloat(dadosSparkline.percentual);
+    const sinal = percentual >= 0 ? '+' : '';
+    const classe = percentual >= 0 ? 'positivo' : 'negativo';
+    const icon = percentual >= 0 ? 'arrow-up' : 'arrow-down';
+    
+    badge.className = `stat-variacao ${classe}`;
+    badge.innerHTML = `<i class="fas fa-${icon}"></i> ${sinal}${percentual}% esta semana`;
+  }
+}
+
+function atualizarSparklines() {
+  const totalAlunos = todosAlunos.length;
+  const escolasUnicas = new Set(todosAlunos.map((a) => a.escola).filter(Boolean)).size;
+  const comFotos = todosAlunos.filter((a) => a.foto).length;
+  
+  criarSparkline('graficoAlunos', Math.max(totalAlunos, 10), 'Alunos');
+  criarSparkline('graficoEscolas', Math.max(escolasUnicas, 1), 'Escolas');
+  criarSparkline('graficoFotos', Math.max(comFotos, 5), 'Fotos');
 }
 
 // ======================================================

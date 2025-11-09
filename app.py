@@ -6,7 +6,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from datetime import datetime, timedelta
 from sqlalchemy.orm import joinedload
-from PIL import Image
+from PIL import Image, ImageOps
 import qrcode
 from io import BytesIO
 import os
@@ -52,7 +52,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'r3-formaturas-secret-2024')
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=8)
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
-app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5MB
+app.config['MAX_CONTENT_LENGTH'] = 15 * 1024 * 1024  # 15MB
 
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
@@ -132,6 +132,18 @@ class Lead(db.Model):
         db.UniqueConstraint('matricula', 'evento_id', name='unique_matricula_evento'),
     )
 
+class GaleriaFoto(db.Model):
+    __tablename__ = 'galeria_fotos'
+    id = db.Column(db.Integer, primary_key=True)
+    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=False)
+    lead_id = db.Column(db.Integer, db.ForeignKey('leads.id'), nullable=True)  # opcional
+    nome_arquivo = db.Column(db.String(255), nullable=False)
+    descricao = db.Column(db.String(255))
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    evento = db.relationship('Evento', backref='galeria_fotos')
+    lead = db.relationship('Lead', backref='fotos_galeria')
+
 # ==================== VALIDAÇÕES ====================
 
 def validar_nome(nome: str) -> bool:
@@ -178,16 +190,33 @@ def processar_foto(file):
     # salva original
     file.save(caminho)
 
-    # abre, normaliza e salva como JPEG 300x400 com fundo branco
+    # Abre com PIL para redimensionamento
     with Image.open(caminho) as img:
-        if img.mode != 'RGB':           # evita erro ao salvar/pastar JPEG
+        if img.mode != 'RGB':
             img = img.convert('RGB')
-        img.thumbnail((300, 400), Image.Resampling.LANCZOS)
-
-        nova_img = Image.new('RGB', (300, 400), (255, 255, 255))
-        offset = ((300 - img.width) // 2, (400 - img.height) // 2)
-        nova_img.paste(img, offset)
-        nova_img.save(caminho, 'JPEG', quality=85, optimize=True)
+        
+        width, height = img.size
+        target_width, target_height = 300, 400
+        aspect_ratio = target_width / target_height  # 0.75 (3x4)
+        
+        # Calcula crop inteligente mantendo aspect ratio
+        current_ratio = width / height
+        
+        if current_ratio > aspect_ratio:
+            # Imagem muito larga - croppa os lados
+            new_width = int(height * aspect_ratio)
+            left = (width - new_width) // 2
+            img = img.crop((left, 0, left + new_width, height))
+        else:
+            # Imagem muito alta - croppa o topo e parte inferior
+            new_height = int(width / aspect_ratio)
+            # Prioriza a parte superior (rosto geralmente está acima do centro)
+            top = int(height * 0.15)  # começa 15% do topo
+            img = img.crop((0, top, width, top + new_height))
+        
+        # Redimensiona para o tamanho final (300x400)
+        img = img.resize((target_width, target_height), Image.Resampling.LANCZOS)
+        img.save(caminho, 'JPEG', quality=85, optimize=True)
 
     return nome_arquivo
 
@@ -581,6 +610,155 @@ def obter_lead(lead_id):
         traceback.print_exc()
         return jsonify({'erro': 'Erro ao buscar lead', 'detalhes': str(e)}), 500
 
+@app.route('/api/leads/<int:lead_id>/foto', methods=['PATCH'])
+@jwt_required()
+def atualizar_foto_lead(lead_id):
+    vendedor_id = current_user_id()
+    if vendedor_id is None:
+        return jsonify({'erro': 'Token inválido'}), 401
+
+    lead = Lead.query.get_or_404(lead_id)
+
+    if 'foto' not in request.files:
+        return jsonify({'erro': 'Nenhuma foto enviada'}), 400
+
+    foto_file = request.files['foto']
+    if foto_file.filename == '':
+        return jsonify({'erro': 'Arquivo vazio'}), 400
+
+    # Se o lead já tem uma foto, deletar a antiga
+    if lead.foto:
+        caminho_antigo = os.path.join(app.config['UPLOAD_FOLDER'], lead.foto)
+        if os.path.exists(caminho_antigo):
+            try:
+                os.remove(caminho_antigo)
+            except Exception as e:
+                print(f"Aviso: não foi possível deletar foto antiga: {str(e)}")
+
+    # Processar e salvar a nova foto
+    nome_foto = processar_foto(foto_file)
+    lead.foto = nome_foto
+    
+    try:
+        db.session.commit()
+        return jsonify({
+            'mensagem': 'Foto atualizada com sucesso!',
+            'foto': nome_foto
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Erro ao atualizar foto: {str(e)}")
+        return jsonify({'erro': 'Erro ao atualizar foto'}), 500
+
+@app.route('/api/eventos/<int:evento_id>/galeria', methods=['POST'])
+@jwt_required()
+def upload_galeria_foto(evento_id):
+    vendedor_id = current_user_id()
+    if vendedor_id is None:
+        return jsonify({'erro': 'Token inválido'}), 401
+    
+    evento = Evento.query.get_or_404(evento_id)
+    
+    if 'fotos' not in request.files:
+        return jsonify({'erro': 'Nenhuma foto enviada'}), 400
+    
+    arquivos = request.files.getlist('fotos')
+    if not arquivos:
+        return jsonify({'erro': 'Nenhuma foto selecionada'}), 400
+    
+    fotos_salvas = []
+    lead_id = request.form.get('lead_id')
+    descricao = request.form.get('descricao', '')
+    
+    for arquivo in arquivos:
+        if arquivo.filename == '':
+            continue
+        
+        # Validar tipo
+        tipos_permitidos = {'jpg', 'jpeg', 'png'}
+        ext = arquivo.filename.rsplit('.', 1)[1].lower() if '.' in arquivo.filename else ''
+        if ext not in tipos_permitidos:
+            continue
+        
+        # Salvar foto sem redimensionar (manter qualidade)
+        filename = secure_filename(arquivo.filename or 'foto.jpg')
+        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        nome_arquivo = f"galeria_{evento_id}_{timestamp}_{filename}"
+        caminho = os.path.join(app.config['UPLOAD_FOLDER'], nome_arquivo)
+        
+        arquivo.save(caminho)
+        
+        # Otimizar apenas a qualidade, sem redimensionar
+        try:
+            with Image.open(caminho) as img:
+                if img.mode != 'RGB':
+                    img = img.convert('RGB')
+                img.save(caminho, 'JPEG', quality=90, optimize=True)
+        except Exception as e:
+            print(f"Aviso ao otimizar imagem: {str(e)}")
+        
+        # Registrar no banco
+        galeria = GaleriaFoto(
+            evento_id=evento_id,
+            lead_id=int(lead_id) if lead_id else None,
+            nome_arquivo=nome_arquivo,
+            descricao=descricao
+        )
+        db.session.add(galeria)
+        fotos_salvas.append(nome_arquivo)
+    
+    try:
+        db.session.commit()
+        return jsonify({
+            'mensagem': f'{len(fotos_salvas)} foto(s) salva(s) com sucesso!',
+            'fotos': fotos_salvas
+        }), 201
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Erro ao salvar galeria: {str(e)}")
+        return jsonify({'erro': 'Erro ao salvar fotos'}), 500
+
+@app.route('/api/eventos/<int:evento_id>/galeria', methods=['GET'])
+@jwt_required()
+def listar_galeria(evento_id):
+    fotos = GaleriaFoto.query.filter_by(evento_id=evento_id).order_by(GaleriaFoto.criado_em.desc()).all()
+    
+    resultado = []
+    for foto in fotos:
+        resultado.append({
+            'id': foto.id,
+            'url': f'/static/uploads/{foto.nome_arquivo}',
+            'nome_arquivo': foto.nome_arquivo,
+            'descricao': foto.descricao,
+            'lead_id': foto.lead_id,
+            'criado_em': foto.criado_em.isoformat()
+        })
+    
+    return jsonify(resultado), 200
+
+@app.route('/api/galeria/<int:foto_id>', methods=['DELETE'])
+@jwt_required()
+def deletar_galeria_foto(foto_id):
+    foto = GaleriaFoto.query.get_or_404(foto_id)
+    
+    # Deletar arquivo
+    caminho = os.path.join(app.config['UPLOAD_FOLDER'], foto.nome_arquivo)
+    if os.path.exists(caminho):
+        try:
+            os.remove(caminho)
+        except Exception as e:
+            print(f"Aviso: não foi possível deletar arquivo: {str(e)}")
+    
+    # Deletar registro
+    try:
+        db.session.delete(foto)
+        db.session.commit()
+        return jsonify({'mensagem': 'Foto deletada com sucesso!'}), 200
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Erro ao deletar foto: {str(e)}")
+        return jsonify({'erro': 'Erro ao deletar foto'}), 500
+
 @app.route('/api/leads/<int:lead_id>', methods=['PATCH'])
 @jwt_required()
 def atualizar_lead(lead_id):
@@ -643,11 +821,20 @@ def atualizar_lead(lead_id):
             return jsonify({'erro': 'Turma inválida! Use apenas letras e números'}), 400
         lead.letra_turma = turma
 
-    # Campos existentes
+    # Status e observações
     if 'status_lead' in data:
-        lead.status_lead = data['status_lead']
+        status = (data['status_lead'] or '').strip().lower()
+        status_validos = ['novo', 'contatado', 'interessado', 'convertido', 'perdido']
+        if status and status not in status_validos:
+            return jsonify({'erro': f'Status inválido! Opções: {", ".join(status_validos)}'}), 400
+        lead.status_lead = status
+    
     if 'observacoes' in data:
-        lead.observacoes = data['observacoes']
+        obs = (data['observacoes'] or '').strip()
+        if len(obs) > 2000:
+            return jsonify({'erro': 'Observações não podem ter mais que 2000 caracteres'}), 400
+        lead.observacoes = obs
+    
     if data.get('marcar_contato'):
         lead.data_contato = datetime.utcnow()
     if not lead.vendedor_id:
@@ -805,13 +992,13 @@ def criar_usuario_admin():
         )
         db.session.add(admin)
         db.session.commit()
-        print("✅ Usuário admin criado: login='admin', senha='admin123'")
+        print("[OK] Usuario admin criado: login='admin', senha='admin123'")
 
 # --- Auto-init também quando o app é importado (Render/Gunicorn) ---
 with app.app_context():
     db.create_all()
     criar_usuario_admin()
-    print("✅ DB inicializado (auto-init)")
+    print("[OK] DB inicializado (auto-init)")
 
 if __name__ == '__main__':
     with app.app_context():

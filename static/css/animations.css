@@ -1,0 +1,677 @@
+/* ==================== ANIMAÇÕES GLOBAIS ==================== */
+
+/* Transição de página */
+@keyframes pageTransition {
+  from {
+    opacity: 0;
+    filter: blur(10px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+body {
+  animation: pageTransition 0.5s ease-out;
+}
+
+/* ==================== SCROLLBAR CUSTOMIZADO ==================== */
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--gold);
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #C57F17;
+}
+
+/* ==================== CADASTRO - INDICADOR DE ETAPAS ==================== */
+
+.etapas-container {
+  display: flex;
+  justify-content: space-between;
+  margin: 1.5rem 0;
+  position: relative;
+}
+
+.etapas-container::before {
+  content: '';
+  position: absolute;
+  top: 20px;
+  left: 15%;
+  right: 15%;
+  height: 2px;
+  background: #e2e8f0;
+  z-index: 0;
+}
+
+.etapa {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  position: relative;
+  z-index: 1;
+}
+
+.etapa-circulo {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  border: 3px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+}
+
+.etapa.active .etapa-circulo {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: white;
+  box-shadow: 0 0 0 4px rgba(246, 162, 30, 0.2);
+  transform: scale(1.1);
+}
+
+.etapa.completed .etapa-circulo {
+  background: #10b981;
+  border-color: #10b981;
+  color: white;
+  animation: bounceIn 0.5s ease;
+}
+
+.etapa span {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 600;
+  text-align: center;
+}
+
+.etapa.active span {
+  color: var(--gold);
+  font-weight: 700;
+}
+
+/* ==================== CADASTRO - VALIDAÇÃO ==================== */
+
+@keyframes shakeError {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
+}
+
+.form-control.is-invalid {
+  animation: shakeError 0.4s ease-in-out;
+  border-color: #ef4444 !important;
+}
+
+.form-control.is-valid {
+  border-color: #10b981 !important;
+}
+
+/* ==================== CADASTRO - PREVIEW FOTO ==================== */
+
+.foto-preview {
+  width: 85px;
+  height: 110px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: white;
+  border: none;
+  padding: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  position: relative;
+  transform: rotate(-2deg);
+  transition: all 0.3s ease;
+  object-fit: cover;
+}
+
+.foto-preview:hover {
+  transform: rotate(0deg) scale(1.05);
+  box-shadow: 0 8px 25px rgba(246, 162, 30, 0.2);
+}
+
+/* ==================== INPUTS COM GLOW ==================== */
+
+.form-control:focus {
+  border-color: var(--gold);
+  box-shadow: 
+    0 0 0 0.2rem rgba(246, 162, 30, 0.15),
+    0 0 20px rgba(246, 162, 30, 0.1);
+  transform: scale(1.01);
+}
+
+/* ==================== BUTTONS COM RIPPLE ==================== */
+
+.ripple-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  transform: scale(0);
+  pointer-events: none;
+}
+
+@keyframes ripple-animation {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* ==================== DASHBOARD - CARDS ESTATÍSTICAS ==================== */
+
+.stat-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  display: flex;
+  gap: 1rem;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(246, 162, 30, 0.1);
+}
+
+.stat-icon {
+  width: 50px;
+  height: 50px;
+  background: rgba(246, 162, 30, 0.1);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gold);
+  font-size: 1.5rem;
+}
+
+.stat-info h3 {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.stat-info p {
+  margin: 0.25rem 0 0;
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.stat-variacao {
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-top: 0.5rem;
+  display: inline-block;
+}
+
+.stat-variacao.positivo {
+  color: #10b981;
+}
+
+.stat-variacao.negativo {
+  color: #ef4444;
+}
+
+.mini-grafico {
+  margin-top: 0.5rem;
+  height: 30px;
+}
+
+/* ==================== DASHBOARD - FILTROS ==================== */
+
+.filtros-container {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 15px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  margin-bottom: 2rem;
+  transition: all 0.3s ease;
+}
+
+.filtros-container:focus-within {
+  box-shadow: 0 8px 30px rgba(246, 162, 30, 0.15);
+  transform: translateY(-2px);
+}
+
+/* ==================== DASHBOARD - ALUNO CARD ==================== */
+
+.aluno-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.aluno-card:hover {
+  box-shadow: 0 8px 20px rgba(246, 162, 30, 0.1);
+  transform: translateY(-2px);
+}
+
+.card-header-custom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.card-header-custom h6 {
+  margin: 0;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.badge-status {
+  font-size: 0.7rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 20px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.badge-status i {
+  font-size: 0.5rem;
+  animation: pulse-dot 2s infinite;
+}
+
+.badge-status.novo {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.badge-status.contatado {
+  background: rgba(246, 162, 30, 0.1);
+  color: var(--gold);
+}
+
+.badge-status.interessado {
+  background: rgba(139, 92, 246, 0.1);
+  color: #8b5cf6;
+}
+
+.badge-status.convertido {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.badge-status.perdido {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ==================== SKELETON LOADING ==================== */
+
+.skeleton-box {
+  height: 20px;
+  background: linear-gradient(
+    90deg,
+    #f1f5f9 0%,
+    #e2e8f0 20%,
+    #f1f5f9 40%,
+    #f1f5f9 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ==================== EVENTOS - TABELA HOVER ==================== */
+
+.table tbody tr {
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.table tbody tr::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 4px;
+  background: var(--gold);
+  transform: scaleY(0);
+  transition: transform 0.3s ease;
+}
+
+.table tbody tr:hover::before {
+  transform: scaleY(1);
+}
+
+.table tbody tr:hover {
+  background: #fff7e9;
+  transform: translateX(4px);
+  box-shadow: 4px 0 12px rgba(246, 162, 30, 0.1);
+}
+
+/* ==================== EVENTOS - BADGE ANIMAÇÃO ==================== */
+
+.badge {
+  position: relative;
+  overflow: hidden;
+}
+
+.badge::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  transition: left 0.5s ease;
+}
+
+.badge:hover::before {
+  left: 100%;
+}
+
+/* ==================== EVENTOS - QR CODE ZOOM ==================== */
+
+#modalQRCode .modal-dialog {
+  animation: zoomIn 0.3s ease-out;
+}
+
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.qr-display {
+  transition: all 0.3s ease;
+}
+
+.qr-display:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 20px rgba(246, 162, 30, 0.2);
+}
+
+/* ==================== INDEX - PARALLAX ==================== */
+
+.hero-parallax {
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-parallax::before {
+  content: '';
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: 
+    radial-gradient(circle at 20% 50%, rgba(246, 162, 30, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(246, 162, 30, 0.08) 0%, transparent 50%);
+  animation: float 20s ease-in-out infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+@keyframes float {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(50px, 50px); }
+}
+
+/* ==================== INDEX - GLASSMORPHISM ==================== */
+
+.card-boas-vindas {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  border-radius: 20px;
+}
+
+/* ==================== LOGIN - SHAKE ANIMATION ==================== */
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
+  20%, 40%, 60%, 80% { transform: translateX(8px); }
+}
+
+.login-card.error {
+  animation: shake 0.5s ease-in-out;
+}
+
+.btn-login {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.btn-login::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s ease, height 0.6s ease;
+}
+
+.btn-login:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* ==================== SUCESSO - CONFETE ==================== */
+
+.confete-particula {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* ==================== SUCESSO - PULSE BUTTON ==================== */
+
+.btn-cadastrar-outro {
+  animation: pulse-button 2s infinite;
+}
+
+@keyframes pulse-button {
+  0%, 100% {
+    box-shadow: 0 4px 15px rgba(246, 162, 30, 0.3);
+  }
+  50% {
+    box-shadow: 0 4px 25px rgba(246, 162, 30, 0.5);
+    transform: scale(1.02);
+  }
+}
+
+/* ==================== TOAST NOTIFICATIONS ==================== */
+
+#toastContainer {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10000;
+}
+
+.toast-notificacao {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-radius: 10px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  margin-bottom: 1rem;
+  font-weight: 500;
+  animation: slideInRight 0.4s ease-out;
+}
+
+.toast-notificacao.toast-success {
+  background: #10b981;
+  color: white;
+}
+
+.toast-notificacao.toast-error {
+  background: #ef4444;
+  color: white;
+}
+
+.toast-notificacao.toast-warning {
+  background: #f59e0b;
+  color: white;
+}
+
+.toast-notificacao.toast-info {
+  background: #3b82f6;
+  color: white;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(400px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(400px);
+  }
+}
+
+/* ==================== BOUNCE & ZOOM ANIMATIONS ==================== */
+
+@keyframes bounceIn {
+  0% { transform: scale(0); opacity: 0; }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes zoomInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ==================== FADE ANIMATIONS ==================== */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+
+
+/* ==================== BUTTON RIPPLE EFFECT ==================== */
+
+.btn-admin {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-admin .ripple {
+position: absolute;
+border-radius: 50%;
+background: rgba(255, 255, 255, 0.5);
+transform: scale(0);
+pointer-events: none;
+}
+
+@keyframes ripple-animation {
+to {
+transform: scale(4);
+opacity: 0;
+}
+}
+
+/* ==================== SPARKLINE MINI GRÁFICOS ==================== */
+
+.mini-grafico canvas {
+  max-height: 30px;
+  margin-top: 0.5rem;
+}
+
+.stat-card-enhanced {
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card-enhanced::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: linear-gradient(180deg, transparent, rgba(246, 162, 30, 0.05));
+  pointer-events: none;
+}

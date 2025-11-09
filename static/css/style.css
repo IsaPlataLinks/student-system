@@ -10,6 +10,8 @@
     --border-color: #e5e7eb;
     --text-muted: #6b7280;
     --success-color: #22c55e;
+    --gold: #F6A21E;
+    --gold-dark: #C57F17;
 }
 
 /* ==================== RESET & BASE ==================== */
@@ -93,8 +95,11 @@ body {
 
 .form-control:focus {
     outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    border-color: var(--gold);
+    box-shadow: 
+        0 0 0 0.2rem rgba(246, 162, 30, 0.15),
+        0 0 20px rgba(246, 162, 30, 0.1);
+    transform: scale(1.01);
 }
 
 .form-control.is-valid {

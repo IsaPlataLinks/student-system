@@ -6,6 +6,7 @@
     <title>Cadastro Realizado! - R3 Formaturas</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/animations.css" rel="stylesheet">
     <style>
         :root {
             --background-gold: #FFE0B3;
@@ -355,13 +356,31 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/ui-enhancements.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const dadosCadastro = JSON.parse(localStorage.getItem('cadastroSucesso'));
             
             if (dadosCadastro) {
                 const tipoTexto = dadosCadastro.tipo === 'aluno' ? 'Aluno' : 'Responsável';
-                document.getElementById('nomeExibir').textContent = `${tipoTexto}: ${dadosCadastro.nome}`;
+                const nomeCompleto = `${tipoTexto}: ${dadosCadastro.nome}`;
+                
+                // Animar nome com efeito de digitação
+                let index = 0;
+                const nomeElement = document.getElementById('nomeExibir');
+                nomeElement.textContent = '';
+                
+                const intervalo = setInterval(() => {
+                  if (index < nomeCompleto.length) {
+                    nomeElement.textContent += nomeCompleto[index];
+                    index++;
+                  } else {
+                    clearInterval(intervalo);
+                  }
+                }, 50);
+                
+                // Animar nome com efeito de digitação
+                UI.animarNome(nomeCompleto, 'nomeExibir');
                 
                 // Mostrar opção apenas se for responsável
                 if (dadosCadastro.tipo === 'responsavel') {
@@ -388,7 +407,12 @@
                 window.location.href = 'index.html';
             }
 
-            criarConfete();
+            // Usar confete realista da biblioteca UI se disponível
+            if (window.UI && window.UI.criarConfeteRealista) {
+                window.UI.criarConfeteRealista();
+            } else {
+                criarConfete();
+            }
         });
 
         // Efeito de confete dourado
@@ -434,9 +458,13 @@
         }
 
         // Easter egg: Clicar no ícone cria mais confetes
-        document.querySelector('.icone-sucesso').addEventListener('click', function() {
-            criarConfete();
-        });
+        const iconeSuccesso = document.querySelector('.icone-sucesso');
+        if (iconeSuccesso) {
+            iconeSuccesso.style.cursor = 'pointer';
+            iconeSuccesso.addEventListener('click', function() {
+                criarConfete();
+            });
+        }
 
         // Limpar dados ao voltar para o início
         document.querySelector('.btn-voltar').addEventListener('click', function() {

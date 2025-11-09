@@ -6,6 +6,7 @@
   <title>Cadastro de Formandos - R3 Formaturas</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+  <link href="/css/animations.css" rel="stylesheet"/>
   <style>
     :root{
       --background-gold:#FFE0B3; --gold:#F6A21E; --gold-dark:#C57F17;
@@ -121,6 +122,22 @@
 
     <div id="eventoBadge" class="text-center"></div>
 
+    <!-- Indicador de Etapas -->
+    <div class="etapas-container">
+      <div class="etapa active" data-etapa="1">
+        <div class="etapa-circulo"><i class="fas fa-user"></i></div>
+        <span>Dados Pessoais</span>
+      </div>
+      <div class="etapa" data-etapa="2">
+        <div class="etapa-circulo"><i class="fas fa-address-book"></i></div>
+        <span>Contato</span>
+      </div>
+      <div class="etapa" data-etapa="3">
+        <div class="etapa-circulo"><i class="fas fa-camera"></i></div>
+        <span>Foto</span>
+      </div>
+    </div>
+
     <!-- Barra de Progresso -->
     <div class="progress-bar-custom">
       <div id="progressFill" class="progress-fill"></div>
@@ -141,13 +158,21 @@
         </div>
 
         <div class="col-md-8">
-          <label class="form-label required">Matrícula do aluno</label>
-          <div class="input-icon">
-            <input type="text" class="form-control" name="matricula" id="matricula" maxlength="10" required placeholder="Ex: 0000044081" inputmode="numeric"/>
-            <i class="state"></i>
-          </div>
-          <small class="small-hint">Apenas números • Máximo 10 dígitos</small>
-        </div>
+        <label class="form-label required">
+          Matrícula do aluno
+        <i class="fas fa-info-circle ms-1" 
+           data-bs-toggle="tooltip" 
+             data-bs-placement="top" 
+             title="Encontre no cartão de matrícula ou documento da escola"
+               style="color: var(--gold); cursor: help; font-size: 0.85rem;">
+             </i>
+           </label>
+           <div class="input-icon">
+             <input type="text" class="form-control" name="matricula" id="matricula" maxlength="10" required placeholder="Ex: 0000044081" inputmode="numeric"/>
+             <i class="state"></i>
+           </div>
+           <small class="small-hint">Apenas números • Máximo 10 dígitos</small>
+         </div>
 
         <!-- Linha 2: Nome do Formando -->
         <div class="col-12">
@@ -255,7 +280,7 @@
             </div>
             <div style="flex:1">
               <input class="form-control" type="file" name="foto" id="foto" accept="image/jpeg,image/png"/>
-              <small class="small-hint">JPG/PNG até 5MB · Ajustada automaticamente para 3x4</small>
+              <small class="small-hint">JPG/PNG até 15MB · Redimensionada automaticamente para 3x4</small>
             </div>
           </div>
         </div>
@@ -292,6 +317,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/js/ui-enhancements.js"></script>
   <script>
   // ---------- Helpers UI ----------
   const qs = new URLSearchParams(location.search);
@@ -477,9 +503,9 @@
     const box = byId('previewBox');
     box.innerHTML = '<i class="fa-solid fa-camera fa-2x" style="color:#cbd5e1"></i>';
     if(!f) return;
-    if(!['image/jpeg','image/png'].includes(f.type) || f.size > 5*1024*1024){
+    if(!['image/jpeg','image/png'].includes(f.type) || f.size > 15*1024*1024){
       e.target.value = '';
-      showErr('Envie JPG ou PNG de até 5MB.');
+      showErr('Envie JPG ou PNG de até 15MB.');
       return;
     }
     hideErr();
@@ -596,6 +622,40 @@
 
   // Inicializar progresso
   atualizarProgresso();
+
+  // Atualizar etapas visuais
+  function atualizarEtapasVisuais() {
+    const progresso = parseInt(byId('progressFill').style.width) || 0;
+    
+    if (progresso < 34) {
+      UI.atualizarEtapa(1);
+    } else if (progresso < 67) {
+      UI.atualizarEtapa(2);
+    } else {
+      UI.atualizarEtapa(3);
+    }
+  }
+
+  // Chamar função ao atualizar progresso
+  const originalAtualizarProgresso = atualizarProgresso;
+  atualizarProgresso = function() {
+    originalAtualizarProgresso();
+    atualizarEtapasVisuais();
+  };
+
+  // Toast para erros
+  const originalShowErr = showErr;
+  showErr = function(msg) {
+    originalShowErr(msg);
+    UI.mostrarToast(msg, 'error');
+  };
+
+  // Toast para sucesso
+  const originalShowOk = showOk;
+  showOk = function(msg) {
+    originalShowOk(msg);
+    UI.mostrarToast(msg, 'success');
+  };
   </script>
 </body>
 </html>

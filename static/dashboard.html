@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -173,6 +174,31 @@
             border-radius: 15px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
             display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(246, 162, 30, 0.1);
+        }
+
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: linear-gradient(180deg, transparent, rgba(246, 162, 30, 0.05));
+            pointer-events: none;
+        }
+
+        .stat-card-header {
+            display: flex;
             align-items: center;
             gap: 1rem;
         }
@@ -202,6 +228,38 @@
             font-size: 0.9rem;
         }
 
+        /* Sparkline e Variação */
+        .mini-grafico {
+            margin-top: 0.75rem;
+            height: 35px;
+            position: relative;
+        }
+
+        .stat-variacao {
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.4rem 0.75rem;
+            border-radius: 8px;
+        }
+
+        .stat-variacao.positivo {
+            color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .stat-variacao.negativo {
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .stat-variacao i {
+            font-size: 0.65rem;
+        }
+
         /* Filtros */
         .filtros-container {
             background: white;
@@ -217,18 +275,21 @@
             margin-bottom: 1rem;
         }
 
-        .form-control, .form-select {
+        .form-control,
+        .form-select {
             border-radius: 10px;
             border: 2px solid #e2e8f0;
             padding: 0.6rem 1rem;
         }
 
-        .form-control:focus, .form-select:focus {
+        .form-control:focus,
+        .form-select:focus {
             border-color: var(--gold);
             box-shadow: 0 0 0 0.2rem rgba(246, 162, 30, 0.15);
         }
 
-        .btn-filtrar, .btn-success {
+        .btn-filtrar,
+        .btn-success {
             background: var(--gold);
             border: none;
             color: var(--black);
@@ -238,7 +299,8 @@
             transition: all 0.3s ease;
         }
 
-        .btn-filtrar:hover, .btn-success:hover {
+        .btn-filtrar:hover,
+        .btn-success:hover {
             background: var(--gold-dark);
             color: var(--white);
         }
@@ -306,7 +368,7 @@
             box-shadow: 0 8px 25px rgba(246, 162, 30, 0.15);
             border-color: var(--gold);
         }
-        
+
         .aluno-card[onclick]:hover {
             cursor: pointer;
         }
@@ -406,6 +468,7 @@
         .nav-tabs {
             border-bottom: 2px solid #e2e8f0;
         }
+
         .nav-tabs .nav-link {
             color: #64748b;
             font-weight: 600;
@@ -414,10 +477,12 @@
             border-bottom: 3px solid transparent;
             transition: all 0.3s ease;
         }
+
         .nav-tabs .nav-link:hover {
             color: var(--gold);
             background: rgba(246, 162, 30, 0.05);
         }
+
         .nav-tabs .nav-link.active {
             color: var(--gold);
             background: transparent;
@@ -428,6 +493,7 @@
         #tabelaLeads tr[onclick] {
             transition: all 0.2s ease;
         }
+
         #tabelaLeads tr[onclick]:hover {
             background: rgba(246, 162, 30, 0.08) !important;
             transform: scale(1.01);
@@ -454,6 +520,7 @@
         }
     </style>
 </head>
+
 <body>
     <!-- Sidebar -->
     <div class="sidebar">
@@ -473,6 +540,13 @@
             <i class="fas fa-plus me-2"></i>Novo Evento
         </button>
 
+        <a href="eventos.html"
+            style="width: 100%; background: transparent; border: 2px solid var(--black); color: var(--black); padding: 0.85rem; border-radius: 10px; font-weight: 600; margin-bottom: 1.5rem; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; text-decoration: none;"
+            onmouseover="this.style.background='var(--black)'; this.style.color='var(--gold)'"
+            onmouseout="this.style.background='transparent'; this.style.color='var(--black)'">
+            <i class="fas fa-calendar-alt me-2"></i>Eventos
+        </a>
+
         <div class="logout-container">
             <button class="btn btn-logout" onclick="logout()">
                 <i class="fas fa-sign-out-alt me-2"></i>Sair
@@ -489,33 +563,57 @@
         <!-- Stats Cards -->
         <div class="stats-container">
             <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-user-graduate"></i>
+                <div class="stat-card-header">
+                    <div class="stat-icon">
+                        <i class="fas fa-user-graduate"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="totalAlunos">0</h3>
+                        <p>Total de Alunos</p>
+                    </div>
                 </div>
-                <div class="stat-info">
-                    <h3 id="totalAlunos">0</h3>
-                    <p>Total de Alunos</p>
+                <div class="mini-grafico">
+                    <canvas id="graficoAlunos" width="150" height="35"></canvas>
                 </div>
+                <small class="stat-variacao positivo" id="variacao-alunos">
+                    <i class="fas fa-arrow-up"></i> +12% esta semana
+                </small>
             </div>
 
             <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-school"></i>
+                <div class="stat-card-header">
+                    <div class="stat-icon">
+                        <i class="fas fa-school"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="totalEscolas">0</h3>
+                        <p>Escolas Cadastradas</p>
+                    </div>
                 </div>
-                <div class="stat-info">
-                    <h3 id="totalEscolas">0</h3>
-                    <p>Escolas Cadastradas</p>
+                <div class="mini-grafico">
+                    <canvas id="graficoEscolas" width="150" height="35"></canvas>
                 </div>
+                <small class="stat-variacao positivo" id="variacao-escolas">
+                    <i class="fas fa-arrow-up"></i> +8% esta semana
+                </small>
             </div>
 
             <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-camera"></i>
+                <div class="stat-card-header">
+                    <div class="stat-icon">
+                        <i class="fas fa-camera"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="totalFotos">0</h3>
+                        <p>Fotos Enviadas</p>
+                    </div>
                 </div>
-                <div class="stat-info">
-                    <h3 id="totalFotos">0</h3>
-                    <p>Fotos Enviadas</p>
+                <div class="mini-grafico">
+                    <canvas id="graficoFotos" width="150" height="35"></canvas>
                 </div>
+                <small class="stat-variacao positivo" id="variacao-fotos">
+                    <i class="fas fa-arrow-up"></i> +18% esta semana
+                </small>
             </div>
         </div>
 
@@ -559,41 +657,60 @@
 
         <!-- MODAL DE CRIAÇÃO DE EVENTO -->
         <div class="modal fade" id="modalNovoEvento" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog">
+            <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
-                    <div class="modal-header" style="background: var(--gold); color: var(--black);">
-                        <h5 class="modal-title">Criar Novo Evento</h5>
+                    <div class="modal-header"
+                        style="background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: var(--black); border: none;">
+                        <h5 class="modal-title">
+                            <i class="fas fa-plus-circle me-2"></i>Criar Novo Evento
+                        </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
                     </div>
                     <div class="modal-body">
                         <form id="formNovoEvento">
+                            <!-- Seção 1: Identificação -->
+                            <div
+                                style="border-top: none; padding-top: 0; margin-bottom: 1rem; border-bottom: 2px solid rgba(246, 162, 30, 0.15); padding-bottom: 0.75rem;">
+                                <span
+                                    style="color: var(--gray-dark); font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 0.4rem;">
+                                    <i class="fas fa-school" style="color: var(--gold)"></i>
+                                    Identificação da Escola
+                                </span>
+                            </div>
+
                             <div class="mb-3">
-                                <label class="form-label">Escola *</label>
-                                <input 
-                                    type="text" 
-                                    class="form-control" 
-                                    name="escola" 
-                                    maxlength="120" 
-                                    required
+                                <label class="form-label">Escola</label>
+                                <input type="text" class="form-control" name="escola" maxlength="120" required
                                     placeholder="Ex: Escola São José ou Colégio Monte Alegre">
-                                <small class="text-muted">Máximo de 120 caracteres</small>
                             </div>
 
                             <div class="row">
                                 <div class="col-md-8 mb-3">
-                                    <label class="form-label">Cidade *</label>
-                                    <input type="text" class="form-control" name="cidade" required placeholder="Ex: São Paulo">
+                                    <label class="form-label">Cidade</label>
+                                    <input type="text" class="form-control" name="cidade" required
+                                        placeholder="Ex: São Paulo">
                                 </div>
                                 <div class="col-md-4 mb-3">
-                                    <label class="form-label">Estado (UF) *</label>
-                                    <input type="text" class="form-control" name="estado" maxlength="2" required placeholder="Ex: SP" style="text-transform: uppercase;">
+                                    <label class="form-label">Estado (UF)</label>
+                                    <input type="text" class="form-control" name="estado" maxlength="2" required
+                                        placeholder="SP" style="text-transform: uppercase;">
                                 </div>
                             </div>
 
+                            <!-- Seção 2: Dados do Evento -->
+                            <div
+                                style="border-top: 2px solid rgba(246, 162, 30, 0.15); margin: 1.25rem 0 1rem 0; padding-top: 1rem;">
+                                <span
+                                    style="color: var(--gray-dark); font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 0.4rem;">
+                                    <i class="fas fa-calendar-check" style="color: var(--gold)"></i>
+                                    Dados do Evento
+                                </span>
+                            </div>
+
                             <div class="mb-3">
-                                <label class="form-label">Tipo de Formatura *</label>
+                                <label class="form-label">Tipo de Formatura</label>
                                 <select class="form-select" name="tipo_formatura" required>
-                                    <option value="">Selecione...</option>
+                                    <option value="">Selecione</option>
                                     <option value="Fundamental">Fundamental</option>
                                     <option value="Médio">Médio</option>
                                     <option value="Infantil">Infantil</option>
@@ -602,24 +719,19 @@
 
                             <div class="mb-3">
                                 <label class="form-label">Data do Evento</label>
-                                <input type="date" class="form-control" name="data_evento">
-                                <small class="text-muted">Opcional</small>
+                                <input type="date" class="form-control" name="data_evento" required>
                             </div>
 
                             <div class="mb-3">
-                                <label class="form-label">Local do Evento *</label>
-                                <input 
-                                    type="text" 
-                                    class="form-control" 
-                                    name="local_evento"
-                                    placeholder="Ex: Auditório Central — Escola São José"
-                                    required>
+                                <label class="form-label">Local do Evento</label>
+                                <input type="text" class="form-control" name="local_evento"
+                                    placeholder="Ex: Auditório Central — Escola São José" required>
                             </div>
                         </form>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="button" class="btn btn-success" onclick="criarEvento()">
+                        <button type="button" class="btn btn-primary" onclick="criarEvento()">
                             <i class="fas fa-save me-1"></i>Salvar Evento
                         </button>
                     </div>
@@ -635,6 +747,39 @@
                     <i class="fas fa-spinner fa-spin"></i>
                     <h4>Carregando alunos...</h4>
                     <p>Aguarde um momento</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Upload Foto -->
+    <div class="modal fade" id="modalUploadFoto" tabindex="-1" style="z-index: 2000;">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" style="background:var(--gold);color:var(--black)">
+                    <h5 class="modal-title"><i class="fas fa-cloud-upload-alt me-2"></i>Enviar Foto do Formando</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info" role="alert">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Tipos aceitos:</strong> JPG, JPEG, PNG | <strong>Tamanho máximo:</strong> 30MB
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Selecione a foto</label>
+                        <input type="file" class="form-control" id="inputFoto"
+                            accept=".jpg,.jpeg,.png,image/jpeg,image/png" onchange="previewImagemFoto()" />
+                    </div>
+                    <div id="previewFoto" class="text-center mb-3" style="display:none;">
+                        <p class="small text-muted">Prévia:</p>
+                        <img id="imagemPreview" style="max-width:150px;max-height:200px;border-radius:10px;" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="enviarFoto()">
+                        <i class="fas fa-upload me-1"></i>Enviar Foto
+                    </button>
                 </div>
             </div>
         </div>
@@ -656,13 +801,16 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-                    <button type="button" class="btn btn-primary" id="btnEditarLead" onclick="ativarEdicaoLead()" style="display:none">
+                    <button type="button" class="btn btn-primary" id="btnEditarLead" onclick="ativarEdicaoLead()"
+                        style="display:none">
                         <i class="fas fa-edit me-1"></i>Editar
                     </button>
-                    <button type="button" class="btn btn-success" id="btnSalvarLead" onclick="salvarEdicaoLead()" style="display:none">
+                    <button type="button" class="btn btn-success" id="btnSalvarLead" onclick="salvarEdicaoLead()"
+                        style="display:none">
                         <i class="fas fa-save me-1"></i>Salvar
                     </button>
-                    <button type="button" class="btn btn-secondary" id="btnCancelarEdicao" onclick="cancelarEdicaoLead()" style="display:none">
+                    <button type="button" class="btn btn-secondary" id="btnCancelarEdicao"
+                        onclick="cancelarEdicaoLead()" style="display:none">
                         Cancelar
                     </button>
                 </div>
@@ -671,6 +819,8 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="js/dashboard.js"></script>
 </body>
+
 </html>
