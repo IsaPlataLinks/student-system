@@ -1,135 +1,548 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Eventos – Sistema de Formandos</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-<style>
-:root{--gold:#F6A21E;--gold-dark:#C57F17;--black:#0D0D0D;--bg:#FFE0B3;}
-body{background:var(--bg);font-family:'Segoe UI',sans-serif}
-.container-box{max-width:1100px;margin:40px auto}
-.card{border:1px solid rgba(246,162,30,.25);box-shadow:0 8px 20px rgba(0,0,0,.05)}
-.btn-gold{background:var(--gold);color:var(--black);border:none}
-.btn-gold:hover{background:var(--gold-dark);color:#fff}
-.table thead th{background:var(--gold);color:#000}
-.badge{font-weight:600}
-</style>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Eventos - R3 Formaturas</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+  <style>
+    :root{
+      --background-gold:#FFE0B3; --gold:#F6A21E; --gold-dark:#C57F17;
+      --black:#0D0D0D; --gray-dark:#333333; --white:#FFFFFF;
+    }
+    body{
+      min-height:100vh;background:var(--background-gold);
+      font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;color:var(--black);
+      padding:2rem 1rem;
+    }
+    .container-box{
+      max-width:1200px;margin:0 auto;
+      animation:fadeInDown .5s ease-out;
+    }
+    .brand{text-align:center;margin-bottom:1.5rem}
+    .brand img{max-width:100px}
+    .page-header{
+      background:var(--white);border-radius:20px;padding:1.5rem 2rem;
+      box-shadow:0 8px 30px rgba(0,0,0,.1);border:1px solid rgba(246,162,30,.2);
+      margin-bottom:1.5rem;
+    }
+    .page-title{
+      font-weight:700;font-size:1.85rem;margin:0;
+      display:flex;align-items:center;gap:0.5rem;
+    }
+    .card{
+      background:var(--white);border-radius:20px;
+      box-shadow:0 8px 30px rgba(0,0,0,.1);border:1px solid rgba(246,162,30,.2);
+    }
+    .card-body{padding:2rem}
+    .form-control,.form-select{
+      padding:0.6rem 0.85rem;font-size:0.95rem;border-radius:10px;border:2px solid #e2e8f0;
+      transition:all .2s ease;
+    }
+    .form-control:focus,.form-select:focus{
+      border-color:var(--gold);box-shadow:0 0 0 0.2rem rgba(246,162,30,.2);
+    }
+    .form-label{font-weight:600;font-size:0.9rem;margin-bottom:0.35rem}
+    .btn-primary{
+      background:var(--gold);border:none;color:var(--black);font-weight:700;
+      padding:.8rem 1.5rem;border-radius:12px;transition:all .25s ease;
+      box-shadow:0 4px 15px rgba(246,162,30,.3);
+    }
+    .btn-primary:hover{
+      background:var(--gold-dark);color:#fff;transform:translateY(-2px);
+      box-shadow:0 6px 20px rgba(246,162,30,.4);
+    }
+    .btn-outline-dark{
+      border:2px solid var(--black);color:var(--black);font-weight:700;border-radius:12px;
+      padding:.8rem 1.5rem;transition:all .25s ease;
+    }
+    .btn-outline-dark:hover{background:var(--black);color:var(--gold)}
+    .btn-secondary{
+      background:#94a3b8;border:none;color:var(--white);font-weight:600;
+      border-radius:12px;padding:.8rem 1.5rem;transition:all .25s ease;
+    }
+    .btn-secondary:hover{background:#64748b;color:var(--white)}
+    .btn-outline-secondary{
+      border:2px solid #94a3b8;color:#64748b;border-radius:8px;padding:.4rem .6rem;
+      transition:all .2s ease;
+    }
+    .btn-outline-secondary:hover{background:#f1f5f9;border-color:#64748b;color:var(--black)}
+    .btn-qr{
+      background:transparent;border:none;color:var(--gold);font-size:1.3rem;
+      transition:all .2s ease;padding:0.25rem 0.5rem;
+    }
+    .btn-qr:hover{color:var(--gold-dark);transform:scale(1.15)}
+    .table{margin-bottom:0}
+    .table thead th{
+      background:#f8f9fa;color:var(--gray-dark);font-weight:700;border:none;padding:1rem;
+      font-size:0.85rem;text-transform:uppercase;letter-spacing:0.5px;
+      border-bottom:3px solid var(--gold);
+    }
+    .table thead th:first-child{border-radius:12px 0 0 0}
+    .table thead th:last-child{border-radius:0 12px 0 0}
+    .table tbody td{
+      padding:1rem;vertical-align:middle;border-color:#f1f5f9;
+    }
+    .table tbody tr{transition:all .3s ease}
+    .table tbody tr:hover{
+      background:#fff7e9;
+      transform:translateY(-2px);
+      box-shadow:0 4px 12px rgba(246,162,30,.1);
+    }
+    .badge{
+      font-weight:600;padding:0.4rem 0.8rem;border-radius:8px;font-size:0.85rem;
+      transition:all .2s ease;
+    }
+    .badge:hover{
+      transform:scale(1.05);
+      box-shadow:0 2px 8px rgba(0,0,0,.15);
+    }
+    .badge.bg-success{background:#10b981!important}
+    .badge.bg-warning{background:#f59e0b!important;color:var(--black)}
+    .badge.bg-secondary{background:#6b7280!important}
+    .modal-header{
+      background:linear-gradient(135deg,var(--gold),var(--gold-dark));
+      color:var(--black);border-radius:12px 12px 0 0;border:none;
+    }
+    .modal-content{border-radius:12px;border:1px solid rgba(246,162,30,.2)}
+    .modal-title{font-weight:700}
+    .info-hint{
+      background:#fff7e9;border-left:4px solid var(--gold);padding:.8rem 1rem;
+      border-radius:10px;box-shadow:0 2px 8px rgba(246,162,30,.15);
+      color:var(--gray-dark);font-size:0.88rem;
+    }
+    .qr-card{
+      background:#f8f9fa;border-radius:15px;padding:1.5rem;
+      border:2px solid rgba(246,162,30,.2);
+    }
+    .qr-display{
+      padding:1rem;background:var(--white);border-radius:10px;
+      display:inline-block;margin:0.5rem auto;
+      box-shadow:0 2px 8px rgba(0,0,0,.05);
+    }
+    .section-divider{
+      border-top:2px solid rgba(246,162,30,.15);
+      margin:1.25rem 0 1rem 0;
+      padding-top:1rem;
+    }
+    .section-label{
+      color:var(--gray-dark);
+      font-size:0.85rem;
+      font-weight:600;
+      display:flex;
+      align-items:center;
+      gap:0.4rem;
+    }
+    .search-icon-wrapper{position:relative}
+    .search-icon{
+      position:absolute;left:1rem;top:50%;transform:translateY(-50%);
+      color:var(--gold);opacity:0.7;pointer-events:none;
+    }
+    .search-input{padding-left:2.75rem!important}
+    .skeleton-box{
+      height:20px;background:linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%);
+      background-size:200% 100%;animation:loading 1.5s infinite;border-radius:4px;
+    }
+    @keyframes loading{
+      0%{background-position:200% 0}
+      100%{background-position:-200% 0}
+    }
+    @keyframes fadeInDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+    @media (max-width:768px){
+      .page-header{padding:1.25rem 1.5rem}
+      .page-title{font-size:1.5rem;flex-direction:column;gap:0.75rem}
+      .card-body{padding:1.5rem}
+      .table{font-size:0.85rem}
+      .btn-primary,.btn-outline-dark{padding:.7rem 1.25rem;font-size:0.95rem}
+    }
+  </style>
 </head>
 <body>
-<div class="container-box">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="m-0"><i class="fas fa-calendar-check me-2"></i>Eventos</h2>
-    <div>
-      <a href="dashboard.html" class="btn btn-outline-dark me-2"><i class="fas fa-arrow-left me-1"></i>Dashboard</a>
-      <button class="btn btn-gold" data-bs-toggle="modal" data-bs-target="#modalNovoEvento"><i class="fas fa-plus me-1"></i>Novo Evento</button>
+  <div class="container-box">
+
+    <!-- Header -->
+    <div class="page-header">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <h1 class="page-title">
+          <i class="fas fa-calendar-check" style="color:var(--gold)"></i>
+          Gerenciador de Eventos
+        </h1>
+        <div class="d-flex gap-2">
+          <a href="dashboard.html" class="btn btn-outline-dark">
+            <i class="fas fa-arrow-left me-1"></i>Dashboard
+          </a>
+          <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNovoEvento">
+            <i class="fas fa-plus me-1"></i>Novo Evento
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card Principal -->
+    <div class="card">
+      <div class="card-body">
+        <!-- Info Box -->
+        <div class="info-hint mb-3">
+          <i class="fas fa-info-circle me-2" style="color:var(--gold)"></i>
+          <strong>Dica:</strong> Clique no ícone <i class="fas fa-qrcode mx-1"></i> para visualizar 
+          e baixar o QR Code de cada evento. Os alunos usarão este QR para acessar o formulário de cadastro.
+        </div>
+
+        <!-- Campo de Busca -->
+        <div class="search-icon-wrapper mb-3">
+          <i class="fas fa-search search-icon"></i>
+          <input type="text" class="form-control search-input" id="buscaEvento" 
+                 placeholder="Buscar por escola, cidade ou tipo de formatura...">
+        </div>
+
+        <!-- Tabela -->
+        <div class="table-responsive">
+          <table class="table align-middle">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Escola</th>
+                <th>Tipo</th>
+                <th>Data</th>
+                <th>Status</th>
+                <th class="text-center">
+                  <i class="fas fa-qrcode me-1" style="color:var(--gold)"></i>QR Code
+                </th>
+              </tr>
+            </thead>
+            <tbody id="tabelaEventos">
+              <!-- Loading Skeleton -->
+              <tr class="skeleton-row">
+                <td><div class="skeleton-box"></div></td>
+                <td><div class="skeleton-box"></div></td>
+                <td><div class="skeleton-box"></div></td>
+                <td><div class="skeleton-box"></div></td>
+                <td><div class="skeleton-box"></div></td>
+                <td><div class="skeleton-box"></div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="card">
-    <div class="card-body">
-      <div class="row g-2 mb-3">
-        <div class="col-md-6">
-          <input type="text" class="form-control" id="buscaEvento" placeholder="Buscar por escola...">
+  <!-- Modal QR Code -->
+  <div class="modal fade" id="modalQRCode" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="fas fa-qrcode me-2"></i>QR Code do Evento
+          </h5>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
         </div>
-        <div class="col-md-6 text-end">
-          <small class="text-muted">Clique em <i class="fas fa-qrcode"></i> para ver/baixar o QR Code.</small>
-        </div>
-      </div>
-      <div class="table-responsive">
-        <table class="table align-middle">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Escola</th>
-              <th>Tipo</th>
-              <th>Data</th>
-              <th>Status</th>
-              <th>QR</th>
-            </tr>
-          </thead>
-          <tbody id="tabelaEventos">
-            <tr><td colspan="6" class="text-center text-muted py-3">Carregando...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Modal QR -->
-<div class="modal fade" id="modalQRCode" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-sm modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header" style="background:#F6A21E">
-        <h5 class="modal-title">QR Code do Evento</h5>
-        <button class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body text-center">
-        <img id="imgQRCode" alt="QR Code" class="img-fluid mb-2"/>
-        <div>
-          <a id="linkEvento" href="#" target="_blank"></a>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button id="btnDownloadQR" class="btn btn-gold"><i class="fas fa-download me-1"></i>Baixar</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Modal Novo Evento -->
-<div class="modal fade" id="modalNovoEvento" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog"><div class="modal-content">
-    <div class="modal-header" style="background:#F6A21E">
-      <h5 class="modal-title">Criar Novo Evento</h5>
-      <button class="btn-close" data-bs-dismiss="modal"></button>
-    </div>
-    <div class="modal-body">
-      <form id="formNovoEvento">
-        <div class="mb-3">
-          <label class="form-label">Escola</label>
-          <input type="text" class="form-control" name="escola" maxlength="120" required
-                 placeholder="Ex: Escola São José ou Colégio Monte Alegre">
-        </div>
-        <div class="row">
-          <div class="col-md-8 mb-3">
-            <label class="form-label">Cidade</label>
-            <input type="text" class="form-control" name="cidade" required>
+        <div class="modal-body text-center">
+          <div class="qr-card">
+            <div class="qr-display">
+              <img id="imgQRCode" alt="QR Code" class="img-fluid" style="max-width:250px"/>
+            </div>
+            
+            <!-- Badge do Evento -->
+            <div class="mt-3 mb-2">
+              <span class="badge" style="background:var(--gold);color:var(--black);font-size:0.9rem">
+                <i class="fas fa-qrcode me-1"></i>
+                Evento #<span id="eventoIdModal">--</span>
+              </span>
+            </div>
+            
+            <!-- Link com Botão Copiar -->
+            <div class="d-flex align-items-center gap-2 justify-content-center mt-2">
+              <input type="text" id="linkEventoInput" readonly class="form-control text-center" 
+                     style="max-width:350px;font-size:0.85rem;font-family:monospace"/>
+              <button class="btn btn-outline-secondary" onclick="copiarLink()" title="Copiar link">
+                <i class="fas fa-copy"></i>
+              </button>
+            </div>
           </div>
-          <div class="col-md-4 mb-3">
-            <label class="form-label">Estado (UF)</label>
-            <input type="text" class="form-control" name="estado" maxlength="2" required>
+          
+          <div class="info-hint mt-3">
+            <small>
+              <i class="fas fa-lightbulb me-1"></i>
+              Imprima este QR Code e coloque em local visível no evento para que os formandos se cadastrem.
+            </small>
           </div>
         </div>
-        <div class="mb-3">
-          <label class="form-label">Tipo de Formatura</label>
-          <select class="form-select" name="tipo_formatura" required>
-            <option value="Fundamental">Fundamental</option>
-            <option value="Médio">Médio</option>
-            <option value="Infantil">Infantil</option>
-          </select>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+          <button id="btnDownloadQR" class="btn btn-primary">
+            <i class="fas fa-download me-1"></i>Baixar QR Code
+          </button>
         </div>
-        <div class="mb-3">
-          <label class="form-label">Data do Evento</label>
-          <input type="date" class="form-control" name="data_evento">
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Local do Evento</label>
-          <input type="text" class="form-control" name="local_evento" required
-                 placeholder="Ex: Auditório Central — Escola São José">
-        </div>
-      </form>
+      </div>
     </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-      <button class="btn btn-gold" onclick="criarEvento()"><i class="fas fa-save me-1"></i>Salvar</button>
-    </div>
-  </div></div>
-</div>
+  </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="js/eventos.js"></script>
+  <!-- Modal Novo Evento -->
+  <div class="modal fade" id="modalNovoEvento" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="fas fa-plus-circle me-2"></i>Criar Novo Evento
+          </h5>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="formNovoEvento">
+            <!-- Seção 1: Identificação -->
+            <div class="section-divider mb-3" style="border-top:none;padding-top:0">
+              <span class="section-label">
+                <i class="fas fa-school" style="color:var(--gold)"></i>
+                Identificação da Escola
+              </span>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Escola</label>
+              <input type="text" class="form-control" name="escola" maxlength="120" required
+                     placeholder="Ex: Escola São José ou Colégio Monte Alegre">
+            </div>
+
+            <div class="row">
+              <div class="col-md-8 mb-3">
+                <label class="form-label">Cidade</label>
+                <input type="text" class="form-control" name="cidade" required placeholder="Ex: São Paulo">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Estado (UF)</label>
+                <input type="text" class="form-control" name="estado" maxlength="2" required 
+                       placeholder="SP" style="text-transform:uppercase">
+              </div>
+            </div>
+
+            <!-- Seção 2: Dados do Evento -->
+            <div class="section-divider mb-3">
+              <span class="section-label">
+                <i class="fas fa-calendar-check" style="color:var(--gold)"></i>
+                Dados do Evento
+              </span>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Tipo de Formatura</label>
+              <select class="form-select" name="tipo_formatura" required>
+                <option value="">Selecione</option>
+                <option value="Fundamental">Fundamental</option>
+                <option value="Médio">Médio</option>
+                <option value="Infantil">Infantil</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Data do Evento</label>
+              <input type="date" class="form-control" name="data_evento">
+              <small class="text-muted">Opcional</small>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Local do Evento</label>
+              <input type="text" class="form-control" name="local_evento" required
+                     placeholder="Ex: Auditório Central — Escola São José">
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button class="btn btn-primary" onclick="criarEvento()">
+            <i class="fas fa-save me-1"></i>Salvar Evento
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const API_URL = `${window.location.origin}/api`;
+
+    // Verificar autenticação
+    function verificarAutenticacao() {
+      const token = localStorage.getItem('token');
+      if (!token) { 
+        window.location.href = 'login.html'; 
+        return null; 
+      }
+      return token;
+    }
+
+    // Carregar eventos
+    async function carregarEventos() {
+      const token = verificarAutenticacao();
+      if (!token) return;
+      
+      try {
+        const resp = await fetch(`${API_URL}/eventos`, { 
+          headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+        });
+        
+        if(resp.status === 401){
+          alert('Sessão expirada. Faça login novamente.');
+          localStorage.removeItem('token');
+          window.location.href = 'login.html';
+          return;
+        }
+
+        const eventos = await resp.json();
+        renderizarEventos(eventos);
+        
+        // Configurar busca
+        document.getElementById('buscaEvento').addEventListener('input', () => filtrar(eventos));
+      } catch (e) {
+        console.error(e);
+        document.getElementById('tabelaEventos').innerHTML =
+          `<tr><td colspan="6" class="text-center text-danger py-4">
+            <i class="fas fa-exclamation-triangle fa-2x mb-2"></i><br>
+            Erro ao carregar eventos
+          </td></tr>`;
+      }
+    }
+
+    // Filtrar eventos
+    function filtrar(eventos) {
+      const termo = document.getElementById('buscaEvento').value.toLowerCase();
+      const filtrados = eventos.filter(e => {
+        const escola = (e.escola || '').toLowerCase();
+        const tipo = (e.tipo_formatura || '').toLowerCase();
+        const local = (e.local_evento || '').toLowerCase();
+        return escola.includes(termo) || tipo.includes(termo) || local.includes(termo);
+      });
+      renderizarEventos(filtrados);
+    }
+
+    // Renderizar tabela
+    function renderizarEventos(eventos) {
+      const tbody = document.getElementById('tabelaEventos');
+      
+      if (eventos.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="text-center py-5">
+              <i class="fas fa-calendar-xmark fa-3x mb-3" style="color:#cbd5e1"></i><br>
+              <h5 style="color:#64748b">Nenhum evento encontrado</h5>
+              <p class="text-muted">Crie seu primeiro evento clicando no botão acima</p>
+            </td>
+          </tr>`;
+        return;
+      }
+      
+      tbody.innerHTML = eventos.map(e => `
+        <tr>
+          <td><strong>#${e.id}</strong></td>
+          <td>${e.escola || '-'}</td>
+          <td><span class="badge bg-secondary">${e.tipo_formatura || '-'}</span></td>
+          <td>${e.data_evento ? new Date(e.data_evento).toLocaleDateString('pt-BR') : '-'}</td>
+          <td>
+            <span class="badge bg-${e.status === 'ativo' ? 'success' : 'secondary'}">
+              ${e.status}
+            </span>
+          </td>
+          <td class="text-center">
+            <button class="btn-qr" onclick="abrirQRCode(${e.id})" title="Ver QR Code">
+              <i class="fas fa-qrcode"></i>
+            </button>
+          </td>
+        </tr>`).join('');
+    }
+
+    // Abrir modal QR Code
+    function abrirQRCode(eventoId) {
+      const modal = new bootstrap.Modal(document.getElementById('modalQRCode'));
+      const img = document.getElementById('imgQRCode');
+      const input = document.getElementById('linkEventoInput');
+      const btnDownload = document.getElementById('btnDownloadQR');
+
+      const qrUrl = `${API_URL}/eventos/${eventoId}/qrcode`;
+      const pageUrl = `${window.location.origin}/cadastro.html?e=${eventoId}`;
+
+      img.src = qrUrl;
+      input.value = pageUrl;
+      document.getElementById('eventoIdModal').textContent = eventoId;
+      
+      btnDownload.onclick = () => baixarArquivo(qrUrl, `evento-${eventoId}.png`);
+      modal.show();
+    }
+
+    // Baixar QR Code
+    function baixarArquivo(url, filename) {
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+
+    // Copiar link
+    function copiarLink() {
+      const input = document.getElementById('linkEventoInput');
+      input.select();
+      document.execCommand('copy');
+      
+      const btn = event.target.closest('button');
+      const iconOriginal = btn.innerHTML;
+      btn.innerHTML = '<i class="fas fa-check"></i>';
+      btn.classList.add('btn-success');
+      btn.classList.remove('btn-outline-secondary');
+      
+      setTimeout(() => {
+        btn.innerHTML = iconOriginal;
+        btn.classList.remove('btn-success');
+        btn.classList.add('btn-outline-secondary');
+      }, 1500);
+    }
+
+    // Criar evento
+    async function criarEvento() {
+      const token = verificarAutenticacao();
+      if (!token) return;
+      
+      const form = document.getElementById('formNovoEvento');
+      const dados = Object.fromEntries(new FormData(form).entries());
+
+      if (!dados.escola || !dados.cidade || !dados.estado) {
+        alert('❌ Preencha escola, cidade e estado.');
+        return;
+      }
+      
+      if (dados.estado) dados.estado = dados.estado.trim().toUpperCase().slice(0,2);
+
+      try {
+        const resp = await fetch(`${API_URL}/eventos`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json', 
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(dados)
+        });
+        
+        const json = await resp.json();
+        
+        if (!resp.ok) {
+          alert(`❌ Erro: ${json.erro || 'Não foi possível criar o evento'}`);
+          return;
+        }
+        
+        alert(`✅ Evento criado com sucesso!\n\nID: ${json.evento_id}`);
+        bootstrap.Modal.getInstance(document.getElementById('modalNovoEvento')).hide();
+        form.reset();
+        carregarEventos();
+      } catch (e) {
+        console.error(e);
+        alert('❌ Erro de conexão.');
+      }
+    }
+
+    // Inicializar
+    document.addEventListener('DOMContentLoaded', carregarEventos);
+  </script>
 </body>
 </html>

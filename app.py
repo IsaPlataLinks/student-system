@@ -141,7 +141,13 @@ def validar_email(email: str) -> bool:
     return bool(email and re.match(r'^[^\s@]+@[^\s@]+\.[^\s@]+$', email))
 
 def validar_whatsapp(whatsapp: str) -> bool:
-    return bool(whatsapp and re.match(r'^\(\d{2}\)\s?\d{5}-\d{4}$', whatsapp))
+    # Aceita apenas dígitos (10 ou 11 dígitos) OU formato (11) 98765-4321
+    if not whatsapp:
+        return False
+    # Remove tudo que não é dígito
+    digitos = re.sub(r'\D', '', whatsapp)
+    # Valida: 10 ou 11 dígitos
+    return len(digitos) in [10, 11]
 
 def validar_cep(cep: str) -> bool:
     return bool((not cep) or re.match(r'^\d{5}-\d{3}$', cep))

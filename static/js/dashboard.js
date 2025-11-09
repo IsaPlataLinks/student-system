@@ -9,9 +9,19 @@ let alunosFiltrados = [];
 function verificarAutenticacao() {
   const token = localStorage.getItem('token');
   if (!token) {
+    console.warn('Token não encontrado. Redirecionando para login...');
     window.location.href = 'login.html';
     return null;
   }
+  
+  // Verifica se o token é válido (não vazio)
+  if (token.trim() === '' || token === 'undefined' || token === 'null') {
+    console.warn('Token inválido. Redirecionando para login...');
+    localStorage.removeItem('token');
+    window.location.href = 'login.html';
+    return null;
+  }
+  
   return token;
 }
 
@@ -86,9 +96,11 @@ async function carregarAlunos() {
       },
     });
 
-    if (response.status === 401) {
+    if (response.status === 401 || response.status === 422) {
+      console.error('Token inválido ou expirado. Status:', response.status);
       alert('Sessão expirada. Faça login novamente.');
-      logout();
+      localStorage.removeItem('token');
+      window.location.href = 'login.html';
       return;
     }
 
@@ -262,9 +274,11 @@ async function carregarEventos() {
       },
     });
 
-    if (response.status === 401) {
+    if (response.status === 401 || response.status === 422) {
+      console.error('Token inválido ou expirado. Status:', response.status);
       alert('Sessão expirada. Faça login novamente.');
-      logout();
+      localStorage.removeItem('token');
+      window.location.href = 'login.html';
       return;
     }
 
