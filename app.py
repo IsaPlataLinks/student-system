@@ -105,7 +105,7 @@ class Lead(db.Model):
     evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=False)
 
     serie = db.Column(db.String(15))
-    letra_turma = db.Column(db.String(2))
+    letra_turma = db.Column(db.String(4))
     ano_formatura = db.Column(db.Integer)
 
     matricula = db.Column(db.String(20), nullable=False)
@@ -153,17 +153,18 @@ def validar_cep(cep: str) -> bool:
     return bool((not cep) or re.match(r'^\d{5}-\d{3}$', cep))
 
 def validar_serie(serie: str) -> bool:
-    series_validas = ['6º ano', '7º ano', '8º ano', '9º ano', '1º ano EM', '2º ano EM', '3º ano EM']
+    series_validas = ['1º ano', '2º ano', '3º ano', '4º ano', '5º ano', '6º ano', '7º ano', '8º ano', '9º ano', '1º ano EM', '2º ano EM', '3º ano EM']
     return serie in series_validas
 
 def validar_letra_turma(letra: str) -> bool:
-    return bool(letra and len(letra) <= 2 and letra.isalnum())
+    return bool(letra and len(letra) <= 4 and letra.isalnum())
 
 def validar_matricula(matricula: str) -> bool:
-    if not matricula or len(matricula) < 3:
+    if not matricula:
         return False
     matricula = matricula.strip().replace(' ', '')
-    return matricula.isalnum()
+    # Aceita 1 a 10 dígitos numéricos
+    return matricula.isdigit() and 1 <= len(matricula) <= 10
 
 def processar_foto(file):
     if not file:
@@ -406,11 +407,13 @@ def cadastrar_lead():
         email = data.get('email')
         whatsapp = data.get('whatsapp')
         tipo_cadastro = data.get('tipo_cadastro')
+        serie = data.get('serie')
+        turma = (data.get('turma') or '').strip().upper()
 
-        if not all([matricula, nome_formando, nome_contato, email, whatsapp]):
+        if not all([matricula, nome_formando, nome_contato, email, whatsapp, serie, turma]):
             return jsonify({'erro': 'Preencha todos os campos obrigatórios'}), 400
         if not validar_matricula(matricula):
-            return jsonify({'erro': 'Matrícula inválida! Digite pelo menos 3 caracteres'}), 400
+            return jsonify({'erro': 'Matrícula inválida! Use apenas números (máximo 10 dígitos)'}), 400
 
         if Lead.query.filter_by(matricula=matricula, evento_id=evento_id).first():
             return jsonify({'erro': f'Matrícula {matricula} já cadastrada neste evento!'}), 400
@@ -435,6 +438,8 @@ def cadastrar_lead():
             email=email,
             whatsapp=whatsapp,
             tipo_cadastro=tipo_cadastro,
+            serie=serie,
+            letra_turma=turma,
             cep=data.get('cep'),
             endereco=data.get('endereco'),
             foto=foto_filename,
@@ -515,6 +520,66 @@ def listar_leads():
         traceback.print_exc()
         return jsonify({'erro': 'Erro ao listar leads', 'detalhes': str(e)}), 500
 
+@app.route('/api/leads/<int:lead_id>', methods=['GET'])
+@jwt_required()
+def obter_lead(lead_id):
+    try:
+        vendedor_id = current_user_id()
+        if vendedor_id is None:
+            return jsonify({'erro': 'Token inválido'}), 401
+        
+        vendedor = Usuario.query.get(vendedor_id)
+        if not vendedor:
+            return jsonify({'erro': 'Usuário não encontrado'}), 404
+
+        lead = (Lead.query
+                .options(joinedload(Lead.evento).joinedload(Evento.escola))
+                .filter_by(id=lead_id)
+                .first())
+        
+        if not lead:
+            return jsonify({'erro': 'Lead não encontrado'}), 404
+
+        # Verificar permissão (admin vê tudo, vendedor só seus leads ou sem dono)
+        if vendedor.tipo_usuario != 'admin':
+            if lead.vendedor_id and lead.vendedor_id != vendedor_id:
+                return jsonify({'erro': 'Sem permissão para visualizar este lead'}), 403
+
+        ev = lead.evento
+        escola_obj = ev.escola if ev else None
+        
+        return jsonify({
+            'id': lead.id,
+            'matricula': lead.matricula,
+            'nome_formando': lead.nome_formando,
+            'serie': lead.serie,
+            'letra_turma': lead.letra_turma,
+            'nome_contato': lead.nome_contato,
+            'email': lead.email,
+            'whatsapp': lead.whatsapp,
+            'tipo_cadastro': lead.tipo_cadastro,
+            'cep': lead.cep,
+            'endereco': lead.endereco,
+            'foto': lead.foto,
+            'status_lead': lead.status_lead,
+            'observacoes': lead.observacoes,
+            'evento': {
+                'id': ev.id if ev else None,
+                'escola': escola_obj.nome if escola_obj else None,
+                'cidade': escola_obj.cidade if escola_obj else None,
+                'estado': escola_obj.estado if escola_obj else None,
+                'tipo_formatura': ev.tipo_formatura if ev else None,
+                'data_evento': ev.data_evento.isoformat() if (ev and ev.data_evento) else None,
+                'local_evento': ev.local_evento if ev else None
+            },
+            'criado_em': lead.criado_em.isoformat(),
+            'atualizado_em': lead.atualizado_em.isoformat() if lead.atualizado_em else None
+        }), 200
+    except Exception as e:
+        print(f"❌ Erro em obter_lead: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'erro': 'Erro ao buscar lead', 'detalhes': str(e)}), 500
 
 @app.route('/api/leads/<int:lead_id>', methods=['PATCH'])
 @jwt_required()

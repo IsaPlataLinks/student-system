@@ -143,10 +143,10 @@
         <div class="col-md-8">
           <label class="form-label required">Matrícula do aluno</label>
           <div class="input-icon">
-            <input type="text" class="form-control" name="matricula" id="matricula" maxlength="20" required placeholder="Ex: 00894156"/>
+            <input type="text" class="form-control" name="matricula" id="matricula" maxlength="10" required placeholder="Ex: 0000044081" inputmode="numeric"/>
             <i class="state"></i>
           </div>
-          <small class="small-hint"></small>
+          <small class="small-hint">Apenas números • Máximo 10 dígitos</small>
         </div>
 
         <!-- Linha 2: Nome do Formando -->
@@ -156,6 +156,31 @@
             <input type="text" class="form-control" name="nome_formando" id="nomeFormando" maxlength="120" required placeholder="Ex: João da Silva Santos"/>
             <i class="state"></i>
           </div>
+        </div>
+
+        <!-- Linha 2.5: Série e Turma -->
+        <div class="col-md-8">
+          <label class="form-label required">Série</label>
+          <select class="form-select" name="serie" id="serie" required>
+            <option value="">Selecione a série</option>
+            <option value="1º ano">1º ano</option>
+            <option value="2º ano">2º ano</option>
+            <option value="3º ano">3º ano</option>
+            <option value="4º ano">4º ano</option>
+            <option value="5º ano">5º ano</option>
+            <option value="6º ano">6º ano</option>
+            <option value="7º ano">7º ano</option>
+            <option value="8º ano">8º ano</option>
+            <option value="9º ano">9º ano</option>
+            <option value="1º ano EM">1º ano EM</option>
+            <option value="2º ano EM">2º ano EM</option>
+            <option value="3º ano EM">3º ano EM</option>
+          </select>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label required">Turma</label>
+          <input type="text" class="form-control" name="turma" id="turma" maxlength="4" required placeholder="Ex: A ou 101" style="text-transform:uppercase"/>
         </div>
 
         <!-- Linha 3: Nome do Responsável -->
@@ -272,10 +297,25 @@
   const qs = new URLSearchParams(location.search);
   const byId = (id) => document.getElementById(id);
   
-  const setBadge = (id) => {
+  const setBadge = async (id) => {
     if(!id) return;
-    byId('eventoBadge').innerHTML =
-      '<span class="badge-evento"><i class="fa-solid fa-qrcode me-1" style="color:var(--gold)"></i>Evento: ' + id + '</span>';
+    
+    // Busca os dados do evento
+    try {
+      const resp = await fetch(`/api/eventos/${id}`);
+      if(resp.ok) {
+        const evento = await resp.json();
+        const nomeEvento = (evento.escola && evento.escola.nome) || `Evento ${id}`;
+        byId('eventoBadge').innerHTML =
+          '<span class="badge-evento"><i class="fa-solid fa-qrcode me-2" style="color:var(--gold)"></i>' + nomeEvento + '</span>';
+      } else {
+        byId('eventoBadge').innerHTML =
+          '<span class="badge-evento"><i class="fa-solid fa-qrcode me-2" style="color:var(--gold)"></i>Evento: ' + id + '</span>';
+      }
+    } catch(e) {
+      byId('eventoBadge').innerHTML =
+        '<span class="badge-evento"><i class="fa-solid fa-qrcode me-2" style="color:var(--gold)"></i>Evento: ' + id + '</span>';
+    }
   };
   
   const showErr = (msg) => { 
@@ -312,10 +352,10 @@
 
   // ---------- Barra de Progresso ----------
   function atualizarProgresso(){
-    const campos = ['tipoCadastro','matricula','nomeFormando','nomeContato','whatsapp','email'];
+    const campos = ['tipoCadastro','matricula','nomeFormando','serie','turma','nomeContato','whatsapp','email'];
     const preenchidos = campos.filter(id => {
       const val = byId(id).value.trim();
-      return val !== '' && val !== 'Selecione';
+      return val !== '' && val !== 'Selecione' && val !== 'Selecione a série';
     }).length;
     const progresso = (preenchidos / campos.length) * 100;
     byId('progressFill').style.width = progresso + '%';
@@ -324,7 +364,7 @@
   // ---------- Validações em tempo real ----------
   const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
   const onlyDigits = (s) => s.replace(/\D+/g,'');
-  const onlyLetters = (s) => s.replace(/[0-9]/g,'');
+  const onlyLetters = (s) => s.replace(/[^a-zA-ZÀ-ÿ\s]/g,''); // Permite apenas letras e espaços (inclui acentos)
   
   function setState(input, valid){
     input.classList.remove('is-valid','is-invalid');
@@ -357,6 +397,13 @@
     setState(e.target, e.target.value.trim().length>=3);
     atualizarProgresso();
   });
+
+  byId('serie').addEventListener('change', atualizarProgresso);
+  byId('turma').addEventListener('input', (e)=>{ 
+    // Aceita apenas letras e números (alfanumérico)
+    e.target.value = e.target.value.replace(/[^a-zA-Z0-9]/g,'').toUpperCase().slice(0,4);
+    atualizarProgresso();
+  });
   
   byId('nomeContato').addEventListener('input', (e)=>{ 
     e.target.value = onlyLetters(e.target.value); 
@@ -365,9 +412,18 @@
   });
 
   byId('matricula').addEventListener('input', (e)=>{ 
-    e.target.value = e.target.value.replace(/[^a-zA-Z0-9\-_.]/g,''); 
-    setState(e.target, e.target.value.trim().length>=3);
+    // Aceita apenas números
+    e.target.value = e.target.value.replace(/\D/g,'').slice(0,10);
+    setState(e.target, e.target.value.trim().length>=1);
     atualizarProgresso();
+  });
+
+  // Preenche com zeros à esquerda quando sair do campo
+  byId('matricula').addEventListener('blur', (e)=>{
+    if(e.target.value.trim() !== '') {
+      e.target.value = e.target.value.padStart(10, '0');
+      setState(e.target, true);
+    }
   });
 
   byId('email').addEventListener('input', (e)=>{ 
@@ -467,13 +523,13 @@
     };
     
     if(!v.tipo) ok=false;
-    if(v.matricula.length < 3) ok=false;
+    if(v.matricula.length < 1 || v.matricula.length > 10 || !/^\d+$/.test(v.matricula)) ok=false;
     if(v.nome_formando.length < 3) ok=false;
     if(v.nome_contato.length < 3) ok=false;
     if(!emailRe.test(v.email)) ok=false;
     if(v.whatsapp.length < 10) ok=false;
 
-    setState(byId('matricula'), v.matricula.length>=3);
+    setState(byId('matricula'), v.matricula.length >= 1 && v.matricula.length <= 10 && /^\d+$/.test(v.matricula));
     setState(byId('nomeFormando'), v.nome_formando.length>=3);
     setState(byId('nomeContato'), v.nome_contato.length>=3);
     setState(byId('email'), emailRe.test(v.email));
@@ -498,6 +554,8 @@
     data.append('tipo_cadastro', byId('tipoCadastro').value);
     data.append('matricula', byId('matricula').value.trim());
     data.append('nome_formando', byId('nomeFormando').value.trim());
+    data.append('serie', byId('serie').value);
+    data.append('turma', byId('turma').value.trim().toUpperCase());
     data.append('nome_contato', byId('nomeContato').value.trim());
     data.append('email', byId('email').value.trim().toLowerCase());
     data.append('whatsapp', (byId('whatsapp').value||'').replace(/\D/g,''));

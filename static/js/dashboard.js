@@ -139,7 +139,7 @@ function renderizarAlunos(alunos) {
   container.innerHTML = alunos
     .map(
       (aluno) => `
-      <div class="aluno-card">
+      <div class="aluno-card" onclick="verDetalhesAluno(${aluno.id})" style="cursor:pointer" title="Clique para ver detalhes completos">
         <div class="card-header-custom">
           <h6>${aluno.escola || 'Escola não informada'}</h6>
         </div>
@@ -171,6 +171,9 @@ function renderizarAlunos(alunos) {
                 : ''
             }
           </div>
+        </div>
+        <div style="position:absolute;top:10px;right:10px">
+          <i class="fas fa-eye text-white" style="opacity:0.7"></i>
         </div>
       </div>`
     )
@@ -230,7 +233,10 @@ function limparFiltros() {
 
 function exportarExcel() {
   if (alunosFiltrados.length === 0) return alert('Não há dados para exportar!');
-  const html = `
+  
+  // Adiciona BOM UTF-8 para corrigir acentuação no Excel
+  const BOM = '\uFEFF';
+  const html = `${BOM}
     <table>
       <thead><tr><th>Nome</th><th>Turma</th><th>Ano</th><th>Escola</th><th>Email</th><th>WhatsApp</th><th>Responsável</th></tr></thead>
       <tbody>${alunosFiltrados
@@ -249,7 +255,7 @@ function exportarExcel() {
         .join('')}
       </tbody>
     </table>`;
-  const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
+  const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -399,6 +405,238 @@ async function criarEvento() {
   } catch (error) {
     console.error('❌ Erro na requisição:', error);
     alert('❌ Erro de conexão com o servidor.');
+  }
+}
+
+// ======================================================
+// 👥 LEADS
+// ======================================================
+
+// Variáveis globais para edição
+let leadAtual = null;
+let modoEdicao = false;
+
+// Função para abrir detalhes do aluno (lead)
+
+async function verDetalhesAluno(alunoId) {
+  const modal = new bootstrap.Modal(document.getElementById('modalDetalhesLead'));
+  const body = document.getElementById('detalhesLeadBody');
+  
+  body.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x"></i><p class="mt-2">Carregando...</p></div>';
+  modal.show();
+
+  const token = verificarAutenticacao();
+  if (!token) return;
+
+  try {
+    const response = await fetch(`${API_URL}/leads/${alunoId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+      },
+    });
+
+    if (response.ok) {
+      leadAtual = await response.json();
+      modoEdicao = false;
+      renderizarDetalhesLead();
+      
+      // Mostrar botão editar
+      document.getElementById('btnEditarLead').style.display = 'inline-block';
+      document.getElementById('btnSalvarLead').style.display = 'none';
+      document.getElementById('btnCancelarEdicao').style.display = 'none';
+    } else {
+      body.innerHTML = '<div class="alert alert-danger">Erro ao carregar detalhes do lead.</div>';
+    }
+  } catch (error) {
+    console.error('Erro:', error);
+    body.innerHTML = '<div class="alert alert-danger">Erro ao conectar com o servidor.</div>';
+  }
+}
+
+function renderizarDetalhesLead() {
+  const body = document.getElementById('detalhesLeadBody');
+  const lead = leadAtual;
+  
+  if (!lead) return;
+  
+  const fotoHtml = lead.foto 
+    ? `<img src="/static/uploads/${lead.foto}" class="img-fluid rounded" style="max-width:150px">`
+    : '<i class="fas fa-user-circle fa-5x text-muted"></i>';
+
+  body.innerHTML = `
+        <div class="row">
+          <div class="col-md-3 text-center mb-3">
+            ${fotoHtml}
+            <p class="mt-2"><strong>Foto 3x4</strong></p>
+          </div>
+          <div class="col-md-9">
+            <h5 class="mb-3"><i class="fas fa-graduation-cap me-2" style="color:var(--gold)"></i>Dados do Formando</h5>
+            <table class="table table-sm table-bordered">
+              <tr>
+                <th width="150">Nome:</th>
+                <td id="tdNomeFormando">${lead.nome_formando}</td>
+              </tr>
+              <tr>
+                <th>Matrícula:</th>
+                <td id="tdMatricula">${lead.matricula}</td>
+              </tr>
+              <tr>
+                <th>Série:</th>
+                <td id="tdSerie">${lead.serie || '-'}</td>
+              </tr>
+              <tr>
+                <th>Turma:</th>
+                <td id="tdTurma">${lead.letra_turma || '-'}</td>
+              </tr>
+              <tr><th>Tipo Cadastro:</th><td>${lead.tipo_cadastro === 'aluno' ? 'Aluno' : 'Responsável'}</td></tr>
+            </table>
+
+            <h5 class="mt-4 mb-3"><i class="fas fa-user me-2" style="color:var(--gold)"></i>Responsável</h5>
+            <table class="table table-sm table-bordered">
+              <tr>
+                <th width="150">Nome:</th>
+                <td id="tdNomeContato">${lead.nome_contato}</td>
+              </tr>
+              <tr>
+                <th>E-mail:</th>
+                <td id="tdEmail">${lead.email}</td>
+              </tr>
+              <tr>
+                <th>WhatsApp:</th>
+                <td id="tdWhatsapp">${lead.whatsapp || '-'}</td>
+              </tr>
+            </table>
+
+            <h5 class="mt-4 mb-3"><i class="fas fa-map-marker-alt me-2" style="color:var(--gold)"></i>Endereço</h5>
+            <table class="table table-sm table-bordered">
+              <tr><th width="150">CEP:</th><td>${lead.cep || '-'}</td></tr>
+              <tr><th>Endereço:</th><td>${lead.endereco || '-'}</td></tr>
+            </table>
+
+            <h5 class="mt-4 mb-3"><i class="fas fa-calendar-check me-2" style="color:var(--gold)"></i>Evento</h5>
+            <table class="table table-sm table-bordered">
+              <tr><th width="150">Escola:</th><td>${lead.evento?.escola || '-'}</td></tr>
+              <tr><th>Tipo:</th><td>${lead.evento?.tipo_formatura || '-'}</td></tr>
+              <tr><th>Data:</th><td>${lead.evento?.data_evento ? new Date(lead.evento.data_evento).toLocaleDateString('pt-BR') : '-'}</td></tr>
+            </table>
+
+            <h5 class="mt-4 mb-3"><i class="fas fa-info-circle me-2" style="color:var(--gold)"></i>Informações Adicionais</h5>
+            <table class="table table-sm table-bordered">
+              <tr><th width="150">Status:</th><td><span class="badge bg-primary">${lead.status_lead}</span></td></tr>
+              <tr><th>Cadastrado em:</th><td>${new Date(lead.criado_em).toLocaleString('pt-BR')}</td></tr>
+            </table>
+          </div>
+        </div>
+      `;
+}
+
+function ativarEdicaoLead() {
+  modoEdicao = true;
+  const lead = leadAtual;
+  
+  // Tornar campos editáveis
+  document.getElementById('tdNomeFormando').innerHTML = 
+    `<input type="text" class="form-control form-control-sm" id="editNomeFormando" value="${lead.nome_formando}">`;
+  
+  document.getElementById('tdMatricula').innerHTML = 
+    `<input type="text" class="form-control form-control-sm" id="editMatricula" value="${lead.matricula}" maxlength="10">`;
+  
+  document.getElementById('tdSerie').innerHTML = 
+    `<select class="form-select form-select-sm" id="editSerie">
+      <option value="1º ano" ${lead.serie === '1º ano' ? 'selected' : ''}>1º ano</option>
+      <option value="2º ano" ${lead.serie === '2º ano' ? 'selected' : ''}>2º ano</option>
+      <option value="3º ano" ${lead.serie === '3º ano' ? 'selected' : ''}>3º ano</option>
+      <option value="4º ano" ${lead.serie === '4º ano' ? 'selected' : ''}>4º ano</option>
+      <option value="5º ano" ${lead.serie === '5º ano' ? 'selected' : ''}>5º ano</option>
+      <option value="6º ano" ${lead.serie === '6º ano' ? 'selected' : ''}>6º ano</option>
+      <option value="7º ano" ${lead.serie === '7º ano' ? 'selected' : ''}>7º ano</option>
+      <option value="8º ano" ${lead.serie === '8º ano' ? 'selected' : ''}>8º ano</option>
+      <option value="9º ano" ${lead.serie === '9º ano' ? 'selected' : ''}>9º ano</option>
+      <option value="1º ano EM" ${lead.serie === '1º ano EM' ? 'selected' : ''}>1º ano EM</option>
+      <option value="2º ano EM" ${lead.serie === '2º ano EM' ? 'selected' : ''}>2º ano EM</option>
+      <option value="3º ano EM" ${lead.serie === '3º ano EM' ? 'selected' : ''}>3º ano EM</option>
+    </select>`;
+  
+  document.getElementById('tdTurma').innerHTML = 
+    `<input type="text" class="form-control form-control-sm" id="editTurma" value="${lead.letra_turma || ''}" maxlength="4">`;
+  
+  document.getElementById('tdNomeContato').innerHTML = 
+    `<input type="text" class="form-control form-control-sm" id="editNomeContato" value="${lead.nome_contato}">`;
+  
+  document.getElementById('tdEmail').innerHTML = 
+    `<input type="email" class="form-control form-control-sm" id="editEmail" value="${lead.email}">`;
+  
+  document.getElementById('tdWhatsapp').innerHTML = 
+    `<input type="text" class="form-control form-control-sm" id="editWhatsapp" value="${lead.whatsapp || ''}">`;
+
+  // Alternar botões
+  document.getElementById('btnEditarLead').style.display = 'none';
+  document.getElementById('btnSalvarLead').style.display = 'inline-block';
+  document.getElementById('btnCancelarEdicao').style.display = 'inline-block';
+}
+
+function cancelarEdicaoLead() {
+  modoEdicao = false;
+  renderizarDetalhesLead();
+  
+  document.getElementById('btnEditarLead').style.display = 'inline-block';
+  document.getElementById('btnSalvarLead').style.display = 'none';
+  document.getElementById('btnCancelarEdicao').style.display = 'none';
+}
+
+async function salvarEdicaoLead() {
+  const token = verificarAutenticacao();
+  if (!token) return;
+
+  const dadosAtualizados = {
+    nome_formando: document.getElementById('editNomeFormando').value.trim(),
+    matricula: document.getElementById('editMatricula').value.trim(),
+    serie: document.getElementById('editSerie').value,
+    letra_turma: document.getElementById('editTurma').value.trim().toUpperCase(),
+    nome_contato: document.getElementById('editNomeContato').value.trim(),
+    email: document.getElementById('editEmail').value.trim(),
+    whatsapp: document.getElementById('editWhatsapp').value.trim(),
+  };
+
+  // Validações básicas
+  if (!dadosAtualizados.nome_formando || !dadosAtualizados.nome_contato || !dadosAtualizados.email) {
+    alert('Preencha todos os campos obrigatórios!');
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/leads/${leadAtual.id}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(dadosAtualizados),
+    });
+
+    if (response.ok) {
+      alert('Dados atualizados com sucesso!');
+      
+      // Atualizar leadAtual com novos dados
+      Object.assign(leadAtual, dadosAtualizados);
+      
+      modoEdicao = false;
+      renderizarDetalhesLead();
+      
+      document.getElementById('btnEditarLead').style.display = 'inline-block';
+      document.getElementById('btnSalvarLead').style.display = 'none';
+      document.getElementById('btnCancelarEdicao').style.display = 'none';
+      
+      // Recarregar lista de alunos
+      carregarAlunos();
+    } else {
+      const error = await response.json();
+      alert(`Erro ao salvar: ${error.erro || 'Erro desconhecido'}`);
+    }
+  } catch (error) {
+    console.error('Erro:', error);
+    alert('Erro ao conectar com o servidor.');
   }
 }
 
