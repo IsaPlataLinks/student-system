@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test FormData evento_id</title>
+</head>
+<body>
+    <h1>Test FormData evento_id</h1>
+    <form id="testForm">
+        <input type="hidden" name="evento_id" id="eventoId" value="" />
+        <input type="text" name="nome" value="João" />
+        <button type="button" onclick="testar()">Testar</button>
+    </form>
+
+    <script>
+        const qs = new URLSearchParams(location.search);
+        const eventoId = qs.get('e') || '';
+        document.getElementById('eventoId').value = eventoId;
+        
+        console.log('Parâmetro e:', eventoId);
+        console.log('Campo eventoId value:', document.getElementById('eventoId').value);
+        
+        function testar() {
+            const data = new FormData(document.getElementById('testForm'));
+            console.log('FormData entries:');
+            for (const [key, value] of data) {
+                console.log(`  ${key}: ${value}`);
+            }
+            
+            // Simular POST
+            const evento_id = document.getElementById('eventoId').value || eventoId;
+            console.log('evento_id (da forma que é enviada):', evento_id);
+        }
+    </script>
+</body>
+</html>

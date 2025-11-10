@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico - Sistema de Formandos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --gold: #F6A21E;
+            --background: #FFE0B3;
+        }
+        
+        body {
+            background: var(--background);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .container-fluid {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .header {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            color: var(--gold);
+            margin-bottom: 0.5rem;
+        }
+        
+        .status-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .stat-item {
+            display: inline-block;
+            background: rgba(246,162,30,0.1);
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin-right: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--gold);
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .evento-item {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-left: 4px solid var(--gold);
+            margin-bottom: 0.5rem;
+            border-radius: 4px;
+        }
+        
+        .lead-item {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-left: 4px solid #10b981;
+            margin-bottom: 0.5rem;
+            border-radius: 4px;
+        }
+        
+        .foto-status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .foto-ok {
+            background: #d1f2eb;
+            color: #0d5347;
+        }
+        
+        .foto-falta {
+            background: #fce4ec;
+            color: #880e4f;
+        }
+        
+        .btn-refresh {
+            background: var(--gold);
+            border: none;
+            color: black;
+            font-weight: 600;
+        }
+        
+        .btn-refresh:hover {
+            background: #C57F17;
+            color: white;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .spinner {
+            color: var(--gold);
+        }
+        
+        .error-box {
+            background: #ffebee;
+            border: 1px solid #ef5350;
+            color: #c62828;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="header">
+            <h1><i class="fas fa-stethoscope"></i> Diagnóstico do Sistema</h1>
+            <p class="text-muted">Verifique o estado dos eventos, leads e fotos</p>
+            <button class="btn btn-refresh" onclick="carregarDados()">
+                <i class="fas fa-sync"></i> Recarregar
+            </button>
+        </div>
+        
+        <div id="conteudo">
+            <div class="loading">
+                <div class="spinner">
+                    <i class="fas fa-spinner fa-spin fa-3x mb-3"></i>
+                </div>
+                <p>Carregando diagnóstico...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function carregarDados() {
+            const conteudo = document.getElementById('conteudo');
+            conteudo.innerHTML = '<div class="loading"><div class="spinner"><i class="fas fa-spinner fa-spin fa-3x mb-3"></i></div><p>Carregando...</p></div>';
+            
+            try {
+                const response = await fetch('/api/diagnostico');
+                const dados = await response.json();
+                
+                if (!response.ok) {
+                    conteudo.innerHTML = `<div class="error-box"><i class="fas fa-exclamation-triangle"></i> ${dados.erro || 'Erro ao carregar diagnóstico'}</div>`;
+                    return;
+                }
+                
+                renderizarDados(dados);
+            } catch (err) {
+                conteudo.innerHTML = `<div class="error-box"><i class="fas fa-exclamation-triangle"></i> Erro ao conectar: ${err.message}</div>`;
+            }
+        }
+        
+        function renderizarDados(dados) {
+            const conteudo = document.getElementById('conteudo');
+            const { totais, eventos, leads_recentes, timestamp, hoje } = dados;
+            
+            let html = '';
+            
+            // Totais
+            html += `
+                <div class="status-card">
+                    <h3>Resumo do Sistema</h3>
+                    <p class="text-muted small">Atualizado em: ${new Date(timestamp).toLocaleString('pt-BR')}</p>
+                    <div>
+                        <div class="stat-item">
+                            <div class="stat-value">${totais.usuarios}</div>
+                            <div class="stat-label">Usuários</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">${totais.escolas}</div>
+                            <div class="stat-label">Escolas</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">${totais.eventos}</div>
+                            <div class="stat-label">Eventos</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">${totais.leads}</div>
+                            <div class="stat-label">Leads Cadastrados</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Eventos
+            html += `
+                <div class="status-card">
+                    <h4><i class="fas fa-calendar"></i> Eventos</h4>
+                    ${eventos.length === 0 ? '<p class="text-muted">Nenhum evento cadastrado</p>' : ''}
+                    ${eventos.map(evt => `
+                        <div class="evento-item">
+                            <div><strong>ID: ${evt.id}</strong> - ${evt.escola}</div>
+                            <small class="text-muted">
+                                Data: ${evt.data ? new Date(evt.data).toLocaleDateString('pt-BR') : 'N/A'} | 
+                                Status: <span class="badge" style="background:${evt.status_auto === 'ativo' ? '#10b981' : evt.status_auto === 'finalizado' ? '#ef4444' : '#fbbf24'}">${evt.status_auto}</span> | 
+                                Leads: ${evt.total_leads}
+                            </small>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            
+            // Leads Recentes
+            html += `
+                <div class="status-card">
+                    <h4><i class="fas fa-users"></i> Leads Recentes</h4>
+                    ${leads_recentes.length === 0 ? '<p class="text-muted">Nenhum lead cadastrado</p>' : ''}
+                    ${leads_recentes.map(lead => `
+                        <div class="lead-item">
+                            <div><strong>${lead.nome}</strong> (ID: ${lead.id})</div>
+                            <small class="text-muted">
+                                E-mail: ${lead.email} | 
+                                Criado: ${lead.criado_em ? new Date(lead.criado_em).toLocaleString('pt-BR') : 'N/A'}
+                            </small>
+                            <br>
+                            <span class="foto-status ${lead.foto_existe ? 'foto-ok' : 'foto-falta'}">
+                                <i class="fas ${lead.foto ? (lead.foto_existe ? 'fa-check-circle' : 'fa-exclamation-circle') : 'fa-ban'}"></i>
+                                ${lead.foto ? (lead.foto_existe ? 'Foto OK' : 'Foto Faltando') : 'Sem Foto'}
+                            </span>
+                            ${lead.foto ? `<small class="text-muted ms-2">${lead.foto}</small>` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            
+            // Arquivos de Upload
+            if (dados.pasta_exists) {
+                html += `
+                    <div class="status-card">
+                        <h4><i class="fas fa-folder"></i> Pasta de Uploads</h4>
+                        <p>
+                            <strong>Caminho:</strong> ${dados.pasta_uploads}<br>
+                            <strong>Total de arquivos:</strong> ${dados.arquivos_upload || 0}
+                        </p>
+                        ${dados.arquivos && dados.arquivos.length > 0 ? `
+                            <h5>Arquivos:</h5>
+                            <ul class="list-unstyled">
+                                ${dados.arquivos.map(arq => `<li><code>${arq}</code></li>`).join('')}
+                            </ul>
+                        ` : ''}
+                    </div>
+                `;
+            }
+            
+            conteudo.innerHTML = html;
+        }
+        
+        // Carregar ao abrir a página
+        document.addEventListener('DOMContentLoaded', carregarDados);
+    </script>
+</body>
+</html>

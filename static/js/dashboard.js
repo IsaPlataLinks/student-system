@@ -213,7 +213,7 @@ function aplicarFiltros() {
   alunosFiltrados = todosAlunos.filter((a) => {
     return (
       (!busca || a.nome.toLowerCase().includes(busca)) &&
-      (!escola || a.escola === escola) &&
+      (!escola || (a.escola && a.escola === escola)) &&
       (!turma || (a.turma && a.turma.toLowerCase().includes(turma))) &&
       (!ano || a.ano_formatura == ano)
     );
@@ -242,11 +242,12 @@ function exportarExcel() {
   const BOM = '\uFEFF';
   const html = `${BOM}
     <table>
-      <thead><tr><th>Nome</th><th>Turma</th><th>Ano</th><th>Escola</th><th>Email</th><th>WhatsApp</th><th>Responsável</th></tr></thead>
+      <thead><tr><th>Matrícula</th><th>Nome</th><th>Turma</th><th>Ano</th><th>Escola</th><th>Email</th><th>WhatsApp</th><th>Responsável</th></tr></thead>
       <tbody>${alunosFiltrados
         .map(
           (a) => `
         <tr>
+          <td>${a.matricula || 'N/A'}</td>
           <td>${a.nome}</td>
           <td>${a.turma}</td>
           <td>${a.ano_formatura || 'N/A'}</td>
