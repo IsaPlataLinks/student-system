@@ -643,23 +643,28 @@
     atualizarEtapasVisuais();
   };
 
-  // Toast para erros
-  const originalShowErr = showErr;
-  showErr = function(msg) {
-    originalShowErr(msg);
-    UI.mostrarToast(msg, 'error');
-  };
+  // Toast para erros (usando window para evitar conflito com const)
+  if (typeof showErr !== 'undefined') {
+    const originalShowErr = showErr;
+    window.showErr = function(msg) {
+      originalShowErr(msg);
+      if (window.UI && window.UI.mostrarToast) {
+        UI.mostrarToast(msg, 'error');
+      }
+    };
+  }
 
-  // Toast para sucesso
-  const originalShowOk = showOk;
-  showOk = function(msg) {
-    originalShowOk(msg);
-    UI.mostrarToast(msg, 'success');
-  };
+  // Toast para sucesso (usando window para evitar conflito com const)
+  if (typeof showOk !== 'undefined') {
+    const originalShowOk = showOk;
+    window.showOk = function(msg) {
+      originalShowOk(msg);
+      if (window.UI && window.UI.mostrarToast) {
+        UI.mostrarToast(msg, 'success');
+      }
+    };
+  }
   </script>
 </body>
 </html>
-```
-
----
 

@@ -216,6 +216,9 @@
                 <th>Data</th>
                 <th>Status</th>
                 <th class="text-center">
+                  <i class="fas fa-users me-1" style="color:var(--gold)"></i>Leads
+                </th>
+                <th class="text-center">
                   <i class="fas fa-qrcode me-1" style="color:var(--gold)"></i>QR Code
                 </th>
               </tr>
@@ -377,7 +380,25 @@
         window.location.href = 'login.html'; 
         return null; 
       }
+
       return token;
+    }
+
+    // Função para verificar perfil do usuário
+    async function verificarPerfil() {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      
+      try {
+        const nome = localStorage.getItem('nomeUsuario');
+        const tipo = localStorage.getItem('tipoUsuario');
+        
+        
+        if (tipo !== 'admin') {
+          console.warn('⚠️ AVISO: Usuário logado não é ADMIN! Tipo:', tipo);
+        }
+      } catch (e) {
+      }
     }
 
     // Carregar eventos
@@ -397,15 +418,27 @@
           return;
         }
 
-        const eventos = await resp.json();
-        renderizarEventos(eventos);
+        const dados = await resp.json();
+        
+        // Verificar se a resposta é um array (sucesso) ou erro
+        if (!Array.isArray(dados)) {
+          console.error('Resposta inválida:', dados);
+          document.getElementById('tabelaEventos').innerHTML =
+            `<tr><td colspan="7" class="text-center text-danger py-4">
+              <i class="fas fa-exclamation-triangle fa-2x mb-2"></i><br>
+              Erro: ${dados.erro || 'Resposta inválida do servidor'}
+            </td></tr>`;
+          return;
+        }
+        
+        renderizarEventos(dados);
         
         // Configurar busca
-        document.getElementById('buscaEvento').addEventListener('input', () => filtrar(eventos));
+        document.getElementById('buscaEvento').addEventListener('input', () => filtrar(dados));
       } catch (e) {
-        console.error(e);
+        console.error('Erro ao buscar eventos:', e);
         document.getElementById('tabelaEventos').innerHTML =
-          `<tr><td colspan="6" class="text-center text-danger py-4">
+          `<tr><td colspan="7" class="text-center text-danger py-4">
             <i class="fas fa-exclamation-triangle fa-2x mb-2"></i><br>
             Erro ao carregar eventos
           </td></tr>`;
@@ -431,7 +464,7 @@
       if (eventos.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="6" class="text-center py-5">
+            <td colspan="7" class="text-center py-5">
               <i class="fas fa-calendar-xmark fa-3x mb-3" style="color:#cbd5e1"></i><br>
               <h5 style="color:#64748b">Nenhum evento encontrado</h5>
               <p class="text-muted">Crie seu primeiro evento clicando no botão acima</p>
@@ -450,6 +483,9 @@
             <span class="badge bg-${e.status === 'ativo' ? 'success' : 'secondary'}">
               ${e.status}
             </span>
+          </td>
+          <td class="text-center">
+          <span class="badge" style="background:var(--gold);color:var(--black);font-weight:600">${e.total_leads || 0}</span>
           </td>
           <td class="text-center">
             <button class="btn-qr" onclick="abrirQRCode(${e.id})" title="Ver QR Code">
@@ -514,12 +550,30 @@
       const form = document.getElementById('formNovoEvento');
       const dados = Object.fromEntries(new FormData(form).entries());
 
+      // Validação completa
       if (!dados.escola || !dados.cidade || !dados.estado) {
         alert('❌ Preencha escola, cidade e estado.');
         return;
       }
       
+      if (!dados.data_evento) {
+        alert('❌ Preencha a data do evento.');
+        return;
+      }
+      
+      if (!dados.tipo_formatura) {
+        alert('❌ Selecione o tipo de formatura.');
+        return;
+      }
+      
+      if (!dados.local_evento) {
+        alert('❌ Preencha o local do evento.');
+        return;
+      }
+      
       if (dados.estado) dados.estado = dados.estado.trim().toUpperCase().slice(0,2);
+
+
 
       try {
         const resp = await fetch(`${API_URL}/eventos`, {
@@ -535,17 +589,21 @@
         const json = await resp.json();
         
         if (!resp.ok) {
-          alert(`❌ Erro: ${json.erro || 'Não foi possível criar o evento'}`);
+          alert(`❌ Erro (${resp.status}): ${json.erro || 'Não foi possível criar o evento'}`);
           return;
         }
         
         alert(`✅ Evento criado com sucesso!\n\nID: ${json.evento_id}`);
         bootstrap.Modal.getInstance(document.getElementById('modalNovoEvento')).hide();
         form.reset();
-        carregarEventos();
+        
+        // Aguardar um pouco antes de recarregar
+        setTimeout(() => {
+          carregarEventos();
+        }, 500);
       } catch (e) {
-        console.error(e);
-        alert('❌ Erro de conexão.');
+        console.error('Erro ao criar evento:', e);
+        alert('❌ Erro de conexão: ' + e.message);
       }
     }
 
@@ -621,7 +679,10 @@
     }
 
     // Inicializar
-    document.addEventListener('DOMContentLoaded', carregarEventos);
+    document.addEventListener('DOMContentLoaded', () => {
+      verificarPerfil();
+      carregarEventos();
+    });
   </script>
 </body>
 </html>

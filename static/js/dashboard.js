@@ -300,6 +300,12 @@ async function carregarEventos() {
       return;
     }
     
+    // Validar que payload é um array
+    if (!Array.isArray(payload)) {
+      console.error('Resposta inválida - não é um array:', payload);
+      return;
+    }
+    
     renderizarEventos(payload);
   } catch (err) {
     console.error('Erro ao buscar eventos:', err);
@@ -313,22 +319,46 @@ function renderizarEventos(eventos) {
 
   tabela.innerHTML =
     eventos.length === 0
-      ? `<tr><td colspan="6" class="text-center text-muted py-3">Nenhum evento cadastrado</td></tr>`
+      ? `<tr><td colspan="7" class="text-center text-muted py-3">Nenhum evento cadastrado</td></tr>`
       : eventos
           .map(
-            (e) => `
+            (e) => {
+              // Determinar cor do badge baseado no status automático
+              let badgeColor = 'secondary';
+              let statusTexto = e.status || 'pendente';
+              let statusDetalhes = '';
+              
+              if (e.status === 'ativo') {
+                badgeColor = 'success';
+                statusDetalhes = e.dias_restantes > 0 ? ` (${e.dias_restantes}d)` : '';
+              } else if (e.status === 'finalizado') {
+                badgeColor = 'danger';
+              } else if (e.status === 'agendado') {
+                badgeColor = 'info';
+              } else if (e.status === 'pendente') {
+                badgeColor = 'warning';
+              }
+              
+              // Desabilitar botão se QR não for válido
+              const btnQR = e.qr_valido 
+                ? `<button class="btn btn-sm" onclick="abrirQRCode(${e.id})" style="background:var(--gold);color:var(--black);border:none;font-weight:600">
+                    <i class="fas fa-qrcode"></i> Ver QR
+                  </button>`
+                : `<button class="btn btn-sm" disabled style="background:#ccc;color:#666;border:none;opacity:0.6">
+                    <i class="fas fa-ban"></i> QR Expirado
+                  </button>`;
+              
+              return `
         <tr>
           <td>${e.id}</td>
           <td>${e.escola || '-'}</td>
           <td>${e.tipo_formatura || '-'}</td>
           <td>${e.data_evento ? new Date(e.data_evento).toLocaleDateString('pt-BR') : '-'}</td>
-          <td><span class="badge bg-${e.status === 'ativo' ? 'success' : 'secondary'}">${e.status}</span></td>
-          <td>
-            <button class="btn btn-sm btn-outline-primary" onclick="abrirQRCode(${e.id})">
-              <i class="fas fa-qrcode"></i> Ver QR
-            </button>
-          </td>
-        </tr>`
+          <td><span class="badge bg-${badgeColor}">${statusTexto}${statusDetalhes}</span></td>
+          <td>${e.total_leads || 0}</td>
+          <td>${btnQR}</td>
+        </tr>`;
+            }
           )
           .join('');
 }
@@ -445,10 +475,18 @@ async function verDetalhesAluno(alunoId) {
       modoEdicao = false;
       renderizarDetalhesLead();
       
-      // Mostrar botão editar
+      // Mostrar botão editar e deletar (apenas se admin)
       document.getElementById('btnEditarLead').style.display = 'inline-block';
       document.getElementById('btnSalvarLead').style.display = 'none';
       document.getElementById('btnCancelarEdicao').style.display = 'none';
+      
+      // Mostrar botão deletar apenas para admin
+      const tipoUsuario = localStorage.getItem('tipoUsuario');
+      if (tipoUsuario === 'admin') {
+        document.getElementById('btnDeletarLead').style.display = 'inline-block';
+      } else {
+        document.getElementById('btnDeletarLead').style.display = 'none';
+      }
     } else {
       body.innerHTML = '<div class="alert alert-danger">Erro ao carregar detalhes do lead.</div>';
     }
@@ -468,14 +506,34 @@ function renderizarDetalhesLead() {
     ? `<img src="/static/uploads/${lead.foto}" class="img-fluid rounded" style="max-width:150px">`
     : '<i class="fas fa-user-circle fa-5x text-muted"></i>';
 
+  const galeriaHtml = lead.link_galeria 
+    ? `<div class="alert mt-2" style="margin-bottom:0;background:rgba(246, 162, 30, 0.1);border:1px solid var(--gold)">
+        <i class="fas fa-check-circle me-1" style="color:var(--gold)"></i>
+        <strong style="color:var(--gold)">Galeria vinculada!</strong><br>
+        <small>${lead.descricao_galeria || 'Link de galeria em nuvem'}</small><br>
+        <a href="${lead.link_galeria}" target="_blank" class="btn btn-sm mt-2" style="background:var(--gold);color:var(--black);border:none;font-weight:600">
+          <i class="fas fa-external-link-alt me-1"></i>Ver Galeria
+        </a>
+        <button class="btn btn-sm mt-2" onclick="removerGaleriaLink()" style="background:rgba(0,0,0,0.1);color:var(--black);border:none;font-weight:600">
+          <i class="fas fa-trash me-1"></i>Remover
+        </button>
+      </div>`
+    : '';
+
   body.innerHTML = `
         <div class="row">
           <div class="col-md-3 text-center mb-3">
             ${fotoHtml}
             <p class="mt-2"><strong>Foto 3x4</strong></p>
-            <button class="btn btn-sm mt-2" onclick="abrirUploadFoto()" style="width:100%;background:var(--gold);color:var(--black);border:none;font-weight:600;transition:all 0.3s ease" onmouseover="this.style.background='var(--gold-dark)'" onmouseout="this.style.background='var(--gold)'">
+            <button class="btn btn-sm mt-2 w-100" onclick="abrirUploadFoto()" style="background:var(--gold);color:var(--black);border:none;font-weight:600;transition:all 0.3s ease" onmouseover="this.style.background='var(--gold-dark)'" onmouseout="this.style.background='var(--gold)'">
               <i class="fas fa-cloud-upload-alt me-1"></i>Upload Foto
             </button>
+            
+            <button class="btn btn-sm mt-2 w-100" onclick="abrirAnexarGaleria()" style="background:var(--gold);color:var(--black);border:none;font-weight:600;transition:all 0.3s ease" onmouseover="this.style.background='var(--gold-dark)'" onmouseout="this.style.background='var(--gold)'">
+              <i class="fas fa-cloud me-1"></i>Anexar Galeria
+            </button>
+
+            ${galeriaHtml}
           </div>
           <div class="col-md-9">
             <h5 class="mb-3"><i class="fas fa-graduation-cap me-2" style="color:var(--gold)"></i>Dados do Formando</h5>
@@ -530,7 +588,7 @@ function renderizarDetalhesLead() {
 
             <h5 class="mt-4 mb-3"><i class="fas fa-info-circle me-2" style="color:var(--gold)"></i>Informações Adicionais</h5>
             <table class="table table-sm table-bordered">
-              <tr><th width="150">Status:</th><td id="tdStatusLead"><span class="badge bg-primary">${lead.status_lead}</span></td></tr>
+            <tr><th width="150">Status:</th><td id="tdStatusLead"><span class="badge-status ${lead.status_lead}">${lead.status_lead}</span></td></tr>
               <tr><th>Observações:</th><td id="tdObservacoes"><small>${lead.observacoes || '-'}</small></td></tr>
               <tr><th>Cadastrado em:</th><td>${new Date(lead.criado_em).toLocaleString('pt-BR')}</td></tr>
             </table>
@@ -760,6 +818,67 @@ async function enviarFoto() {
 }
 
 // ======================================================
+// 🗑️ DELETAR LEAD
+// ======================================================
+
+function confirmarDelecaoLead() {
+  if (!leadAtual) return;
+  
+  const confirmacao = confirm(
+    `⚠️  ATENÇÃO!\n\n` +
+    `Tem certeza que deseja deletar o cadastro de ${leadAtual.nome_formando}?\n\n` +
+    `Esta ação é IRREVERSÍVEL e todas as informações será perdidas.`
+  );
+  
+  if (confirmacao) {
+    deletarLead();
+  }
+}
+
+async function deletarLead() {
+  const token = verificarAutenticacao();
+  if (!token) return;
+  
+  if (!leadAtual) {
+    alert('Erro: nenhum lead selecionado');
+    return;
+  }
+  
+  const tipoUsuario = localStorage.getItem('tipoUsuario');
+  if (tipoUsuario !== 'admin') {
+    alert('❌ Apenas administradores podem deletar leads!');
+    return;
+  }
+  
+  try {
+    const response = await fetch(`${API_URL}/leads/${leadAtual.id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    
+    if (response.ok) {
+      alert('✅ Lead deletado com sucesso!');
+      
+      // Fechar modal
+      const modal = bootstrap.Modal.getInstance(document.getElementById('modalDetalhesLead'));
+      if (modal) modal.hide();
+      
+      // Recarregar lista de alunos
+      leadAtual = null;
+      carregarAlunos();
+    } else {
+      const erro = await response.json();
+      alert(`❌ Erro ao deletar: ${erro.erro || 'Erro desconhecido'}`);
+    }
+  } catch (error) {
+    console.error('Erro ao deletar lead:', error);
+    alert('❌ Erro ao conectar com o servidor.');
+  }
+}
+
+// ======================================================
 // 📊 SPARKLINES
 // ======================================================
 
@@ -862,6 +981,116 @@ function atualizarSparklines() {
 // ======================================================
 // 🚀 INICIALIZAÇÃO
 // ======================================================
+
+// ======================================================
+// ☁️ GALERIA DE FOTOS EM NUVEM
+// ======================================================
+
+function abrirAnexarGaleria() {
+  // Se já tem galeria, mostrar aviso
+  if (leadAtual && leadAtual.link_galeria) {
+    document.getElementById('galeriaAtualInfo').style.display = 'block';
+  } else {
+    document.getElementById('galeriaAtualInfo').style.display = 'none';
+  }
+  
+  // Limpar campos
+  document.getElementById('inputLinkGaleria').value = (leadAtual && leadAtual.link_galeria) ? leadAtual.link_galeria : '';
+  document.getElementById('inputDescricaoGaleria').value = (leadAtual && leadAtual.descricao_galeria) ? leadAtual.descricao_galeria : '';
+  
+  const modal = new bootstrap.Modal(document.getElementById('modalAnexarGaleria'));
+  modal.show();
+}
+
+async function salvarGaleriaLink() {
+  const token = verificarAutenticacao();
+  if (!token) return;
+
+  const link = document.getElementById('inputLinkGaleria').value.trim();
+  const descricao = document.getElementById('inputDescricaoGaleria').value.trim();
+
+  if (!link) {
+    alert('Informe o link da galeria!');
+    return;
+  }
+
+  if (!link.startsWith('http://') && !link.startsWith('https://')) {
+    alert('O link deve começar com http:// ou https://');
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/leads/${leadAtual.id}/galeria-link`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        link_galeria: link,
+        descricao_galeria: descricao
+      }),
+    });
+
+    if (response.ok) {
+      const resultado = await response.json();
+      alert('✅ Galeria anexada com sucesso!');
+      
+      // Atualizar leadAtual
+      leadAtual.link_galeria = resultado.link_galeria;
+      leadAtual.descricao_galeria = resultado.descricao_galeria;
+      renderizarDetalhesLead();
+      
+      // Fechar modal
+      const modal = bootstrap.Modal.getInstance(document.getElementById('modalAnexarGaleria'));
+      if (modal) modal.hide();
+      
+      // Recarregar alunos
+      carregarAlunos();
+    } else {
+      const erro = await response.json();
+      alert(`❌ Erro: ${erro.erro || 'Erro desconhecido'}`);
+    }
+  } catch (error) {
+    console.error('Erro:', error);
+    alert('❌ Erro ao conectar com o servidor.');
+  }
+}
+
+async function removerGaleriaLink() {
+  const confirmacao = confirm('Deseja remover o link da galeria?');
+  if (!confirmacao) return;
+
+  const token = verificarAutenticacao();
+  if (!token) return;
+
+  try {
+    const response = await fetch(`${API_URL}/leads/${leadAtual.id}/galeria-link`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (response.ok) {
+      alert('✅ Galeria removida com sucesso!');
+      
+      // Atualizar leadAtual
+      leadAtual.link_galeria = null;
+      leadAtual.descricao_galeria = null;
+      renderizarDetalhesLead();
+      
+      // Recarregar alunos
+      carregarAlunos();
+    } else {
+      const erro = await response.json();
+      alert(`❌ Erro: ${erro.erro || 'Erro desconhecido'}`);
+    }
+  } catch (error) {
+    console.error('Erro:', error);
+    alert('❌ Erro ao conectar com o servidor.');
+  }
+}
 
 document.addEventListener('DOMContentLoaded', function () {
   verificarAutenticacao();

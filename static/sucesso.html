@@ -366,20 +366,6 @@
                 const nomeCompleto = `${tipoTexto}: ${dadosCadastro.nome}`;
                 
                 // Animar nome com efeito de digitação
-                let index = 0;
-                const nomeElement = document.getElementById('nomeExibir');
-                nomeElement.textContent = '';
-                
-                const intervalo = setInterval(() => {
-                  if (index < nomeCompleto.length) {
-                    nomeElement.textContent += nomeCompleto[index];
-                    index++;
-                  } else {
-                    clearInterval(intervalo);
-                  }
-                }, 50);
-                
-                // Animar nome com efeito de digitação
                 UI.animarNome(nomeCompleto, 'nomeExibir');
                 
                 // Mostrar opção apenas se for responsável

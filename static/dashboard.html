@@ -260,6 +260,20 @@
             font-size: 0.65rem;
         }
 
+        /* Botão Deletar */
+        .btn-deletar-lead {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+            transition: all 0.3s ease;
+        }
+
+        .btn-deletar-lead:hover {
+            background: #ef4444;
+            color: white;
+            border-color: #ef4444;
+        }
+
         /* Filtros */
         .filtros-container {
             background: white;
@@ -785,6 +799,56 @@
         </div>
     </div>
 
+    <!-- Modal Anexar Link de Galeria -->
+    <div class="modal fade" id="modalAnexarGaleria" tabindex="-1" style="z-index: 2000;">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" style="background:var(--gold);color:var(--black)">
+                    <h5 class="modal-title">
+                        <i class="fas fa-cloud me-2"></i>Anexar Galeria de Fotos em Nuvem
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info" role="alert">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Como funciona:</strong> Compartilhe o link da pasta de fotos do Google Fotos, 
+                        OneDrive, Dropbox ou qualquer serviço de nuvem que tenha link de compartilhamento.
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Link da Galeria em Nuvem <span class="text-danger">*</span></label>
+                        <input type="url" class="form-control" id="inputLinkGaleria" 
+                            placeholder="https://photos.google.com/share/..." required>
+                        <small class="form-text text-muted d-block mt-1">
+                            Copie o link de compartilhamento da sua pasta de fotos
+                        </small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Descrição (opcional)</label>
+                        <textarea class="form-control" id="inputDescricaoGaleria" 
+                            placeholder="Ex: Fotos da criança - 130 imagens" rows="2" maxlength="500"></textarea>
+                        <small class="form-text text-muted d-block mt-1">
+                            Máximo 500 caracteres
+                        </small>
+                    </div>
+
+                    <div id="galeriaAtualInfo" style="display:none;" class="alert alert-warning mt-3">
+                        <i class="fas fa-warning me-2"></i>
+                        <strong>Aviso:</strong> Ao anexar um novo link, o link anterior será substituído.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn" onclick="salvarGaleriaLink()" style="background:var(--gold);color:var(--black);border:none;font-weight:600">
+                        <i class="fas fa-save me-1"></i>Anexar Galeria
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Detalhes do Lead -->
     <div class="modal fade" id="modalDetalhesLead" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
@@ -800,19 +864,25 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-                    <button type="button" class="btn btn-primary" id="btnEditarLead" onclick="ativarEdicaoLead()"
-                        style="display:none">
-                        <i class="fas fa-edit me-1"></i>Editar
+                    <button type="button" class="btn btn-deletar-lead" id="btnDeletarLead"
+                        onclick="confirmarDelecaoLead()" style="display:none">
+                        <i class="fas fa-trash me-1"></i>Deletar
                     </button>
-                    <button type="button" class="btn btn-success" id="btnSalvarLead" onclick="salvarEdicaoLead()"
-                        style="display:none">
-                        <i class="fas fa-save me-1"></i>Salvar
-                    </button>
-                    <button type="button" class="btn btn-secondary" id="btnCancelarEdicao"
-                        onclick="cancelarEdicaoLead()" style="display:none">
-                        Cancelar
-                    </button>
+                    <div class="ms-auto">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                        <button type="button" class="btn" id="btnEditarLead" onclick="ativarEdicaoLead()"
+                            style="display:none;background:var(--gold);color:var(--black);border:none;font-weight:600">
+                            <i class="fas fa-edit me-1"></i>Editar
+                        </button>
+                        <button type="button" class="btn" id="btnSalvarLead" onclick="salvarEdicaoLead()"
+                            style="display:none;background:var(--gold);color:var(--black);border:none;font-weight:600">
+                            <i class="fas fa-save me-1"></i>Salvar
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="btnCancelarEdicao"
+                            onclick="cancelarEdicaoLead()" style="display:none">
+                            Cancelar
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

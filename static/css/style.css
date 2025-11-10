@@ -288,9 +288,9 @@ body {
 }
 
 .alert-info {
-    background: #dbeafe;
-    color: #1e40af;
-    border-left: 4px solid var(--primary-color);
+    background: #fff7e9;
+    color: #C57F17;
+    border-left: 4px solid var(--gold);
 }
 
 /* ==================== HEADER ==================== */
@@ -474,8 +474,8 @@ body {
 }
 
 .lead-status.novo {
-    background: #dbeafe;
-    color: #1e40af;
+    background: #fff7e9;
+    color: #C57F17;
 }
 
 .lead-status.contatado {

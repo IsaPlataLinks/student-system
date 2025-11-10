@@ -301,8 +301,8 @@ body {
 }
 
 .badge-status.novo {
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
+background: rgba(246, 162, 30, 0.1);
+color: var(--gold);
 }
 
 .badge-status.contatado {
@@ -569,8 +569,8 @@ body {
 }
 
 .toast-notificacao.toast-info {
-  background: #3b82f6;
-  color: white;
+background: var(--gold);
+color: var(--black);
 }
 
 @keyframes slideInRight {

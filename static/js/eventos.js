@@ -74,7 +74,7 @@ function renderizarEventos(eventos) {
   if (eventos.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="6" class="text-center text-muted py-4">
+        <td colspan="7" class="text-center text-muted py-4">
           <i class="fas fa-inbox fa-2x mb-2"></i><br>
           Nenhum evento encontrado
         </td>
@@ -84,13 +84,36 @@ function renderizarEventos(eventos) {
   }
 
   tbody.innerHTML = eventos.map(e => {
-    const statusBadge = e.status === 'ativo' 
-      ? '<span class="badge bg-success">Ativo</span>'
-      : '<span class="badge bg-secondary">Inativo</span>';
+    // Determinar cor do badge baseado no status automático
+    let badgeColor = 'secondary';
+    let statusTexto = e.status || 'pendente';
+    let statusDetalhes = '';
+    
+    if (e.status === 'ativo') {
+      badgeColor = 'success';
+      statusDetalhes = e.dias_restantes > 0 ? ` (${e.dias_restantes}d)` : '';
+    } else if (e.status === 'finalizado') {
+      badgeColor = 'danger';
+    } else if (e.status === 'agendado') {
+      badgeColor = 'info';
+    } else if (e.status === 'pendente') {
+      badgeColor = 'warning';
+    }
+    
+    const statusBadge = `<span class="badge bg-${badgeColor}">${statusTexto}${statusDetalhes}</span>`;
     
     const dataFormatada = e.data_evento 
       ? new Date(e.data_evento).toLocaleDateString('pt-BR')
       : 'Não definida';
+    
+    // Desabilitar botão se QR não for válido
+    const btnQR = e.qr_valido 
+      ? `<button class="btn-qr" onclick="mostrarQRCode(${e.id}, '${e.escola}', '${e.qr_url}')" title="Ver QR Code">
+          <i class="fas fa-qrcode"></i>
+        </button>`
+      : `<button class="btn-qr" disabled title="QR Code expirado" style="opacity:0.5;cursor:not-allowed">
+          <i class="fas fa-ban"></i>
+        </button>`;
 
     return `
       <tr>
@@ -99,11 +122,8 @@ function renderizarEventos(eventos) {
         <td>${e.tipo_formatura || '-'}</td>
         <td>${dataFormatada}</td>
         <td>${statusBadge}</td>
-        <td class="text-center">
-          <button class="btn-qr" onclick="mostrarQRCode(${e.id}, '${e.escola}', '${e.qr_url}')" title="Ver QR Code">
-            <i class="fas fa-qrcode"></i>
-          </button>
-        </td>
+        <td class="text-center">${e.total_leads || 0}</td>
+        <td class="text-center">${btnQR}</td>
       </tr>
     `;
   }).join('');
