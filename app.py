@@ -24,6 +24,10 @@ def current_user_id() -> int | None:
     except (TypeError, ValueError):
         return None
 
+def eh_administrador(usuario):
+    """Verifica se um usuário é admin ou dono"""
+    return usuario.tipo_usuario in ['admin', 'dono']
+
 # ==================== CONFIG ====================
 
 app = Flask(__name__, static_folder='static')
@@ -98,6 +102,55 @@ class Evento(db.Model):
     @property
     def qr_url(self):
         return f"/cadastro?e={self.id}"
+    
+    @property
+    def dias_desde_evento(self):
+        """Calcula dias desde a data do evento"""
+        if not self.data_evento:
+            return None
+        from datetime import datetime, timezone
+        hoje = datetime.now().date()
+        return (hoje - self.data_evento).days
+    
+    @property
+    def status_automatico(self):
+        """
+        Calcula status automaticamente:
+        - Se data_evento não está definida: 'pendente'
+        - Se passou 7 dias da data: 'finalizado'
+        - Se passou menos de 7 dias: 'ativo'
+        """
+        if not self.data_evento:
+            return 'pendente'
+        
+        dias = self.dias_desde_evento
+        if dias is None:
+            return 'pendente'
+        
+        # Se passou 7 dias, está finalizado
+        if dias >= 7:
+            return 'finalizado'
+        
+        # Se ainda não chegou a data ou passou menos de 7 dias, está ativo
+        if dias >= 0:
+            return 'ativo'
+        
+        # Se ainda não chegou a data do evento
+        return 'agendado'
+    
+    def atualizar_status_automatico(self):
+        """Atualiza o status baseado na data do evento"""
+        novo_status = self.status_automatico
+        if self.status != novo_status:
+            self.status = novo_status
+            db.session.commit()
+            return True
+        return False
+    
+    @property
+    def qr_code_valido(self):
+        """QR code é válido apenas se status for 'ativo' ou 'agendado'"""
+        return self.status_automatico in ['ativo', 'agendado']
 
 class Lead(db.Model):
     __tablename__ = 'leads'
@@ -111,6 +164,8 @@ class Lead(db.Model):
     matricula = db.Column(db.String(20), nullable=False)
     nome_formando = db.Column(db.String(100), nullable=False)
     foto = db.Column(db.String(255))
+    link_galeria = db.Column(db.String(500))
+    descricao_galeria = db.Column(db.Text)
 
     nome_contato = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), nullable=False)
@@ -277,10 +332,10 @@ def criar_evento():
     user = Usuario.query.get(uid)
     if not user:
         return jsonify({'erro': 'Usuário não encontrado'}), 404
-    if user.tipo_usuario != 'admin':
-        return jsonify({'erro': 'Apenas administradores podem criar eventos'}), 403
+    if user.tipo_usuario not in ['admin', 'dono']:
+        return jsonify({'erro': 'Apenas administradores e donos podem criar eventos'}), 403
 
-    data = (request.get_json(silent=True) or {})
+    data = request.get_json(silent=True) or {}
 
     escola_nome = (data.get('escola') or '').strip()
     if not escola_nome:
@@ -295,6 +350,7 @@ def criar_evento():
             estado=(data.get('estado') or '').upper()[:2]
         )
         db.session.add(escola)
+        db.session.flush()  # Garante que a escola tem ID antes de usar no Evento
 
     # -------- DAQUI PRA BAIXO PRECISA FICAR DENTRO DA FUNÇÃO --------
     # Data do evento (OBRIGATÓRIA)
@@ -318,11 +374,24 @@ def criar_evento():
     )
 
     try:
+        print(f"[DEBUG] Antes de commit - Evento: id={evento.id}, escola_id={evento.escola_id}, data={evento.data_evento}")
         db.session.add(evento)
         db.session.commit()
-    except IntegrityError:
+        print(f"[OK] Evento criado com sucesso! ID: {evento.id}, Escola: {evento.escola.nome if evento.escola else 'None'}")
+        
+        # Debug: verificar se foi salvo
+        evento_test = Evento.query.get(evento.id)
+        print(f"[DEBUG] Verificacao pos-commit: evento {evento.id} existe? {evento_test is not None}")
+    except IntegrityError as ie:
         db.session.rollback()
+        print(f"[ERRO] IntegrityError ao criar evento: {str(ie)}")
         return jsonify({'erro': 'Já existe um evento para esta escola nesta data'}), 409
+    except Exception as e:
+        db.session.rollback()
+        print(f"[ERRO] Erro ao criar evento: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'erro': 'Erro ao criar evento', 'detalhes': str(e)}), 500
 
     qr_url = f"{request.host_url}cadastro?e={evento.id}"
     return jsonify({
@@ -335,27 +404,58 @@ def criar_evento():
 @jwt_required()
 def listar_eventos():
     try:
-        # ✅ joinedload evita N+1 e AttributeError
+        # Debug: contar eventos brutos
+        total_raw = db.session.query(Evento).count()
+        print(f"[DEBUG] Total de eventos no BD (raw count): {total_raw}")
+        
+        # Buscar eventos com escolas carregadas
         eventos = (Evento.query
-                   .options(joinedload(Evento.escola))
                    .order_by(Evento.criado_em.desc())
                    .all())
+        
+        print(f"[OK] Eventos encontrados: {len(eventos)}")
+        for ev in eventos:
+            print(f"  - ID: {ev.id}, Escola: {ev.escola.nome if ev.escola else 'None'}, Data: {ev.data_evento}")
 
         payload = []
         for e in eventos:
-            payload.append({
-                'id': e.id,
-                'escola': e.escola.nome if e.escola else None,
-                'tipo_formatura': e.tipo_formatura,
-                'data_evento': e.data_evento.isoformat() if e.data_evento else None,
-                'local_evento': e.local_evento,
-                'status': e.status,
-                'total_leads': len(e.leads),
-                'qr_url': f"{request.host_url}cadastro?e={e.id}"
-            })
+            try:
+                # Atualizar status automaticamente
+                if hasattr(e, 'atualizar_status_automatico'):
+                    e.atualizar_status_automatico()
+                
+                dias_restantes = 0
+                if e.dias_desde_evento is not None and 0 <= e.dias_desde_evento < 7:
+                    dias_restantes = 7 - e.dias_desde_evento
+                
+                # Trata escola nula ou erro ao acessá-la
+                escola_nome = None
+                try:
+                    if e.escola:
+                        escola_nome = e.escola.nome
+                except Exception as escola_err:
+                    print(f"Aviso: erro ao acessar escola do evento {e.id}: {str(escola_err)}")
+                
+                payload.append({
+                    'id': e.id,
+                    'escola': escola_nome,
+                    'tipo_formatura': e.tipo_formatura,
+                    'data_evento': e.data_evento.isoformat() if e.data_evento else None,
+                    'local_evento': e.local_evento,
+                    'status': e.status_automatico,
+                    'status_original': e.status,
+                    'total_leads': len(e.leads) if hasattr(e, 'leads') else 0,
+                    'dias_restantes': dias_restantes,
+                    'qr_valido': e.qr_code_valido,
+                    'qr_url': f"{request.host_url}cadastro?e={e.id}"
+                })
+            except Exception as event_err:
+                print(f"Aviso: erro ao processar evento {getattr(e, 'id', '?')}: {str(event_err)}")
+                continue
+        
         return jsonify(payload), 200
     except Exception as e:
-        print(f"❌ Erro em listar_eventos: {str(e)}")
+        print(f"[ERRO] Erro em listar_eventos: {str(e)}")
         import traceback
         traceback.print_exc()
         return jsonify({'erro': 'Erro ao listar eventos', 'detalhes': str(e)}), 500
@@ -363,27 +463,56 @@ def listar_eventos():
 @app.route('/api/eventos/<int:evento_id>', methods=['GET'])
 def buscar_evento(evento_id):
     try:
-        # ✅ Adicionar joinedload para evitar AttributeError
-        evento = (Evento.query
-                  .options(joinedload(Evento.escola))
-                  .filter_by(id=evento_id)
-                  .first_or_404())
+        # Buscar evento sem joinedload para evitar erro se escola for None
+        evento = Evento.query.filter_by(id=evento_id).first()
         
-        if evento.status != 'ativo':
-            return jsonify({'erro': 'Este evento não está mais disponível'}), 400
+        if not evento:
+            return jsonify({'erro': 'Evento não encontrado'}), 404
+        
+        # Atualizar status automaticamente
+        if hasattr(evento, 'atualizar_status_automatico'):
+            evento.atualizar_status_automatico()
+        
+        # Verificar se evento ainda está disponível
+        if evento.status_automatico not in ['ativo', 'agendado']:
+            return jsonify({
+                'erro': 'Este evento não está mais disponível',
+                'status': evento.status_automatico,
+                'detalhes': f'Formulário finalizado em {evento.data_evento + timedelta(days=7)}'
+            }), 410
+        
+        dias_restantes = 0
+        if evento.dias_desde_evento is not None and 0 <= evento.dias_desde_evento < 7:
+            dias_restantes = 7 - evento.dias_desde_evento
+        
+        # Trata escola nula ou erro ao acessá-la
+        escola_info = {
+            'id': None,
+            'nome': None,
+            'cidade': None,
+            'estado': None
+        }
+        try:
+            if evento.escola:
+                escola_info = {
+                    'id': evento.escola.id,
+                    'nome': evento.escola.nome,
+                    'cidade': evento.escola.cidade,
+                    'estado': evento.escola.estado
+                }
+        except Exception as escola_err:
+            print(f"Aviso: erro ao acessar escola do evento {evento.id}: {str(escola_err)}")
         
         return jsonify({
             'id': evento.id,
-            'escola': {
-                'id': evento.escola.id if evento.escola else None,
-                'nome': evento.escola.nome if evento.escola else None,
-                'cidade': evento.escola.cidade if evento.escola else None,
-                'estado': evento.escola.estado if evento.escola else None
-            },
+            'escola': escola_info,
             'data_evento': evento.data_evento.isoformat() if evento.data_evento else None,
             'local_evento': evento.local_evento,
             'endereco_evento': evento.endereco_evento,
-            'tipo_formatura': evento.tipo_formatura
+            'tipo_formatura': evento.tipo_formatura,
+            'status': evento.status_automatico,
+            'dias_restantes': dias_restantes,
+            'qr_valido': evento.qr_code_valido
         }), 200
     except Exception as e:
         print(f"❌ Erro em buscar_evento: {str(e)}")
@@ -396,6 +525,17 @@ def buscar_evento(evento_id):
 @app.route('/api/eventos/<int:evento_id>/qrcode', methods=['GET'])
 def gerar_qrcode(evento_id):
     evento = Evento.query.get_or_404(evento_id)
+    
+    # Atualizar status automaticamente
+    evento.atualizar_status_automatico()
+    
+    # Verificar se QR code é válido
+    if not evento.qr_code_valido:
+        return jsonify({
+            'erro': 'QR code expirado',
+            'detalhes': f'Este evento foi finalizado em {evento.data_evento + timedelta(days=7)}',
+            'status': evento.status_automatico
+        }), 410  # 410 Gone
 
     base_url = request.host_url.rstrip('/')     # evita //cadastro
     qr_url = f"{base_url}/cadastro?e={evento.id}"
@@ -427,8 +567,20 @@ def cadastrar_lead():
             return jsonify({'erro': 'Evento não identificado'}), 400
 
         evento = Evento.query.get(evento_id)
-        if not evento or evento.status != 'ativo':
-            return jsonify({'erro': 'Evento não disponível'}), 400
+        if not evento:
+            return jsonify({'erro': 'Evento não encontrado'}), 404
+        
+        # Atualizar status automaticamente
+        evento.atualizar_status_automatico()
+        
+        # Verificar se evento ainda está ativo/aberto
+        if evento.status_automatico not in ['ativo', 'agendado']:
+            data_finalizacao = evento.data_evento + timedelta(days=7)
+            return jsonify({
+                'erro': 'Formulário fechado',
+                'detalhes': f'Este formulário foi finalizado em {data_finalizacao.strftime("%d/%m/%Y")}',
+                'status': evento.status_automatico
+            }), 410
 
         matricula = (data.get('matricula') or '').strip().upper()
         nome_formando = data.get('nome_formando')
@@ -505,7 +657,8 @@ def listar_leads():
              .options(joinedload(Lead.evento).joinedload(Evento.escola))
              .order_by(Lead.criado_em.desc()))
 
-        if vendedor.tipo_usuario != 'admin':
+        # Verificar permissão (admin/dono vê tudo, vendedor só seus leads ou sem dono)
+        if not eh_administrador(vendedor):
             q = q.filter((Lead.vendedor_id == vendedor_id) | (Lead.vendedor_id == None))
         if evento_id:
             q = q.filter(Lead.evento_id == evento_id)
@@ -569,8 +722,8 @@ def obter_lead(lead_id):
         if not lead:
             return jsonify({'erro': 'Lead não encontrado'}), 404
 
-        # Verificar permissão (admin vê tudo, vendedor só seus leads ou sem dono)
-        if vendedor.tipo_usuario != 'admin':
+        # Verificar permissão (admin/dono vê tudo, vendedor só seus leads ou sem dono)
+        if not eh_administrador(vendedor):
             if lead.vendedor_id and lead.vendedor_id != vendedor_id:
                 return jsonify({'erro': 'Sem permissão para visualizar este lead'}), 403
 
@@ -590,6 +743,8 @@ def obter_lead(lead_id):
             'cep': lead.cep,
             'endereco': lead.endereco,
             'foto': lead.foto,
+            'link_galeria': lead.link_galeria,
+            'descricao_galeria': lead.descricao_galeria,
             'status_lead': lead.status_lead,
             'observacoes': lead.observacoes,
             'evento': {
@@ -649,6 +804,78 @@ def atualizar_foto_lead(lead_id):
         db.session.rollback()
         print(f"❌ Erro ao atualizar foto: {str(e)}")
         return jsonify({'erro': 'Erro ao atualizar foto'}), 500
+
+@app.route('/api/leads/<int:lead_id>/galeria-link', methods=['PATCH'])
+@jwt_required()
+def adicionar_galeria_link(lead_id):
+    """
+    Adiciona/atualiza link de galeria de fotos em nuvem
+    
+    Payload:
+    {
+        "link_galeria": "https://photos.google.com/share/...",
+        "descricao_galeria": "Fotos da criança - 130 imagens"
+    }
+    """
+    vendedor_id = current_user_id()
+    if vendedor_id is None:
+        return jsonify({'erro': 'Token inválido'}), 401
+
+    lead = Lead.query.get_or_404(lead_id)
+    data = request.get_json() or {}
+    
+    link = (data.get('link_galeria') or '').strip()
+    descricao = (data.get('descricao_galeria') or '').strip()
+    
+    # Validação básica de URL
+    if not link:
+        return jsonify({'erro': 'Link da galeria é obrigatório'}), 400
+    
+    if not link.startswith(('http://', 'https://')):
+        return jsonify({'erro': 'Link deve começar com http:// ou https://'}), 400
+    
+    if len(link) > 500:
+        return jsonify({'erro': 'Link muito longo (máximo 500 caracteres)'}), 400
+    
+    if descricao and len(descricao) > 500:
+        return jsonify({'erro': 'Descrição muito longa (máximo 500 caracteres)'}), 400
+    
+    try:
+        lead.link_galeria = link
+        lead.descricao_galeria = descricao if descricao else None
+        db.session.commit()
+        
+        return jsonify({
+            'mensagem': 'Galeria de fotos vinculada com sucesso!',
+            'link_galeria': link,
+            'descricao_galeria': descricao
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Erro ao adicionar galeria link: {str(e)}")
+        return jsonify({'erro': 'Erro ao vincular galeria'}), 500
+
+
+@app.route('/api/leads/<int:lead_id>/galeria-link', methods=['DELETE'])
+@jwt_required()
+def remover_galeria_link(lead_id):
+    """Remove o link de galeria de um lead"""
+    vendedor_id = current_user_id()
+    if vendedor_id is None:
+        return jsonify({'erro': 'Token inválido'}), 401
+
+    lead = Lead.query.get_or_404(lead_id)
+    
+    try:
+        lead.link_galeria = None
+        lead.descricao_galeria = None
+        db.session.commit()
+        
+        return jsonify({'mensagem': 'Galeria removida com sucesso!'}), 200
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Erro ao remover galeria link: {str(e)}")
+        return jsonify({'erro': 'Erro ao remover galeria'}), 500
 
 @app.route('/api/eventos/<int:evento_id>/galeria', methods=['POST'])
 @jwt_required()
@@ -852,6 +1079,59 @@ def atualizar_lead(lead_id):
         return jsonify({'erro': 'Erro ao atualizar lead'}), 500
 
 
+@app.route('/api/leads/<int:lead_id>', methods=['DELETE'])
+@jwt_required()
+def deletar_lead(lead_id):
+    """
+    Deleta um lead (apenas admin)
+    
+    Args:
+        lead_id: ID do lead a ser deletado
+    
+    Returns:
+        200: Lead deletado com sucesso
+        401: Não autenticado
+        403: Sem permissão (apenas admin)
+        404: Lead não encontrado
+        500: Erro ao deletar
+    """
+    usuario_id = current_user_id()
+    if usuario_id is None:
+        return jsonify({'erro': 'Token inválido'}), 401
+    
+    usuario = Usuario.query.get(usuario_id)
+    if not usuario:
+        return jsonify({'erro': 'Usuário não encontrado'}), 404
+    
+    # Apenas admin/dono pode deletar leads
+    if not eh_administrador(usuario):
+        return jsonify({'erro': 'Apenas administradores podem deletar leads'}), 403
+    
+    lead = Lead.query.get(lead_id)
+    if not lead:
+        return jsonify({'erro': 'Lead não encontrado'}), 404
+    
+    try:
+        # Deletar foto se existir
+        if lead.foto:
+            foto_path = os.path.join(app.config['UPLOAD_FOLDER'], lead.foto)
+            if os.path.exists(foto_path):
+                os.remove(foto_path)
+                print(f"✅ Foto deletada: {foto_path}")
+        
+        # Deletar lead
+        db.session.delete(lead)
+        db.session.commit()
+        
+        print(f"✅ Lead {lead_id} deletado por admin {usuario_id}")
+        return jsonify({'mensagem': 'Lead deletado com sucesso!'}), 200
+    
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Erro ao deletar lead: {str(e)}")
+        return jsonify({'erro': 'Erro ao deletar lead'}), 500
+
+
 @app.route('/api/estatisticas', methods=['GET'])
 @jwt_required()
 def estatisticas():
@@ -863,7 +1143,7 @@ def estatisticas():
     if not vendedor:
         return jsonify({'erro': 'Usuário não encontrado'}), 404
 
-    leads_query = Lead.query if vendedor.tipo_usuario == 'admin' else Lead.query.filter_by(vendedor_id=vendedor_id)
+    leads_query = Lead.query if eh_administrador(vendedor) else Lead.query.filter_by(vendedor_id=vendedor_id)
     total = leads_query.count()
     novos = leads_query.filter_by(status_lead='novo').count()
     contatados = leads_query.filter_by(status_lead='contatado').count()
@@ -950,29 +1230,43 @@ def listar_alunos():
         if not vendedor:
             return jsonify({'erro': 'Usuário não encontrado'}), 404
 
-        # ✅ joinedload para evitar N+1
-        q = Lead.query.options(joinedload(Lead.evento).joinedload(Evento.escola))
-        leads = q.all() if vendedor.tipo_usuario == 'admin' else q.filter(
+        # Buscar leads sem joinedload para evitar erro se evento ou escola for None
+        q = Lead.query
+        leads = q.all() if eh_administrador(vendedor) else q.filter(
             (Lead.vendedor_id == vendedor_id) | (Lead.vendedor_id == None)
         ).all()
 
         alunos = []
         for lead in leads:
-            ev = lead.evento
-            escola_nome = ev.escola.nome if (ev and ev.escola) else None
-            ano_evento = ev.data_evento.year if (ev and ev.data_evento) else None
+            try:
+                ev = lead.evento
+                escola_nome = None
+                ano_evento = None
+                
+                if ev:
+                    if ev.data_evento:
+                        ano_evento = ev.data_evento.year
+                    try:
+                        if ev.escola:
+                            escola_nome = ev.escola.nome
+                    except Exception as escola_err:
+                        print(f"Aviso: erro ao acessar escola do evento {getattr(ev, 'id', '?')}: {str(escola_err)}")
 
-            alunos.append({
-                'id': lead.id,
-                'nome': lead.nome_formando,
-                'escola': escola_nome,
-                'turma': (f"{lead.serie or ''} {lead.letra_turma or ''}").strip() or 'Não informada',
-                'ano_formatura': lead.ano_formatura or ano_evento,
-                'email': lead.email,
-                'whatsapp': lead.whatsapp,
-                'responsavel': lead.nome_contato if lead.tipo_cadastro == 'responsavel' else None,
-                'foto': f'/static/uploads/{lead.foto}' if lead.foto else None
-            })
+                alunos.append({
+                    'id': lead.id,
+                    'nome': lead.nome_formando,
+                    'escola': escola_nome,
+                    'turma': (f"{lead.serie or ''} {lead.letra_turma or ''}").strip() or 'Não informada',
+                    'ano_formatura': lead.ano_formatura or ano_evento,
+                    'email': lead.email,
+                    'whatsapp': lead.whatsapp,
+                    'responsavel': lead.nome_contato if lead.tipo_cadastro == 'responsavel' else None,
+                    'foto': f'/static/uploads/{lead.foto}' if lead.foto else None
+                })
+            except Exception as lead_err:
+                print(f"Aviso: erro ao processar lead {getattr(lead, 'id', '?')}: {str(lead_err)}")
+                continue
+        
         return jsonify(alunos), 200
     except Exception as e:
         print(f"❌ Erro em listar_alunos: {str(e)}")
