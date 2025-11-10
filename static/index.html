@@ -166,6 +166,31 @@
       }
     }
 
+    /* ==================== SCROLL CUSTOMIZADO ==================== */
+    ::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--gold);
+      border-radius: 10px;
+      border: 2px solid #f1f5f9;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--gold-dark);
+    }
+
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: var(--gold) #f1f5f9;
+    }
+
     @media (max-width: 768px) {
       .card-boas-vindas h1 {
         font-size: 2rem;

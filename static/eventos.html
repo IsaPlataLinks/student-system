@@ -6,6 +6,7 @@
   <title>Eventos - R3 Formaturas</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+  <link href="/css/animations.css" rel="stylesheet"/>
   <style>
     :root{
       --background-gold:#FFE0B3; --gold:#F6A21E; --gold-dark:#C57F17;
@@ -73,16 +74,18 @@
       transition:all .2s ease;padding:0.25rem 0.5rem;
     }
     .btn-qr:hover{color:var(--gold-dark);transform:scale(1.15)}
-    .table{margin-bottom:0}
+    .table{margin-bottom:0;width:100%;table-layout:fixed}
     .table thead th{
       background:#f8f9fa;color:var(--gray-dark);font-weight:700;border:none;padding:1rem;
       font-size:0.85rem;text-transform:uppercase;letter-spacing:0.5px;
       border-bottom:3px solid var(--gold);
+      word-break:break-word;
     }
     .table thead th:first-child{border-radius:12px 0 0 0}
     .table thead th:last-child{border-radius:0 12px 0 0}
     .table tbody td{
       padding:1rem;vertical-align:middle;border-color:#f1f5f9;
+      word-break:break-word;
     }
     .table tbody tr{transition:all .3s ease}
     .table tbody tr:hover{
@@ -149,14 +152,63 @@
       100%{background-position:-200% 0}
     }
     @keyframes fadeInDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
-    @media (max-width:768px){
-      .page-header{padding:1.25rem 1.5rem}
-      .page-title{font-size:1.5rem;flex-direction:column;gap:0.75rem}
-      .card-body{padding:1.5rem}
-      .table{font-size:0.85rem}
-      .btn-primary,.btn-outline-dark{padding:.7rem 1.25rem;font-size:0.95rem}
+    /* ==================== SCROLL CUSTOMIZADO ==================== */
+    ::-webkit-scrollbar {
+    width: 10px;
     }
-  </style>
+    ::-webkit-scrollbar-track {
+    background: #f1f5f9;
+      border-radius: 10px;
+      }
+     ::-webkit-scrollbar-thumb {
+       background: var(--gold);
+       border-radius: 10px;
+       border: 2px solid #f1f5f9;
+     }
+     ::-webkit-scrollbar-thumb:hover {
+       background: var(--gold-dark);
+     }
+     * {
+       scrollbar-width: thin;
+       scrollbar-color: var(--gold) #f1f5f9;
+     }
+     /* ==================== MELHORIAS DE HOVER NA TABELA ==================== */
+     .table tbody tr {
+     position: relative;
+     border-left: 4px solid transparent;
+     transition: all 0.3s ease;
+     }
+     .table tbody tr:hover {
+     border-left-color: var(--gold);
+     }
+     /* ==================== EFEITO MODAL ==================== */
+     .modal.fade .modal-dialog {
+       transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+       transform: scale(0.8) translateY(-20px);
+     }
+     .modal.show .modal-dialog {
+       transform: scale(1) translateY(0);
+       animation: zoomIn 0.3s ease-out;
+     }
+     .modal-backdrop.show {
+       backdrop-filter: blur(4px);
+       background-color: rgba(0, 0, 0, 0.4);
+     }
+     .qr-display {
+       transition: all 0.3s ease;
+     }
+     .qr-display:hover {
+       transform: scale(1.05);
+       box-shadow: 0 8px 20px rgba(246, 162, 30, 0.2);
+     }
+     @media (max-width:768px){
+       .page-header{padding:1.25rem 1.5rem}
+       .page-title{font-size:1.5rem;flex-direction:column;gap:0.75rem}
+       .card-body{padding:1.5rem}
+       .table{font-size:0.85rem}
+       .btn-primary,.btn-outline-dark{padding:.7rem 1.25rem;font-size:0.95rem}
+     }
+   </style>
 </head>
 <body>
   <div class="container-box">
@@ -224,16 +276,17 @@
               </tr>
             </thead>
             <tbody id="tabelaEventos">
-              <!-- Loading Skeleton -->
-              <tr class="skeleton-row">
-                <td><div class="skeleton-box"></div></td>
-                <td><div class="skeleton-box"></div></td>
-                <td><div class="skeleton-box"></div></td>
-                <td><div class="skeleton-box"></div></td>
-                <td><div class="skeleton-box"></div></td>
-                <td><div class="skeleton-box"></div></td>
+            <!-- Loading Skeleton -->
+            <tr class="skeleton-row">
+            <td><div class="skeleton-box"></div></td>
+            <td><div class="skeleton-box"></div></td>
+            <td><div class="skeleton-box"></div></td>
+            <td><div class="skeleton-box"></div></td>
+            <td><div class="skeleton-box"></div></td>
+            <td><div class="skeleton-box"></div></td>
+              <td><div class="skeleton-box"></div></td>
               </tr>
-            </tbody>
+             </tbody>
           </table>
         </div>
       </div>
@@ -431,6 +484,11 @@
           return;
         }
         
+        // DEBUG: Logar primeiro evento para verificar estrutura
+        if (dados.length > 0) {
+          console.log('📊 PRIMEIRO EVENTO (DEBUG):', dados[0]);
+        }
+        
         renderizarEventos(dados);
         
         // Configurar busca
@@ -485,7 +543,7 @@
             </span>
           </td>
           <td class="text-center">
-          <span class="badge" style="background:var(--gold);color:var(--black);font-weight:600">${e.total_leads || 0}</span>
+            <span class="badge" style="background:var(--gold);color:var(--black);font-weight:600">${e.total_leads || 0}</span>
           </td>
           <td class="text-center">
             <button class="btn-qr" onclick="abrirQRCode(${e.id})" title="Ver QR Code">

@@ -1,7 +1,7 @@
 /* ==================== VARIÁVEIS ==================== */
 :root {
-    --primary-color: #2563eb;
-    --primary-dark: #1e40af;
+    --primary-color: #F6A21E;
+    --primary-dark: #C57F17;
     --secondary-color: #10b981;
     --danger-color: #ef4444;
     --warning-color: #f59e0b;
@@ -167,7 +167,7 @@ body {
 
 .radio-option:hover {
     border-color: var(--primary-color);
-    background: rgba(37, 99, 235, 0.05);
+    background: rgba(246, 162, 30, 0.05);
 }
 
 .radio-option input[type="radio"] {
@@ -205,7 +205,7 @@ body {
 .btn-primary:hover {
     background: var(--primary-dark);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    box-shadow: 0 4px 12px rgba(246, 162, 30, 0.3);
 }
 
 .btn-success {
@@ -320,7 +320,7 @@ body {
     padding: 25px;
     border-radius: 12px;
     margin-bottom: 30px;
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+    box-shadow: 0 4px 12px rgba(246, 162, 30, 0.2);
 }
 
 .evento-info h2 {
@@ -647,4 +647,66 @@ body {
 .btn-exportar,
 .btn-filtrar {
     min-width: 150px;
+}
+
+/* ==================== BOOTSTRAP OVERRIDES ==================== */
+/* Override Bootstrap default colors to match project palette */
+.btn-primary {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-dark) !important;
+    border-color: var(--primary-dark) !important;
+}
+
+.btn-primary:active,
+.btn-primary.active {
+    background-color: var(--primary-dark) !important;
+    border-color: var(--primary-dark) !important;
+}
+
+.btn-primary:focus {
+    box-shadow: 0 0 0 0.25rem rgba(246, 162, 30, 0.25) !important;
+}
+
+.alert-primary {
+    background-color: rgba(246, 162, 30, 0.1);
+    border-color: var(--primary-color);
+    color: var(--primary-dark);
+}
+
+.badge-primary {
+    background-color: var(--primary-color) !important;
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+}
+
+.pagination .page-link {
+    color: var(--primary-color);
+}
+
+.pagination .page-link:hover {
+    color: var(--primary-dark);
+    background-color: rgba(246, 162, 30, 0.1);
+    border-color: var(--primary-color);
+}
+
+.pagination .page-item.active .page-link {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+}
+
+.form-control:focus {
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 0.2rem rgba(246, 162, 30, 0.25) !important;
+}
+
+.form-select:focus {
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 0.2rem rgba(246, 162, 30, 0.25) !important;
 }

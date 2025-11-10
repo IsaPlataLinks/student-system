@@ -408,8 +408,9 @@ def listar_eventos():
         total_raw = db.session.query(Evento).count()
         print(f"[DEBUG] Total de eventos no BD (raw count): {total_raw}")
         
-        # Buscar eventos com escolas carregadas
-        eventos = (Evento.query
+        # Buscar eventos com escolas carregadas usando JOIN
+        eventos = (db.session.query(Evento)
+                   .outerjoin(Escola)
                    .order_by(Evento.criado_em.desc())
                    .all())
         
