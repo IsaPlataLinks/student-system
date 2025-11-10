@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: student-system
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: DATABASE_URL
+        scope: build
+        sync: false
+      - key: UPLOAD_PATH
+        value: /mnt/data/uploads
+      - key: JWT_SECRET_KEY
+        scope: secret
+
+  - type: pserv
+    name: student-system-disk
+    disk:
+      name: student-system-uploads
+      mountPath: /mnt/data
+      sizeGB: 10

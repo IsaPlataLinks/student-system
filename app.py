@@ -55,7 +55,11 @@ app.config['SQLALCHEMY_DATABASE_URI'] = uri
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'r3-formaturas-secret-2024')
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=8)
-app.config['UPLOAD_FOLDER'] = 'static/uploads'
+
+# Pasta de uploads: usar volume persistente no Render, ou static/uploads local
+# No Render, defina UPLOAD_PATH=/mnt/data/uploads (volume persistente)
+upload_path = os.getenv('UPLOAD_PATH', 'static/uploads')
+app.config['UPLOAD_FOLDER'] = upload_path
 app.config['MAX_CONTENT_LENGTH'] = 15 * 1024 * 1024  # 15MB
 
 db = SQLAlchemy(app)
@@ -1212,6 +1216,11 @@ def page_login():
 @app.route('/sucesso')
 def page_sucesso():
     return send_from_directory('static', 'sucesso.html')
+
+@app.route('/static/uploads/<filename>')
+def servir_upload(filename):
+    """Serve arquivos do UPLOAD_FOLDER (pode ser local ou volume persistente)"""
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 @app.route('/<path:path>')
 def static_files(path):
