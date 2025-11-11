@@ -703,6 +703,11 @@ def deletar_evento(evento_id):
     evento = Evento.query.get_or_404(evento_id)
     
     try:
+        # Guardar informações ANTES de deletar
+        nome_escola = evento.escola.nome if evento.escola else 'N/A'
+        total_leads = len(evento.leads)
+        total_fotos = len(evento.galeria_fotos)
+        
         # Deletar arquivos de foto dos leads
         for lead in evento.leads:
             if lead.foto:
@@ -740,9 +745,9 @@ def deletar_evento(evento_id):
         
         return jsonify({
             'mensagem': f'Evento {evento_id} deletado com sucesso!',
-            'escola': evento.escola.nome if evento.escola else 'N/A',
-            'leads_deletados': len(evento.leads),
-            'fotos_deletadas': len(evento.galeria_fotos)
+            'escola': nome_escola,
+            'leads_deletados': total_leads,
+            'fotos_deletadas': total_fotos
         }), 200
         
     except Exception as e:
