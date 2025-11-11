@@ -1020,7 +1020,7 @@ def listar_leads():
                 'tipo_cadastro': lead.tipo_cadastro,
                 'status_lead': lead.status_lead,
                 'observacoes': lead.observacoes,
-                'foto': f'/static/uploads/{lead.foto}' if lead.foto else None,
+                'foto': f'/uploads/{lead.foto}' if lead.foto else None,
                 'cep': lead.cep,
                 'endereco': lead.endereco,
                 'numero': lead.numero,
@@ -1296,7 +1296,7 @@ def listar_galeria(evento_id):
     for foto in fotos:
         resultado.append({
             'id': foto.id,
-            'url': f'/static/uploads/{foto.nome_arquivo}',
+            'url': f'/uploads/{foto.nome_arquivo}',
             'nome_arquivo': foto.nome_arquivo,
             'descricao': foto.descricao,
             'lead_id': foto.lead_id,
@@ -1586,9 +1586,18 @@ def page_login():
 def page_sucesso():
     return send_from_directory('static', 'sucesso.html')
 
-@app.route('/static/uploads/<filename>')
+@app.route('/uploads/<filename>')
 def servir_upload(filename):
     """Serve arquivos do UPLOAD_FOLDER (pode ser local ou volume persistente)"""
+    upload_folder = app.config['UPLOAD_FOLDER']
+    print(f"[DEBUG] Servindo arquivo: {filename}")
+    print(f"[DEBUG] Upload folder: {upload_folder}")
+    print(f"[DEBUG] Arquivo existe: {os.path.exists(os.path.join(upload_folder, filename))}")
+    return send_from_directory(upload_folder, filename)
+
+@app.route('/static/uploads/<filename>')
+def servir_upload_legacy(filename):
+    """Legacy route - redireciona para novo endpoint"""
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 @app.route('/<path:path>')
@@ -1641,7 +1650,7 @@ def listar_alunos():
                 if lead.foto:
                     foto_path = os.path.join(app.config['UPLOAD_FOLDER'], lead.foto)
                     if os.path.exists(foto_path):
-                        foto_url = f'/static/uploads/{lead.foto}'
+                        foto_url = f'/uploads/{lead.foto}'
                         print(f"[OK] Foto encontrada para lead {lead.id}: {lead.foto}")
                     else:
                         print(f"[AVISO] Arquivo de foto não encontrado: {foto_path}")

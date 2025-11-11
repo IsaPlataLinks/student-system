@@ -954,35 +954,59 @@
                     img.onload = () => {
                         // Tenta ler EXIF data
                         EXIF.getData(img, function() {
-                            const orientation = EXIF.getTag(this, "Orientation");
+                            const orientation = EXIF.getTag(this, "Orientation") || 1;
                             
                             // Cria canvas para desenhar a imagem com rotação correta
                             const canvas = document.createElement('canvas');
                             const ctx = canvas.getContext('2d');
-                            canvas.width = img.width;
-                            canvas.height = img.height;
+                            
+                            // Define dimensões baseadas na orientação
+                            let width = img.width;
+                            let height = img.height;
+                            
+                            if (orientation === 6 || orientation === 8) {
+                                // Inverte dimensões para rotações de 90°
+                                width = img.height;
+                                height = img.width;
+                            }
+                            
+                            canvas.width = width;
+                            canvas.height = height;
                             
                             // Aplica rotação baseada em orientação EXIF
                             switch(orientation) {
+                                case 2: // Flip Horizontal
+                                    ctx.translate(canvas.width, 0);
+                                    ctx.scale(-1, 1);
+                                    break;
                                 case 3: // 180 graus
                                     ctx.translate(canvas.width, canvas.height);
                                     ctx.rotate(Math.PI);
                                     break;
+                                case 4: // Flip Vertical
+                                    ctx.translate(0, canvas.height);
+                                    ctx.scale(1, -1);
+                                    break;
+                                case 5: // Transpose
+                                    ctx.translate(canvas.width, 0);
+                                    ctx.scale(-1, 1);
+                                    ctx.rotate(-Math.PI / 2);
+                                    break;
                                 case 6: // 90 graus (câmera frontal comum)
-                                    canvas.width = img.height;
-                                    canvas.height = img.width;
                                     ctx.translate(canvas.width, 0);
                                     ctx.rotate(Math.PI / 2);
                                     break;
-                                case 8: // -90 graus
-                                    canvas.width = img.height;
-                                    canvas.height = img.width;
+                                case 7: // Transverse
+                                    ctx.translate(0, canvas.height);
+                                    ctx.rotate(Math.PI / 2);
+                                    break;
+                                case 8: // -90 graus (ESQUERDA)
                                     ctx.translate(0, canvas.height);
                                     ctx.rotate(-Math.PI / 2);
                                     break;
                             }
                             
-                            ctx.drawImage(img, 0, 0);
+                            ctx.drawImage(img, 0, 0, img.width, img.height);
                             resolve(canvas.toDataURL('image/jpeg'));
                         });
                     };
@@ -1008,6 +1032,7 @@
             
             const img = document.createElement('img');
             img.src = correctedSrc;
+            img.style.transform = 'none'; // Remove qualquer rotação CSS
             box.innerHTML = '';
             box.appendChild(img);
         });
@@ -1052,7 +1077,7 @@
                 showOk('Cadastro realizado com sucesso!');
                 // Redireciona para a página de sucesso
                 setTimeout(() => {
-                    window.location.href = 'sucesso.html';
+                    window.location.href = `${window.location.origin}/sucesso.html`;
                 }, 1500);
             } catch {
                 showErr('Erro de conexão. Tente novamente em instantes.');
