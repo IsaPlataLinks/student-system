@@ -264,6 +264,50 @@ def validar_matricula(matricula: str) -> bool:
     # Aceita 1 a 10 dígitos numéricos
     return matricula.isdigit() and 1 <= len(matricula) <= 10
 
+def corrigir_orientacao_exif(img):
+    """Corrige a orientação da imagem baseado em dados EXIF"""
+    try:
+        from PIL import ExifTags
+        # Tenta ler EXIF
+        exif_data = img._getexif()
+        if not exif_data:
+            return img
+        
+        # Procura a tag de orientação
+        orientation_tag = None
+        for tag, name in ExifTags.TAGS.items():
+            if name == 'Orientation':
+                orientation_tag = tag
+                break
+        
+        if not orientation_tag:
+            return img
+        
+        orientation = exif_data.get(orientation_tag, 1)
+        
+        # Aplica rotação conforme orientação EXIF
+        if orientation == 2:
+            img = img.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+        elif orientation == 3:
+            img = img.rotate(180, expand=True)
+        elif orientation == 4:
+            img = img.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
+        elif orientation == 5:
+            img = img.rotate(90, expand=True)
+            img = img.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+        elif orientation == 6:
+            img = img.rotate(-90, expand=True)
+        elif orientation == 7:
+            img = img.rotate(-90, expand=True)
+            img = img.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+        elif orientation == 8:
+            img = img.rotate(90, expand=True)
+    
+    except Exception as e:
+        print(f"[AVISO] Erro ao corrigir EXIF: {str(e)}")
+    
+    return img
+
 def processar_foto(file):
     if not file:
         return None
@@ -276,8 +320,11 @@ def processar_foto(file):
     # salva original
     file.save(caminho)
 
-    # Abre com PIL para redimensionamento
+    # Abre com PIL para redimensionamento e correção de orientação
     with Image.open(caminho) as img:
+        # Corrige orientação EXIF
+        img = corrigir_orientacao_exif(img)
+        
         if img.mode != 'RGB':
             img = img.convert('RGB')
         
@@ -774,13 +821,22 @@ def cadastrar_lead():
         print(f"[OK] Lead {lead.id} cadastrado com sucesso!")
         print(f"     - Evento: {evento_id} -> Total de leads agora: {len(evento_test.leads) if evento_test else 'erro'}")
         print(f"     - Matrícula: {matricula}, Nome: {nome_formando}")
-        return jsonify({'mensagem': 'Cadastro realizado com sucesso!', 'id': lead.id, 'matricula': matricula}), 201
+        print(f"     - Foto: {foto_filename}")
+        return jsonify({
+            'mensagem': 'Cadastro realizado com sucesso!', 
+            'id': lead.id, 
+            'matricula': matricula,
+            'success': True
+        }), 201
     except Exception as e:
         db.session.rollback()
         print(f"❌ ERRO no cadastro: {str(e)}")
         import traceback
         traceback.print_exc()
-        return jsonify({'erro': 'Erro ao processar cadastro'}), 500
+        return jsonify({
+            'erro': 'Erro ao processar cadastro',
+            'detalhes': str(e)
+        }), 500
 
 # ==================== LEADS/CRM ====================
 

@@ -7,6 +7,7 @@
     <title>Cadastro de Formandos - R3 Formaturas</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/exif-js@2.3.0/exif.min.js"></script>
     <style>
         :root {
             --background-gold: #FFE0B3;
@@ -873,10 +874,31 @@
 
         // ==================== CEP ====================
         byId("cep").addEventListener("input", (e) => {
-            const valor = e.target.value.replace(/\D/g, '').slice(0, 8);
-            e.target.value = valor.replace(/^(\d{5})(\d{0,3})/, '$1-$2');
+            let value = e.target.value.replace(/\D/g, '').slice(0, 8);
+            let cursorPos = e.target.selectionStart;
+            let oldValue = e.target.value;
+            
+            // Formata o valor
+            let formatted = value.replace(/^(\d{5})(\d{0,3})/, '$1-$2');
+            e.target.value = formatted;
+            
+            // Ajusta a posição do cursor
+            if (oldValue.length < formatted.length) {
+                // Usuário adicionou dígito
+                cursorPos++;
+            } else if (oldValue.length > formatted.length) {
+                // Usuário removeu dígito
+                cursorPos = Math.max(0, cursorPos - 1);
+            }
+            
+            // Evita cursor após o hífen na deleção
+            if (formatted[cursorPos - 1] === '-') {
+                cursorPos--;
+            }
+            
+            e.target.setSelectionRange(cursorPos, cursorPos);
 
-            if (valor.length < 8) {
+            if (value.length < 8) {
                 blocoEndereco.classList.add("d-none");
                 blocoEndereco.classList.remove("show");
                 document.querySelectorAll("#blocoEndereco input, #blocoEndereco select").forEach(el => el.value = "");
@@ -922,7 +944,54 @@
         });
 
         // ==================== FOTO ====================
-        byId('foto').addEventListener('change', (e) => {
+        // Função para detectar e corrigir orientação EXIF
+        async function getImageWithCorrectOrientation(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = () => {
+                        // Tenta ler EXIF data
+                        EXIF.getData(img, function() {
+                            const orientation = EXIF.getTag(this, "Orientation");
+                            
+                            // Cria canvas para desenhar a imagem com rotação correta
+                            const canvas = document.createElement('canvas');
+                            const ctx = canvas.getContext('2d');
+                            canvas.width = img.width;
+                            canvas.height = img.height;
+                            
+                            // Aplica rotação baseada em orientação EXIF
+                            switch(orientation) {
+                                case 3: // 180 graus
+                                    ctx.translate(canvas.width, canvas.height);
+                                    ctx.rotate(Math.PI);
+                                    break;
+                                case 6: // 90 graus (câmera frontal comum)
+                                    canvas.width = img.height;
+                                    canvas.height = img.width;
+                                    ctx.translate(canvas.width, 0);
+                                    ctx.rotate(Math.PI / 2);
+                                    break;
+                                case 8: // -90 graus
+                                    canvas.width = img.height;
+                                    canvas.height = img.width;
+                                    ctx.translate(0, canvas.height);
+                                    ctx.rotate(-Math.PI / 2);
+                                    break;
+                            }
+                            
+                            ctx.drawImage(img, 0, 0);
+                            resolve(canvas.toDataURL('image/jpeg'));
+                        });
+                    };
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        byId('foto').addEventListener('change', async (e) => {
             const f = e.target.files[0];
             const box = byId('previewBox');
             box.innerHTML = '<i class="fa-solid fa-camera fa-2x" style="color:#cbd5e1"></i>';
@@ -933,9 +1002,12 @@
                 return;
             }
             hideErr();
+            
+            // Corrige orientação da foto
+            const correctedSrc = await getImageWithCorrectOrientation(f);
+            
             const img = document.createElement('img');
-            img.src = URL.createObjectURL(f);
-            img.onload = () => URL.revokeObjectURL(img.src);
+            img.src = correctedSrc;
             box.innerHTML = '';
             box.appendChild(img);
         });
@@ -978,7 +1050,10 @@
                 }
 
                 showOk('Cadastro realizado com sucesso!');
-                setTimeout(() => location.href = '/sucesso.html', 800);
+                // Redireciona para a página de sucesso
+                setTimeout(() => {
+                    window.location.href = 'sucesso.html';
+                }, 1500);
             } catch {
                 showErr('Erro de conexão. Tente novamente em instantes.');
                 btn.disabled = false;
