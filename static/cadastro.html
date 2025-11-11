@@ -7,7 +7,6 @@
     <title>Cadastro de Formandos - R3 Formaturas</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
-    <link href="/css/animations.css" rel="stylesheet" />
     <style>
         :root {
             --background-gold: #FFE0B3;
@@ -180,26 +179,6 @@
             cursor: not-allowed
         }
 
-        .ripple-effect {
-            position: relative;
-            overflow: hidden;
-        }
-
-        .ripple {
-            position: absolute;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.5);
-            transform: scale(0);
-            pointer-events: none;
-        }
-
-        @keyframes rippleAnimation {
-            to {
-                transform: scale(4);
-                opacity: 0;
-            }
-        }
-
         .btn-outline-dark {
             border: 2px solid var(--black);
             color: var(--black);
@@ -288,51 +267,78 @@
             --bs-gutter-y: 0.9rem
         }
 
+        /* BLOCO DE ENDEREÇO APRIMORADO */
+        .bloco-endereco {
+            background: linear-gradient(135deg, #fffbf5 0%, #fff7e9 100%);
+            border: 2px solid rgba(246, 162, 30, 0.3);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(246, 162, 30, 0.12);
+        }
+
+        .bloco-endereco::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--gold) 0%, var(--gold-dark) 100%);
+        }
+
+        .bloco-endereco-header {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.8rem;
+            border-bottom: 2px dashed rgba(246, 162, 30, 0.25);
+        }
+
+        .bloco-endereco-header i {
+            color: var(--gold);
+            font-size: 1.2rem;
+        }
+
+        .bloco-endereco-header span {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--gray-dark);
+        }
+
+        .bloco-endereco.d-none {
+            display: none !important;
+        }
+
+        .bloco-endereco.show {
+            animation: slideInUp 0.4s ease-out;
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         @keyframes fadeInDown {
             from {
                 opacity: 0;
                 transform: translateY(-20px)
             }
-
             to {
                 opacity: 1;
                 transform: translateY(0)
             }
         }
 
-        @media (max-width:576px) {
-            .card-form {
-                padding: 1.5rem;
-                max-width: 100%
-            }
-
-            .title {
-                font-size: 1.5rem
-            }
-
-            .foto-box {
-                flex-direction: column;
-                align-items: flex-start
-            }
-
-            .btn-primary,
-            .btn-outline-dark {
-                padding: .7rem 1.25rem;
-                font-size: 0.95rem
-            }
-        }
-
-        /* remove o check/xis padrão do Bootstrap dentro dos inputs */
-        .form-control.is-valid,
-        .form-control.is-invalid,
-        .form-select.is-valid,
-        .form-select.is-invalid {
-            background-image: none !important;
-            padding-right: .85rem;
-            /* compensa o ícone custom .state */
-        }
-
-        /* ==================== ETAPAS DO CADASTRO ==================== */
         .etapas-container {
             display: flex;
             justify-content: space-between;
@@ -400,33 +406,24 @@
         }
 
         @keyframes pulseEtapa {
-
-            0%,
-            100% {
+            0%, 100% {
                 transform: scale(1);
             }
-
             50% {
                 transform: scale(1.1);
             }
         }
 
-        /* ==================== SHAKE ANIMATION PARA ERROS ==================== */
         @keyframes shakeError {
-
-            0%,
-            100% {
+            0%, 100% {
                 transform: translateX(0);
             }
-
             25% {
                 transform: translateX(-10px);
             }
-
             50% {
                 transform: translateX(10px);
             }
-
             75% {
                 transform: translateX(-5px);
             }
@@ -440,7 +437,14 @@
             animation: shakeError 0.4s ease-in-out;
         }
 
-        /* ==================== SCROLL CUSTOMIZADO ==================== */
+        .form-control.is-valid,
+        .form-control.is-invalid,
+        .form-select.is-valid,
+        .form-select.is-invalid {
+            background-image: none !important;
+            padding-right: .85rem;
+        }
+
         ::-webkit-scrollbar {
             width: 10px;
         }
@@ -464,6 +468,28 @@
             scrollbar-width: thin;
             scrollbar-color: var(--gold) #f1f5f9;
         }
+
+        @media (max-width:576px) {
+            .card-form {
+                padding: 1.5rem;
+                max-width: 100%
+            }
+            .title {
+                font-size: 1.5rem
+            }
+            .foto-box {
+                flex-direction: column;
+                align-items: flex-start
+            }
+            .btn-primary,
+            .btn-outline-dark {
+                padding: .7rem 1.25rem;
+                font-size: 0.95rem
+            }
+            .bloco-endereco {
+                padding: 1.25rem;
+            }
+        }
     </style>
 </head>
 
@@ -477,7 +503,6 @@
 
         <div id="eventoBadge" class="text-center"></div>
 
-        <!-- Indicador de Etapas -->
         <div class="etapas-container">
             <div class="etapa active" data-etapa="1">
                 <div class="etapa-circulo"><i class="fas fa-user"></i></div>
@@ -493,7 +518,6 @@
             </div>
         </div>
 
-        <!-- Barra de Progresso -->
         <div class="progress-bar-custom">
             <div id="progressFill" class="progress-fill"></div>
         </div>
@@ -502,7 +526,6 @@
             <input type="hidden" name="evento_id" id="eventoId" />
 
             <div class="row g-3">
-                <!-- Linha 1: Tipo + Matrícula -->
                 <div class="col-md-4">
                     <label class="form-label required">Você é</label>
                     <select class="form-select" name="tipo_cadastro" id="tipoCadastro" required>
@@ -528,7 +551,6 @@
                     <small class="small-hint">Apenas números • Máximo 10 dígitos</small>
                 </div>
 
-                <!-- Linha 2: Nome do Formando -->
                 <div class="col-12">
                     <label class="form-label required">Nome completo do formando</label>
                     <div class="input-icon">
@@ -538,7 +560,6 @@
                     </div>
                 </div>
 
-                <!-- Linha 2.5: Série e Turma -->
                 <div class="col-md-8">
                     <label class="form-label required">Série</label>
                     <select class="form-select" name="serie" id="serie" required>
@@ -564,7 +585,6 @@
                         placeholder="Ex: A ou 101" style="text-transform:uppercase" />
                 </div>
 
-                <!-- Linha 3: Nome do Responsável -->
                 <div class="col-12" id="grupoNomeContato">
                     <label class="form-label required">Nome completo do responsável</label>
                     <div class="input-icon">
@@ -574,7 +594,6 @@
                     </div>
                 </div>
 
-                <!-- Divisor: Dados de Contato -->
                 <div class="col-12 section-divider">
                     <span class="section-label">
                         <i class="fa-solid fa-address-book" style="color:var(--gold)"></i>
@@ -582,7 +601,6 @@
                     </span>
                 </div>
 
-                <!-- Linha 4: WhatsApp + E-mail -->
                 <div class="col-md-5">
                     <label class="form-label required">WhatsApp</label>
                     <div class="input-icon">
@@ -601,63 +619,73 @@
                     </div>
                 </div>
 
-                <!-- Divisor: Localização -->
                 <div class="col-12 section-divider">
                     <span class="section-label">
                         <i class="fa-solid fa-location-dot" style="color:var(--gold)"></i>
-                        Localização
+                        Localização (opcional)
                     </span>
                 </div>
 
-                <!-- Linha 5: CEP + Endereço -->
-                <div class="col-md-3">
-                    <label class="form-label">CEP</label>
+                <div class="col-12">
+                    <label class="form-label">
+                        CEP
+                        <small class="small-hint" style="display:inline; margin:0 0 0 0.5rem;">
+                            Digite para buscar automaticamente o endereço
+                        </small>
+                    </label>
                     <div class="input-icon">
                         <input type="text" class="form-control" name="cep" id="cep" inputmode="numeric" maxlength="9"
-                            placeholder="01310-100" />
+                            placeholder="00000-000" />
                         <i class="state"></i>
                     </div>
                 </div>
 
-                <div class="col-md-9">
-                    <label class="form-label">Endereço completo</label>
-                    <input type="text" class="form-control" name="endereco" id="endereco" maxlength="200"
-                        placeholder="Será preenchido automaticamente" />
+                <div class="col-12">
+                    <div id="blocoEndereco" class="bloco-endereco d-none">
+                        <div class="bloco-endereco-header">
+                            <i class="fas fa-map-marked-alt"></i>
+                            <span>Complete seu endereço</span>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label">Endereço</label>
+                                <input type="text" class="form-control" name="endereco" id="endereco" maxlength="200"
+                                    placeholder="Rua, bairro, cidade - UF" readonly style="background-color: #f8f9fa;" />
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Número</label>
+                                <input type="text" class="form-control" name="numero" id="numero" maxlength="10"
+                                    placeholder="Ex: 123 ou S/N" />
+                            </div>
+
+                            <div class="col-md-8">
+                                <label class="form-label">Complemento</label>
+                                <input type="text" class="form-control" name="complemento" id="complemento"
+                                    maxlength="100" placeholder="Ex: Apto 42, Bloco B, Casa fundos" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Tipo de imóvel</label>
+                                <select class="form-select" name="tipo_imovel" id="tipoImovel">
+                                    <option value="">Selecione</option>
+                                    <option value="casa">Casa</option>
+                                    <option value="apartamento">Apartamento</option>
+                                    <option value="condominio">Condomínio</option>
+                                    <option value="outro">Outro</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Linha 5.5: Número + Complemento -->
-                <div class="col-md-3">
-                    <label class="form-label">Número</label>
-                    <input type="text" class="form-control" name="numero" id="numero" maxlength="10"
-                        placeholder="Ex: 123 ou S/N" />
-                </div>
-
-                <div class="col-md-9">
-                    <label class="form-label">Complemento</label>
-                    <input type="text" class="form-control" name="complemento" id="complemento" maxlength="100"
-                        placeholder="Ex: Apto 42 ou Lote B" />
-                </div>
-
-                <!-- Linha 5.6: Tipo de Imóvel -->
-                <div class="col-md-6">
-                    <label class="form-label">Tipo de imóvel</label>
-                    <select class="form-select" name="tipo_imovel" id="tipoImovel">
-                        <option value="">Selecione</option>
-                        <option value="casa">Casa</option>
-                        <option value="apartamento">Apartamento</option>
-                        <option value="outro">Outro</option>
-                    </select>
-                </div>
-
-                <!-- Divisor: Foto -->
                 <div class="col-12 section-divider">
                     <span class="section-label">
                         <i class="fa-solid fa-camera" style="color:var(--gold)"></i>
-                        Foto 3x4 (Opcional)
+                        Foto 3x4 (opcional)
                     </span>
                 </div>
 
-                <!-- Linha 6: Foto -->
                 <div class="col-12">
                     <div class="foto-box">
                         <div class="foto-preview" id="previewBox">
@@ -672,7 +700,6 @@
                 </div>
             </div>
 
-            <!-- Info Box -->
             <div class="info-box">
                 <div class="d-flex align-items-start gap-2">
                     <i class="fa-solid fa-shield-halved mt-1" style="color:var(--gold)"></i>
@@ -683,11 +710,9 @@
                 </div>
             </div>
 
-            <!-- Botões -->
             <div class="d-flex gap-2 mt-3">
-                <button type="submit" id="btnEnviar" class="btn btn-primary flex-fill ripple-effect">
+                <button type="submit" id="btnEnviar" class="btn btn-primary flex-fill">
                     <i class="fa-solid fa-paper-plane me-2"></i>Concluir cadastro
-                    <span class="ripple"></span>
                 </button>
                 <button type="button" class="btn btn-outline-secondary" onclick="limparFormulario()"
                     title="Limpar formulário">
@@ -698,23 +723,19 @@
                 </a>
             </div>
 
-            <!-- Alertas -->
             <div id="alerta" class="alert alert-danger mt-3 d-none" role="alert"></div>
             <div id="ok" class="alert alert-success mt-3 d-none" role="alert"></div>
         </form>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="/js/ui-enhancements.js"></script>
     <script>
-        // ---------- Helpers UI ----------
         const qs = new URLSearchParams(location.search);
         const byId = (id) => document.getElementById(id);
+        const blocoEndereco = byId("blocoEndereco");
 
         const setBadge = async (id) => {
             if (!id) return;
-
-            // Busca os dados do evento
             try {
                 const resp = await fetch(`/api/eventos/${id}`);
                 if (resp.ok) {
@@ -745,40 +766,12 @@
             a.classList.remove('d-none');
         };
 
-        // ---------- Pré-carregar evento e dados do responsável ----------
         const eventoId = qs.get('e') || '';
         byId('eventoId').value = eventoId;
         setBadge(eventoId);
 
-        try {
-            const r = JSON.parse(localStorage.getItem('dadosResponsavel') || 'null');
-            if (r) {
-                byId('tipoCadastro').value = 'responsavel';
-                byId('nomeContato').value = r.nomeContato || '';
-                byId('email').value = r.email || '';
-                byId('whatsapp').value = maskPhone(r.whatsapp || '');
-                if (r.eventoId && !eventoId) {
-                    byId('eventoId').value = r.eventoId;
-                    setBadge(r.eventoId);
-                }
-            }
-        } catch (e) { }
-
-        // ---------- Barra de Progresso ----------
-        function atualizarProgresso() {
-            const campos = ['tipoCadastro', 'matricula', 'nomeFormando', 'serie', 'turma', 'nomeContato', 'whatsapp', 'email'];
-            const preenchidos = campos.filter(id => {
-                const val = byId(id).value.trim();
-                return val !== '' && val !== 'Selecione' && val !== 'Selecione a série';
-            }).length;
-            const progresso = (preenchidos / campos.length) * 100;
-            byId('progressFill').style.width = progresso + '%';
-        }
-
-        // ---------- Validações em tempo real ----------
         const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
         const onlyDigits = (s) => s.replace(/\D+/g, '');
-        const onlyLetters = (s) => s.replace(/[^a-zA-ZÀ-ÿ\s]/g, ''); // Permite apenas letras e espaços (inclui acentos)
 
         function setState(input, valid) {
             input.classList.remove('is-valid', 'is-invalid');
@@ -790,102 +783,55 @@
             }
         }
 
-        function maskPhone(v) {
-            v = onlyDigits(v).slice(0, 11);
-            if (v.length <= 10) {
-                return v.replace(/^(\d{0,2})(\d{0,4})(\d{0,4}).*/, function (_, a, b, c) {
-                    return (a ? `(${a}` : '') + (a.length === 2 ? ') ' : '') + (b || '') + (b.length === 4 ? '-' : '') + (c || '');
-                });
-            } else {
-                return v.replace(/^(\d{0,2})(\d{0,5})(\d{0,4}).*/, function (_, a, b, c) {
-                    return (a ? `(${a}` : '') + (a.length === 2 ? ') ' : '') + (b || '') + (b.length >= 5 ? '-' : '') + (c || '');
-                });
-            }
-        }
+        byId("cep").addEventListener("input", (e) => {
+            const valor = e.target.value.replace(/\D/g, '').slice(0, 8);
+            e.target.value = valor.replace(/^(\d{5})(\d{0,3})/, '$1-$2');
 
-        // Eventos de validação + progresso
-        byId('tipoCadastro').addEventListener('change', atualizarProgresso);
-
-        byId('nomeFormando').addEventListener('input', (e) => {
-            e.target.value = onlyLetters(e.target.value);
-            setState(e.target, e.target.value.trim().length >= 3);
-            atualizarProgresso();
-        });
-
-        byId('serie').addEventListener('change', atualizarProgresso);
-        byId('turma').addEventListener('input', (e) => {
-            // Aceita apenas letras e números (alfanumérico)
-            e.target.value = e.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 4);
-            atualizarProgresso();
-        });
-
-        byId('nomeContato').addEventListener('input', (e) => {
-            e.target.value = onlyLetters(e.target.value);
-            setState(e.target, e.target.value.trim().length >= 3);
-            atualizarProgresso();
-        });
-
-        byId('matricula').addEventListener('input', (e) => {
-            // Aceita apenas números
-            e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10);
-            setState(e.target, e.target.value.trim().length >= 1);
-            atualizarProgresso();
-        });
-
-        // Preenche com zeros à esquerda quando sair do campo
-        byId('matricula').addEventListener('blur', (e) => {
-            if (e.target.value.trim() !== '') {
-                e.target.value = e.target.value.padStart(10, '0');
-                setState(e.target, true);
+            if (valor.length < 8) {
+                blocoEndereco.classList.add("d-none");
+                blocoEndereco.classList.remove("show");
+                document.querySelectorAll("#blocoEndereco input, #blocoEndereco select").forEach(el => el.value = "");
             }
         });
 
-        byId('email').addEventListener('input', (e) => {
-            setState(e.target, emailRe.test(e.target.value));
-            atualizarProgresso();
-        });
+        byId("cep").addEventListener("blur", async (e) => {
+            const cepDigits = e.target.value.replace(/\D/g, '');
+            if (cepDigits.length !== 8) {
+                blocoEndereco.classList.add("d-none");
+                blocoEndereco.classList.remove("show");
+                setState(byId('cep'), false);
+                return;
+            }
 
-        byId('whatsapp').addEventListener('input', (e) => {
-            e.target.value = maskPhone(e.target.value);
-            const d = onlyDigits(e.target.value);
-            setState(e.target, d.length >= 10);
-            atualizarProgresso();
-        });
-
-        // CEP + ViaCEP
-        byId('cep').addEventListener('input', (e) => {
-            e.target.value = e.target.value.replace(/\D/g, '').slice(0, 8).replace(/^(\d{5})(\d{0,3})/, '$1-$2');
-        });
-
-        byId('cep').addEventListener('blur', async (e) => {
-            const cepDigits = onlyDigits(e.target.value);
-            if (cepDigits.length !== 8) return;
             try {
                 const r = await fetch(`https://viacep.com.br/ws/${cepDigits}/json/`);
                 const j = await r.json();
+
                 if (j && !j.erro) {
-                    const uf = (j.uf || '').toUpperCase().slice(0, 2);
-                    byId('endereco').value = `${j.logradouro || ''}, ${j.bairro || ''}, ${j.localidade || ''} - ${uf}`.replace(/^[, ]+|[, ]+$/g, '');
+                    const uf = (j.uf || "").toUpperCase().slice(0,2);
+                    byId("endereco").value =
+                        `${j.logradouro || ""}, ${j.bairro || ""}, ${j.localidade || ""} - ${uf}`
+                            .replace(/^[, ]+|[, ]+$/g, "");
+
                     setState(byId('cep'), true);
+                    blocoEndereco.classList.remove("d-none");
+                    blocoEndereco.classList.add("show");
+                    
+                    setTimeout(() => byId('numero').focus(), 350);
                 } else {
+                    blocoEndereco.classList.add("d-none");
+                    blocoEndereco.classList.remove("show");
                     setState(byId('cep'), false);
+                    showErr('CEP não encontrado. Verifique e tente novamente.');
                 }
-            } catch (err) {
+            } catch {
+                blocoEndereco.classList.add("d-none");
+                blocoEndereco.classList.remove("show");
                 setState(byId('cep'), false);
+                showErr('Erro ao buscar CEP. Tente novamente.');
             }
         });
 
-        // Mostrar/ocultar Nome do Contato
-        const tipoEl = byId('tipoCadastro');
-        const grupoContato = byId('grupoNomeContato');
-        function toggleContato() {
-            grupoContato.style.display = 'block';
-            byId('nomeContato').required = true;
-        }
-        tipoEl.addEventListener('change', toggleContato);
-        toggleContato();
-
-        // Preview da foto
         byId('foto').addEventListener('change', (e) => {
             const f = e.target.files[0];
             const box = byId('previewBox');
@@ -904,7 +850,6 @@
             box.appendChild(img);
         });
 
-        // Limpar formulário
         function limparFormulario() {
             if (confirm('Deseja limpar todos os campos?')) {
                 byId('formCadastro').reset();
@@ -914,71 +859,21 @@
                 });
                 document.querySelectorAll('.state').forEach(el => el.className = 'state');
                 hideErr();
-                atualizarProgresso();
+                blocoEndereco.classList.add("d-none");
+                blocoEndereco.classList.remove("show");
             }
         }
 
-        // Validação final
-        function validarFormulario() {
-            hideErr();
-            let ok = true;
-            if (!eventoId && !byId('eventoId').value) {
-                showErr('Link inválido: evento não identificado. Acesse pelo QR do evento.');
-                return false;
-            }
-
-            const v = {
-                tipo: byId('tipoCadastro').value,
-                matricula: byId('matricula').value.trim(),
-                nome_formando: byId('nomeFormando').value.trim(),
-                nome_contato: byId('nomeContato').value.trim(),
-                email: byId('email').value.trim(),
-                whatsapp: onlyDigits(byId('whatsapp').value),
-            };
-
-            if (!v.tipo) ok = false;
-            if (v.matricula.length < 1 || v.matricula.length > 10 || !/^\d+$/.test(v.matricula)) ok = false;
-            if (v.nome_formando.length < 3) ok = false;
-            if (v.nome_contato.length < 3) ok = false;
-            if (!emailRe.test(v.email)) ok = false;
-            if (v.whatsapp.length < 10) ok = false;
-
-            setState(byId('matricula'), v.matricula.length >= 1 && v.matricula.length <= 10 && /^\d+$/.test(v.matricula));
-            setState(byId('nomeFormando'), v.nome_formando.length >= 3);
-            setState(byId('nomeContato'), v.nome_contato.length >= 3);
-            setState(byId('email'), emailRe.test(v.email));
-            setState(byId('whatsapp'), v.whatsapp.length >= 10);
-
-            if (!ok) showErr('Confira os campos destacados e tente novamente.');
-            return ok;
-        }
-
-        // Envio
         const form = byId('formCadastro');
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (!validarFormulario()) return;
+            hideErr();
 
             const btn = byId('btnEnviar');
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Enviando...';
 
-            const data = new FormData();
-            data.append('evento_id', byId('eventoId').value || eventoId);
-            data.append('tipo_cadastro', byId('tipoCadastro').value);
-            data.append('matricula', byId('matricula').value.trim());
-            data.append('nome_formando', byId('nomeFormando').value.trim());
-            data.append('serie', byId('serie').value);
-            data.append('turma', byId('turma').value.trim().toUpperCase());
-            data.append('nome_contato', byId('nomeContato').value.trim());
-            data.append('email', byId('email').value.trim().toLowerCase());
-            data.append('whatsapp', (byId('whatsapp').value || '').replace(/\D/g, ''));
-            data.append('cep', byId('cep').value.trim());
-            data.append('endereco', byId('endereco').value.trim());
-            data.append('numero', byId('numero').value.trim());
-            data.append('complemento', byId('complemento').value.trim());
-            data.append('tipo_imovel', byId('tipoImovel').value);
-            if (byId('foto').files[0]) data.append('foto', byId('foto').files[0]);
+            const data = new FormData(form);
 
             try {
                 const resp = await fetch('/api/cadastro', { method: 'POST', body: data });
@@ -992,70 +887,14 @@
                     return;
                 }
 
-                const tipo = byId('tipoCadastro').value;
-                const payload = {
-                    tipo,
-                    nome: tipo === 'aluno' ? byId('nomeFormando').value.trim() : byId('nomeContato').value.trim(),
-                    eventoId: byId('eventoId').value || eventoId,
-                    nomeContato: byId('nomeContato').value.trim(),
-                    email: byId('email').value.trim(),
-                    whatsapp: (byId('whatsapp').value || '').replace(/\D/g, '')
-                };
-                localStorage.setItem('cadastroSucesso', JSON.stringify(payload));
-                showOk('Cadastro realizado! Redirecionando...');
-                setTimeout(() => location.href = '/sucesso.html', 700);
-            } catch (err) {
+                showOk('Cadastro realizado com sucesso!');
+                setTimeout(() => location.href = '/sucesso.html', 800);
+            } catch {
                 showErr('Erro de conexão. Tente novamente em instantes.');
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fa-solid fa-paper-plane me-2"></i>Concluir cadastro';
             }
         });
-
-        // Inicializar progresso
-        atualizarProgresso();
-
-        // Atualizar etapas visuais
-        function atualizarEtapasVisuais() {
-            const progresso = parseInt(byId('progressFill').style.width) || 0;
-
-            if (progresso < 34) {
-                UI.atualizarEtapa(1);
-            } else if (progresso < 67) {
-                UI.atualizarEtapa(2);
-            } else {
-                UI.atualizarEtapa(3);
-            }
-        }
-
-        // Chamar função ao atualizar progresso
-        const originalAtualizarProgresso = atualizarProgresso;
-        atualizarProgresso = function () {
-            originalAtualizarProgresso();
-            atualizarEtapasVisuais();
-        };
-
-        // Toast para erros (usando window para evitar conflito com const)
-        if (typeof showErr !== 'undefined') {
-            const originalShowErr = showErr;
-            window.showErr = function (msg) {
-                originalShowErr(msg);
-                if (window.UI && window.UI.mostrarToast) {
-                    UI.mostrarToast(msg, 'error');
-                }
-            };
-        }
-
-        // Toast para sucesso (usando window para evitar conflito com const)
-        if (typeof showOk !== 'undefined') {
-            const originalShowOk = showOk;
-            window.showOk = function (msg) {
-                originalShowOk(msg);
-                if (window.UI && window.UI.mostrarToast) {
-                    UI.mostrarToast(msg, 'success');
-                }
-            };
-        }
     </script>
 </body>
-
 </html>
