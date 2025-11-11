@@ -374,6 +374,61 @@ def not_found(e):
 def unauthorized(e):
     return jsonify({'erro': 'Não autorizado'}), 401
 
+# ==================== RESET DB ====================
+
+@app.route('/api/reset-db', methods=['POST'])
+def reset_database():
+    """
+    Reseta o banco de dados (deleta todos os dados e recria as tabelas)
+    Requer header de autenticação: X-Reset-Token
+    """
+    token = request.headers.get('X-Reset-Token', '')
+    reset_token = os.getenv('RESET_TOKEN', 'reset-2024-secret')
+    
+    if token != reset_token:
+        print(f"[ERRO] Tentativa de reset com token inválido: {token}")
+        return jsonify({'erro': 'Token inválido'}), 401
+    
+    try:
+        print("\n[RESET] Iniciando reset do banco de dados...")
+        
+        # Deletar todos os dados
+        db.drop_all()
+        print("[OK] Todas as tabelas deletadas")
+        
+        # Recriar tabelas
+        db.create_all()
+        print("[OK] Tabelas recriadas")
+        
+        # Criar admin padrão
+        admin = Usuario(
+            nome='Administrador',
+            login='admin',
+            senha_hash=generate_password_hash('admin123'),
+            tipo_usuario='admin'
+        )
+        db.session.add(admin)
+        db.session.commit()
+        print("[OK] Usuário admin criado")
+        
+        print("[OK] Reset concluído com sucesso!\n")
+        
+        return jsonify({
+            'mensagem': 'Banco de dados resetado com sucesso!',
+            'usuario_admin': 'admin',
+            'senha_admin': 'admin123'
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"[ERRO] Falha no reset: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'erro': 'Erro ao resetar banco de dados',
+            'detalhes': str(e)
+        }), 500
+
 # ==================== DIAGNÓSTICO ====================
 
 @app.route('/api/diagnostico', methods=['GET'])
@@ -614,6 +669,7 @@ def listar_eventos():
                     'status': e.status_automatico,
                     'status_original': e.status,
                     'total_leads': len(e.leads) if hasattr(e, 'leads') else 0,
+                    'galeria_count': len(e.galeria_fotos) if hasattr(e, 'galeria_fotos') else 0,
                     'dias_restantes': dias_restantes,
                     'qr_valido': e.qr_code_valido,
                     'qr_url': f"{request.host_url}cadastro?e={e.id}"
@@ -628,6 +684,76 @@ def listar_eventos():
         import traceback
         traceback.print_exc()
         return jsonify({'erro': 'Erro ao listar eventos', 'detalhes': str(e)}), 500
+
+@app.route('/api/eventos/<int:evento_id>', methods=['DELETE'])
+@jwt_required()
+def deletar_evento(evento_id):
+    """
+    Deleta um evento e todos seus dados associados (leads, fotos, galeria)
+    Apenas admin ou dono pode deletar
+    """
+    usuario_id = current_user_id()
+    if usuario_id is None:
+        return jsonify({'erro': 'Token inválido'}), 401
+    
+    usuario = Usuario.query.get(usuario_id)
+    if not usuario or not eh_administrador(usuario):
+        return jsonify({'erro': 'Apenas administradores podem deletar eventos'}), 403
+    
+    evento = Evento.query.get_or_404(evento_id)
+    
+    try:
+        # Deletar arquivos de foto dos leads
+        for lead in evento.leads:
+            if lead.foto:
+                foto_path = os.path.join(app.config['UPLOAD_FOLDER'], lead.foto)
+                if os.path.exists(foto_path):
+                    try:
+                        os.remove(foto_path)
+                        print(f"✅ Foto do lead {lead.id} deletada")
+                    except Exception as e:
+                        print(f"⚠️  Erro ao deletar foto: {str(e)}")
+        
+        # Deletar arquivos da galeria
+        for foto_galeria in evento.galeria_fotos:
+            foto_path = os.path.join(app.config['UPLOAD_FOLDER'], foto_galeria.nome_arquivo)
+            if os.path.exists(foto_path):
+                try:
+                    os.remove(foto_path)
+                    print(f"✅ Foto da galeria {foto_galeria.id} deletada")
+                except Exception as e:
+                    print(f"⚠️  Erro ao deletar foto da galeria: {str(e)}")
+        
+        # Deletar leads (cascata)
+        for lead in evento.leads:
+            db.session.delete(lead)
+        
+        # Deletar galeria (cascata)
+        for foto_galeria in evento.galeria_fotos:
+            db.session.delete(foto_galeria)
+        
+        # Deletar evento
+        db.session.delete(evento)
+        db.session.commit()
+        
+        print(f"✅ Evento {evento_id} deletado com sucesso por admin {usuario_id}")
+        
+        return jsonify({
+            'mensagem': f'Evento {evento_id} deletado com sucesso!',
+            'escola': evento.escola.nome if evento.escola else 'N/A',
+            'leads_deletados': len(evento.leads),
+            'fotos_deletadas': len(evento.galeria_fotos)
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Erro ao deletar evento {evento_id}: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'erro': 'Erro ao deletar evento',
+            'detalhes': str(e)
+        }), 500
 
 @app.route('/api/eventos/<int:evento_id>', methods=['GET'])
 def buscar_evento(evento_id):

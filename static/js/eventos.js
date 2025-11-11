@@ -139,6 +139,12 @@ function renderizarEventos(eventos) {
         <td>${statusBadge}</td>
         <td class="text-center">${e.total_leads || 0}</td>
         <td class="text-center">${btnQR}</td>
+        <td class="text-center">
+          <button class="btn btn-outline-danger btn-sm" onclick="abrirModalDeletar(${e.id}, '${e.escola}', ${e.total_leads || 0}, ${e.galeria_count || 0})" 
+                  title="Deletar evento">
+            <i class="fas fa-trash"></i>
+          </button>
+        </td>
       </tr>
     `;
   }).join('');
@@ -331,9 +337,97 @@ async function criarEvento() {
 }
 
 // ======================================================
-// 🚀 INICIALIZAÇÃO
+// 🗑️ DELETAR EVENTO
 // ======================================================
 
+let eventoEmDelecao = null;
+
+function abrirModalDeletar(eventoId, nomeEscola, totalLeads, totalFotos) {
+  eventoEmDelecao = { id: eventoId, escola: nomeEscola };
+  
+  // Atualizar os dados no modal
+  document.getElementById('nomeEvenoDeletar').textContent = nomeEscola;
+  document.getElementById('totalLeadsDeletar').textContent = totalLeads;
+  document.getElementById('totalFotosDeletar').textContent = totalFotos;
+  document.getElementById('confirmacaoEscolaDeletar').value = '';
+  
+  // Habilitar/desabilitar botão de deletar
+  const inputConfirmacao = document.getElementById('confirmacaoEscolaDeletar');
+  const btnDeletar = document.getElementById('btnConfirmarDeletar');
+  btnDeletar.disabled = true;
+  
+  inputConfirmacao.addEventListener('input', (e) => {
+    btnDeletar.disabled = e.target.value.toLowerCase() !== nomeEscola.toLowerCase();
+  });
+  
+  // Mostrar modal
+  const modal = new bootstrap.Modal(document.getElementById('modalDeletarEvento'));
+  modal.show();
+}
+
+async function confirmarDelecaoEvento() {
+  if (!eventoEmDelecao) return;
+  
+  const token = localStorage.getItem('token');
+  if (!token) {
+    alert('Token expirado. Faça login novamente.');
+    window.location.href = 'login.html';
+    return;
+  }
+  
+  const eventoId = eventoEmDelecao.id;
+  const nomeEscola = eventoEmDelecao.escola;
+  
+  // Mostrar loading
+  const btnDeletar = document.getElementById('btnConfirmarDeletar');
+  const textoOriginal = btnDeletar.innerHTML;
+  btnDeletar.disabled = true;
+  btnDeletar.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Deletando...';
+  
+  try {
+    const response = await fetch(`${API_URL}/eventos/${eventoId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (response.ok) {
+      const resultado = await response.json();
+      
+      // Sucesso!
+      alert(`✅ Evento deletado com sucesso!\n\nEscola: ${nomeEscola}\nLeads deletados: ${resultado.leads_deletados}\nFotos deletadas: ${resultado.fotos_deletadas}`);
+      
+      // Fechar modal e recarregar eventos
+      bootstrap.Modal.getInstance(document.getElementById('modalDeletarEvento')).hide();
+      carregarEventos();
+    } else if (response.status === 403) {
+      alert('❌ Apenas administradores podem deletar eventos.');
+    } else if (response.status === 404) {
+      alert('❌ Evento não encontrado.');
+    } else {
+      const erro = await response.json();
+      alert(`❌ Erro ao deletar evento: ${erro.erro || 'Erro desconhecido'}`);
+    }
+  } catch (error) {
+    console.error('Erro ao deletar evento:', error);
+    alert('❌ Erro ao conectar com o servidor.');
+  } finally {
+    btnDeletar.disabled = false;
+    btnDeletar.innerHTML = textoOriginal;
+  }
+}
+
+// Configurar evento do botão deletar quando o modal abrir
 document.addEventListener('DOMContentLoaded', () => {
+  const btnDeletar = document.getElementById('btnConfirmarDeletar');
+  if (btnDeletar) {
+    btnDeletar.addEventListener('click', confirmarDelecaoEvento);
+  }
   carregarEventos();
 });
+
+// ======================================================
+// 🚀 INICIALIZAÇÃO
+// ======================================================
