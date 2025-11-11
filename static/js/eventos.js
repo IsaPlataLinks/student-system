@@ -53,6 +53,21 @@ async function carregarEventos() {
       todosEventos = eventos;
       eventosFiltrados = [...todosEventos];
       renderizarEventos(eventosFiltrados);
+      
+      // Configurar o listener de busca
+      const buscaInput = document.getElementById('buscaEvento');
+      if (buscaInput) {
+        buscaInput.addEventListener('input', (e) => {
+          const termo = e.target.value.toLowerCase();
+          eventosFiltrados = todosEventos.filter(evento => {
+            const escola = (evento.escola || '').toLowerCase();
+            const tipo = (evento.tipo_formatura || '').toLowerCase();
+            const local = (evento.local_evento || '').toLowerCase();
+            return escola.includes(termo) || tipo.includes(termo) || local.includes(termo);
+          });
+          renderizarEventos(eventosFiltrados);
+        });
+      }
     } else {
       const error = await response.json();
       console.error('Erro ao carregar eventos:', error);
@@ -214,25 +229,53 @@ function exportarEventosExcel() {
 // 📱 QR CODE
 // ======================================================
 
-function mostrarQRCode(eventoId, nomeEscola, qrUrl) {
+function abrirQRCode(eventoId) {
   const modal = new bootstrap.Modal(document.getElementById('modalQRCode'));
+  const img = document.getElementById('imgQRCode');
+  const input = document.getElementById('linkEventoInput');
+  const btnDownload = document.getElementById('btnDownloadQR');
+
+  const qrUrl = `${API_URL}/eventos/${eventoId}/qrcode`;
+  const pageUrl = `${window.location.origin}/cadastro.html?e=${eventoId}`;
+
+  img.src = qrUrl;
+  input.value = pageUrl;
+  document.getElementById('eventoIdModal').textContent = eventoId;
   
-  // Gera QR Code
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrUrl)}`;
-  
-  document.getElementById('imgQRCode').src = qrCodeUrl;
-  document.getElementById('linkEvento').href = qrUrl;
-  document.getElementById('linkEvento').textContent = qrUrl;
-  
-  // Botão de download
-  document.getElementById('btnDownloadQR').onclick = () => {
-    const link = document.createElement('a');
-    link.href = qrCodeUrl;
-    link.download = `QRCode_${nomeEscola.replace(/\s+/g, '_')}_${eventoId}.png`;
-    link.click();
-  };
-  
+  btnDownload.onclick = () => baixarArquivo(qrUrl, `evento-${eventoId}.png`);
   modal.show();
+}
+
+function baixarArquivo(url, filename) {
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+function copiarLink() {
+  const input = document.getElementById('linkEventoInput');
+  input.select();
+  document.execCommand('copy');
+  
+  const btn = event.target.closest('button');
+  const iconOriginal = btn.innerHTML;
+  btn.innerHTML = '<i class="fas fa-check"></i>';
+  btn.classList.add('btn-success');
+  btn.classList.remove('btn-outline-secondary');
+  
+  setTimeout(() => {
+    btn.innerHTML = iconOriginal;
+    btn.classList.remove('btn-success');
+    btn.classList.add('btn-outline-secondary');
+  }, 1500);
+}
+
+function mostrarQRCode(eventoId, nomeEscola, qrUrl) {
+  // Compatibilidade com versão anterior
+  abrirQRCode(eventoId);
 }
 
 // ======================================================
