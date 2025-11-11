@@ -341,6 +341,7 @@ async function criarEvento() {
 // ======================================================
 
 let eventoEmDelecao = null;
+let inputConfirmacaoListener = null;
 
 function abrirModalDeletar(eventoId, nomeEscola, totalLeads, totalFotos) {
   eventoEmDelecao = { id: eventoId, escola: nomeEscola };
@@ -351,22 +352,32 @@ function abrirModalDeletar(eventoId, nomeEscola, totalLeads, totalFotos) {
   document.getElementById('totalFotosDeletar').textContent = totalFotos;
   document.getElementById('confirmacaoEscolaDeletar').value = '';
   
-  // Habilitar/desabilitar botão de deletar
+  // Remover listener anterior se existir
   const inputConfirmacao = document.getElementById('confirmacaoEscolaDeletar');
+  if (inputConfirmacaoListener) {
+    inputConfirmacao.removeEventListener('input', inputConfirmacaoListener);
+  }
+  
+  // Criar novo listener
   const btnDeletar = document.getElementById('btnConfirmarDeletar');
   btnDeletar.disabled = true;
   
-  inputConfirmacao.addEventListener('input', (e) => {
+  inputConfirmacaoListener = (e) => {
     btnDeletar.disabled = e.target.value.toLowerCase() !== nomeEscola.toLowerCase();
-  });
+  };
+  
+  inputConfirmacao.addEventListener('input', inputConfirmacaoListener);
   
   // Mostrar modal
   const modal = new bootstrap.Modal(document.getElementById('modalDeletarEvento'));
   modal.show();
 }
 
+let deletandoEvento = false;
+
 async function confirmarDelecaoEvento() {
-  if (!eventoEmDelecao) return;
+  // Proteção contra múltiplos cliques
+  if (!eventoEmDelecao || deletandoEvento) return;
   
   const token = localStorage.getItem('token');
   if (!token) {
@@ -381,6 +392,7 @@ async function confirmarDelecaoEvento() {
   // Mostrar loading
   const btnDeletar = document.getElementById('btnConfirmarDeletar');
   const textoOriginal = btnDeletar.innerHTML;
+  deletandoEvento = true;
   btnDeletar.disabled = true;
   btnDeletar.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Deletando...';
   
@@ -414,6 +426,7 @@ async function confirmarDelecaoEvento() {
     console.error('Erro ao deletar evento:', error);
     alert('❌ Erro ao conectar com o servidor.');
   } finally {
+    deletandoEvento = false;
     btnDeletar.disabled = false;
     btnDeletar.innerHTML = textoOriginal;
   }
