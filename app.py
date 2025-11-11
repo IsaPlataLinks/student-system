@@ -1491,9 +1491,31 @@ def criar_usuario_admin():
         print("[OK] Usuario admin criado: login='admin', senha='admin123'")
 
 # --- Auto-init também quando o app é importado (Render/Gunicorn) ---
+def adicionar_colunas_faltantes():
+    """Adiciona colunas que faltam na tabela leads (migração automática)"""
+    from sqlalchemy import text, inspect
+    try:
+        inspector = inspect(db.engine)
+        colunas = [col['name'] for col in inspector.get_columns('leads')]
+        
+        if 'numero' not in colunas:
+            print("[MIGRAÇÃO] Adicionando coluna 'numero' na tabela leads...")
+            db.session.execute(text('ALTER TABLE leads ADD COLUMN numero VARCHAR(10)'))
+            db.session.commit()
+            print("[OK] Coluna 'numero' adicionada")
+        
+        if 'ano_formatura' not in colunas:
+            print("[MIGRAÇÃO] Adicionando coluna 'ano_formatura' na tabela leads...")
+            db.session.execute(text('ALTER TABLE leads ADD COLUMN ano_formatura INTEGER'))
+            db.session.commit()
+            print("[OK] Coluna 'ano_formatura' adicionada")
+    except Exception as e:
+        print(f"[AVISO] Erro ao verificar colunas: {str(e)}")
+
 with app.app_context():
     db.create_all()
     criar_usuario_admin()
+    adicionar_colunas_faltantes()
     print("[OK] DB inicializado (auto-init)")
 
 if __name__ == '__main__':
