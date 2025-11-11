@@ -783,6 +783,95 @@
             }
         }
 
+        // ==================== MATRÍCULA ====================
+        byId("matricula").addEventListener("input", (e) => {
+            // Aceita apenas números
+            e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10);
+        });
+
+        byId("matricula").addEventListener("blur", (e) => {
+            // Preenche com zeros à esquerda
+            const val = e.target.value;
+            if (val.length > 0) {
+                e.target.value = val.padStart(10, '0');
+                setState(e.target, true);
+            }
+        });
+
+        // ==================== NOME DO FORMANDO ====================
+        byId("nomeFormando").addEventListener("input", (e) => {
+            // Remove números e caracteres especiais, mantém letras, espaços e acentos
+            e.target.value = e.target.value.replace(/[^a-záàâãéèêíïóôõöúçñ\s]/gi, '');
+        });
+
+        byId("nomeFormando").addEventListener("blur", (e) => {
+            const val = e.target.value.trim();
+            // Mínimo 3 caracteres
+            const isValid = val.length >= 3;
+            setState(e.target, isValid);
+        });
+
+        // ==================== NOME DO RESPONSÁVEL ====================
+        byId("nomeContato").addEventListener("input", (e) => {
+            // Remove números e caracteres especiais, mantém letras, espaços e acentos
+            e.target.value = e.target.value.replace(/[^a-záàâãéèêíïóôõöúçñ\s]/gi, '');
+        });
+
+        byId("nomeContato").addEventListener("blur", (e) => {
+            const val = e.target.value.trim();
+            // Mínimo 3 caracteres
+            const isValid = val.length >= 3;
+            setState(e.target, isValid);
+        });
+
+        // ==================== TURMA ====================
+        byId("turma").addEventListener("input", (e) => {
+            // Aceita apenas letras ou números (alfanumérico), máximo 4 caracteres
+            e.target.value = e.target.value.replace(/[^a-z0-9]/gi, '').slice(0, 4).toUpperCase();
+        });
+
+        byId("turma").addEventListener("blur", (e) => {
+            const val = e.target.value.trim();
+            const isValid = val.length > 0 && val.length <= 4;
+            setState(e.target, isValid);
+        });
+
+        // ==================== WHATSAPP ====================
+        byId("whatsapp").addEventListener("input", (e) => {
+            // Remove qualquer caractere não numérico
+            let digits = e.target.value.replace(/\D/g, '').slice(0, 11);
+            
+            // Máscara automática: (11) 98765-4321
+            let formatted = '';
+            if (digits.length > 0) {
+                formatted = '(' + digits.slice(0, 2);
+            }
+            if (digits.length >= 3) {
+                formatted += ') ' + digits.slice(2, 7);
+            }
+            if (digits.length >= 8) {
+                formatted += '-' + digits.slice(7, 11);
+            }
+            
+            e.target.value = formatted;
+        });
+
+        byId("whatsapp").addEventListener("blur", (e) => {
+            const digits = e.target.value.replace(/\D/g, '');
+            // Suporta 10 ou 11 dígitos
+            const isValid = digits.length === 10 || digits.length === 11;
+            setState(e.target, isValid);
+        });
+
+        // ==================== EMAIL ====================
+        byId("email").addEventListener("blur", (e) => {
+            const val = e.target.value.trim();
+            // Validação com regex padrão
+            const isValid = emailRe.test(val);
+            setState(e.target, isValid);
+        });
+
+        // ==================== CEP ====================
         byId("cep").addEventListener("input", (e) => {
             const valor = e.target.value.replace(/\D/g, '').slice(0, 8);
             e.target.value = valor.replace(/^(\d{5})(\d{0,3})/, '$1-$2');
@@ -832,6 +921,7 @@
             }
         });
 
+        // ==================== FOTO ====================
         byId('foto').addEventListener('change', (e) => {
             const f = e.target.files[0];
             const box = byId('previewBox');
