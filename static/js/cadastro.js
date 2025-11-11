@@ -324,7 +324,7 @@ formCadastro.addEventListener('submit', async function(e) {
                 matricula: matricula,
                 id: resultado.id
             }));
-            window.location.href = 'sucesso.html';
+            window.location.href = `${window.location.origin}/sucesso.html`;
         } else {
             // Erro
             mostrarAlerta(resultado.erro || 'Erro ao cadastrar. Tente novamente.', 'danger');
