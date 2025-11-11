@@ -62,12 +62,27 @@ if uri.startswith('postgres://'):
 
 app.config['SQLALCHEMY_DATABASE_URI'] = uri
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_size': 10,
+    'pool_recycle': 3600,  # Recicla conexões a cada 1 hora
+    'pool_pre_ping': True,  # Verifica se conexão está viva antes de usar
+    'max_overflow': 20,
+}
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'r3-formaturas-secret-2024')
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=8)
 
-# Pasta de uploads: usar volume persistente no Render, ou static/uploads local
-# No Render, defina UPLOAD_PATH=/mnt/data/uploads (volume persistente)
-upload_path = os.getenv('UPLOAD_PATH', 'static/uploads')
+# Pasta de uploads: SEMPRE remota em produção
+upload_path = os.getenv('UPLOAD_PATH')
+if not upload_path:
+    if ENV == 'production':
+        print('\n❌ ERRO CRÍTICO: Produção detectada sem UPLOAD_PATH!')
+        print('   Configure UPLOAD_PATH=/mnt/data/uploads no Render.')
+        import sys
+        sys.exit(1)
+    else:
+        # Em desenvolvimento, usa pasta local
+        upload_path = 'static/uploads'
+
 app.config['UPLOAD_FOLDER'] = upload_path
 app.config['MAX_CONTENT_LENGTH'] = 15 * 1024 * 1024  # 15MB
 
@@ -187,6 +202,9 @@ class Lead(db.Model):
 
     cep = db.Column(db.String(10))
     endereco = db.Column(db.String(300))
+    numero = db.Column(db.String(10))
+    complemento = db.Column(db.String(100))
+    tipo_imovel = db.Column(db.String(20))
 
     status_lead = db.Column(db.String(20), default='novo')
     observacoes = db.Column(db.Text)
@@ -726,6 +744,9 @@ def cadastrar_lead():
             letra_turma=turma,
             cep=data.get('cep'),
             endereco=data.get('endereco'),
+            numero=data.get('numero'),
+            complemento=data.get('complemento'),
+            tipo_imovel=data.get('tipo_imovel'),
             foto=foto_filename,
             status_lead='novo'
         )
@@ -799,6 +820,11 @@ def listar_leads():
                 'status_lead': lead.status_lead,
                 'observacoes': lead.observacoes,
                 'foto': f'/static/uploads/{lead.foto}' if lead.foto else None,
+                'cep': lead.cep,
+                'endereco': lead.endereco,
+                'numero': lead.numero,
+                'complemento': lead.complemento,
+                'tipo_imovel': lead.tipo_imovel,
                 'evento': {
                     'id': ev.id if ev else None,
                     'escola': escola,
@@ -854,6 +880,9 @@ def obter_lead(lead_id):
             'tipo_cadastro': lead.tipo_cadastro,
             'cep': lead.cep,
             'endereco': lead.endereco,
+            'numero': lead.numero,
+            'complemento': lead.complemento,
+            'tipo_imovel': lead.tipo_imovel,
             'foto': lead.foto,
             'link_galeria': lead.link_galeria,
             'descricao_galeria': lead.descricao_galeria,
@@ -1159,6 +1188,38 @@ def atualizar_lead(lead_id):
         if turma and not validar_letra_turma(turma):
             return jsonify({'erro': 'Turma inválida! Use apenas letras e números'}), 400
         lead.letra_turma = turma
+    
+    # Endereço e imóvel
+    if 'cep' in data:
+        cep = (data['cep'] or '').strip()
+        if cep and not validar_cep(cep):
+            return jsonify({'erro': 'CEP inválido! Use formato: 01310-100'}), 400
+        lead.cep = cep
+    
+    if 'endereco' in data:
+        endereco = (data['endereco'] or '').strip()
+        if len(endereco) > 300:
+            return jsonify({'erro': 'Endereço não pode ter mais que 300 caracteres'}), 400
+        lead.endereco = endereco
+    
+    if 'numero' in data:
+        numero = (data['numero'] or '').strip()
+        if len(numero) > 10:
+            return jsonify({'erro': 'Número não pode ter mais que 10 caracteres'}), 400
+        lead.numero = numero
+    
+    if 'complemento' in data:
+        complemento = (data['complemento'] or '').strip()
+        if len(complemento) > 100:
+            return jsonify({'erro': 'Complemento não pode ter mais que 100 caracteres'}), 400
+        lead.complemento = complemento
+    
+    if 'tipo_imovel' in data:
+        tipo_imovel = (data['tipo_imovel'] or '').strip()
+        tipos_validos = ['casa', 'apartamento', 'outro']
+        if tipo_imovel and tipo_imovel.lower() not in tipos_validos:
+            return jsonify({'erro': f'Tipo de imóvel inválido! Opções: {", ".join(tipos_validos)}'}), 400
+        lead.tipo_imovel = tipo_imovel.lower() if tipo_imovel else None
 
     # Status e observações
     if 'status_lead' in data:
