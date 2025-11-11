@@ -625,6 +625,30 @@
                         placeholder="Será preenchido automaticamente" />
                 </div>
 
+                <!-- Linha 5.5: Número + Complemento -->
+                <div class="col-md-3">
+                    <label class="form-label">Número</label>
+                    <input type="text" class="form-control" name="numero" id="numero" maxlength="10"
+                        placeholder="Ex: 123 ou S/N" />
+                </div>
+
+                <div class="col-md-9">
+                    <label class="form-label">Complemento</label>
+                    <input type="text" class="form-control" name="complemento" id="complemento" maxlength="100"
+                        placeholder="Ex: Apto 42 ou Lote B" />
+                </div>
+
+                <!-- Linha 5.6: Tipo de Imóvel -->
+                <div class="col-md-6">
+                    <label class="form-label">Tipo de imóvel</label>
+                    <select class="form-select" name="tipo_imovel" id="tipoImovel">
+                        <option value="">Selecione</option>
+                        <option value="casa">Casa</option>
+                        <option value="apartamento">Apartamento</option>
+                        <option value="outro">Outro</option>
+                    </select>
+                </div>
+
                 <!-- Divisor: Foto -->
                 <div class="col-12 section-divider">
                     <span class="section-label">
@@ -951,6 +975,9 @@
             data.append('whatsapp', (byId('whatsapp').value || '').replace(/\D/g, ''));
             data.append('cep', byId('cep').value.trim());
             data.append('endereco', byId('endereco').value.trim());
+            data.append('numero', byId('numero').value.trim());
+            data.append('complemento', byId('complemento').value.trim());
+            data.append('tipo_imovel', byId('tipoImovel').value);
             if (byId('foto').files[0]) data.append('foto', byId('foto').files[0]);
 
             try {
