@@ -6,12 +6,13 @@ services:
     startCommand: gunicorn app:app
     envVars:
       - key: DATABASE_URL
-        scope: build
-        sync: false
+        value: postgresql+psycopg2://student_system_e101_user:d4mTXBUFhOjQdPIVnF4PNNNnhgIrkTwG@dpg-d4940ls9c44c73bfmc00-a.oregon-postgres.render.com/student_system_e101
       - key: UPLOAD_PATH
         value: /mnt/data/uploads
       - key: JWT_SECRET_KEY
         scope: secret
+      - key: FLASK_ENV
+        value: production
 
   - type: pserv
     name: student-system-disk
