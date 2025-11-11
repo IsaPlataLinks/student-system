@@ -114,7 +114,7 @@ class Evento(db.Model):
     __tablename__ = 'eventos'
     id = db.Column(db.Integer, primary_key=True)
     escola_id = db.Column(db.Integer, db.ForeignKey('escolas.id'), nullable=False)
-    data_evento = db.Column(db.Date, nullable=False)  # agora OBRIGATÓRIA
+    data_evento = db.Column(db.Date, nullable=False)  # OBRIGATÓRIA
     local_evento = db.Column(db.String(200))
     endereco_evento = db.Column(db.String(255))
     tipo_formatura = db.Column(db.String(50))
@@ -333,11 +333,18 @@ def unauthorized(e):
 def diagnostico():
     """Endpoint de diagnóstico para verificar estado do sistema"""
     from datetime import datetime, date
+    from sqlalchemy import inspect
     
     print(f"\n[DIAGNOSTICO] Requisição recebida em {datetime.now()}")
     
     try:
         hoje = date.today()
+        
+        # Verificar se as colunas faltantes existem
+        inspector = inspect(db.engine)
+        colunas_leads = [col['name'] for col in inspector.get_columns('leads')]
+        colunas_esperadas = ['numero', 'complemento', 'tipo_imovel', 'ano_formatura']
+        colunas_faltantes = [col for col in colunas_esperadas if col not in colunas_leads]
         
         # Contar dados
         total_usuarios = Usuario.query.count()
@@ -377,6 +384,13 @@ def diagnostico():
         resultado = {
             'timestamp': datetime.now().isoformat(),
             'hoje': hoje.isoformat(),
+            'database': {
+                'uri': str(app.config['SQLALCHEMY_DATABASE_URI'])[:50] + '...',
+                'colunas_leads_esperadas': colunas_esperadas,
+                'colunas_leads_existentes': colunas_leads,
+                'colunas_faltantes': colunas_faltantes,
+                'status': '❌ ERRO: Colunas faltando!' if colunas_faltantes else '✅ OK: Todas as colunas presentes'
+            },
             'totais': {
                 'usuarios': total_usuarios,
                 'escolas': total_escolas,
@@ -1498,22 +1512,46 @@ def adicionar_colunas_faltantes():
         inspector = inspect(db.engine)
         colunas = [col['name'] for col in inspector.get_columns('leads')]
         
-        if 'numero' not in colunas:
-            print("[MIGRAÇÃO] Adicionando coluna 'numero' na tabela leads...")
-            db.session.execute(text('ALTER TABLE leads ADD COLUMN numero VARCHAR(10)'))
-            db.session.commit()
-            print("[OK] Coluna 'numero' adicionada")
+        print(f"[DEBUG] Colunas existentes em 'leads': {colunas}")
         
-        if 'ano_formatura' not in colunas:
-            print("[MIGRAÇÃO] Adicionando coluna 'ano_formatura' na tabela leads...")
-            db.session.execute(text('ALTER TABLE leads ADD COLUMN ano_formatura INTEGER'))
-            db.session.commit()
-            print("[OK] Coluna 'ano_formatura' adicionada")
+        # Lista de colunas a verificar
+        colunas_necessarias = {
+            'numero': 'VARCHAR(10)',
+            'complemento': 'VARCHAR(100)',
+            'tipo_imovel': 'VARCHAR(20)',
+            'ano_formatura': 'INTEGER'
+        }
+        
+        for coluna, tipo_sql in colunas_necessarias.items():
+            if coluna not in colunas:
+                print(f"[MIGRAÇÃO] Adicionando coluna '{coluna}' do tipo {tipo_sql}...")
+                try:
+                    db.session.execute(text(f'ALTER TABLE leads ADD COLUMN {coluna} {tipo_sql}'))
+                    db.session.commit()
+                    print(f"[OK] Coluna '{coluna}' adicionada com sucesso")
+                except Exception as col_err:
+                    print(f"[ERRO] Falha ao adicionar coluna '{coluna}': {str(col_err)}")
+                    db.session.rollback()
+            else:
+                print(f"[OK] Coluna '{coluna}' já existe")
+                
     except Exception as e:
-        print(f"[AVISO] Erro ao verificar colunas: {str(e)}")
+        print(f"[AVISO] Erro geral ao verificar/adicionar colunas: {str(e)}")
+        import traceback
+        traceback.print_exc()
+
+def verificar_e_criar_tabelas():
+    """Cria todas as tabelas e adiciona colunas faltantes"""
+    try:
+        db.create_all()
+        print("[OK] Todas as tabelas verificadas/criadas")
+    except Exception as e:
+        print(f"[ERRO] Erro ao criar tabelas: {str(e)}")
+        import traceback
+        traceback.print_exc()
 
 with app.app_context():
-    db.create_all()
+    verificar_e_criar_tabelas()
     criar_usuario_admin()
     adicionar_colunas_faltantes()
     print("[OK] DB inicializado (auto-init)")
