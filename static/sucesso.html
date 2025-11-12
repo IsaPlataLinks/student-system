@@ -383,7 +383,7 @@
     <p class="mensagem">Seus dados foram salvos com segurança em nosso sistema.</p>
 
     <!-- Área que exibe o tipo e o nome do cadastrado -->
-    <div class="nome-cadastrado" id="nomeCadastrado">
+    <div class="nome-cadastrado" id="nomeCadastrado" style="display:none;">
         <i class="fas fa-user-check me-2"></i>
         <span id="nomeExibir">Carregando...</span>
     </div>
@@ -448,16 +448,19 @@
             console.log('[DEBUG] Dados parseados:', dadosCadastro);
             
             // Exibir nome do cadastrado
-            const nomeCompleto = dadosCadastro.nome || 'Não informado';
-            console.log('[DEBUG] Nome a exibir:', nomeCompleto);
-            
-            // Animar nome com efeito de digitação usando helper da UI
-            if (window.UI && typeof window.UI.animarNome === 'function') {
-                window.UI.animarNome(nomeCompleto, 'nomeExibir');
-            } else {
-                console.warn('[AVISO] UI.animarNome não disponível, exibindo texto direto');
-                document.getElementById('nomeExibir').textContent = nomeCompleto;
-            }
+             const nomeCompleto = dadosCadastro.nome || 'Não informado';
+             console.log('[DEBUG] Nome a exibir:', nomeCompleto);
+             
+             // Mostrar container de nome
+             document.getElementById('nomeCadastrado').style.display = 'block';
+             
+             // Animar nome com efeito de digitação usando helper da UI
+             if (window.UI && typeof window.UI.animarNome === 'function') {
+                 window.UI.animarNome(nomeCompleto, 'nomeExibir');
+             } else {
+                 console.warn('[AVISO] UI.animarNome não disponível, exibindo texto direto');
+                 document.getElementById('nomeExibir').textContent = nomeCompleto;
+             }
             
             // Mostrar opção apenas se for responsável
             if (dadosCadastro.tipo === 'responsavel') {
@@ -482,9 +485,10 @@
                 });
             }
         } catch (erro) {
-            console.error('[ERRO] Falha ao parsear dados:', erro);
-            document.getElementById('nomeExibir').textContent = 'Seus dados foram cadastrados com sucesso!';
-        }
+             console.error('[ERRO] Falha ao parsear dados:', erro);
+             document.getElementById('nomeCadastrado').style.display = 'block';
+             document.getElementById('nomeExibir').textContent = 'Seus dados foram cadastrados com sucesso!';
+         }
 
         // Usar confete realista da biblioteca UI se disponível
         if (window.UI && window.UI.criarConfeteRealista) {
