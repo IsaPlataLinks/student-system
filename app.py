@@ -811,7 +811,14 @@ def criar_evento():
             estado=(data.get('estado') or '').upper()[:2]
         )
         db.session.add(escola)
-        db.session.flush()  # Garante que a escola tem ID antes de usar no Evento
+    else:
+        # Se escola já existe, SEMPRE atualiza com novos dados se forem fornecidos
+        if data.get('cidade'):
+            escola.cidade = data.get('cidade')
+        if data.get('estado'):
+            escola.estado = (data.get('estado') or '').upper()[:2]
+    
+    db.session.flush()  # Garante que a escola tem ID antes de usar no Evento
 
     # -------- DAQUI PRA BAIXO PRECISA FICAR DENTRO DA FUNÇÃO --------
     # Data do evento (OBRIGATÓRIA)
@@ -1967,25 +1974,28 @@ def listar_alunos():
                             print(f"[AVISO] Arquivo de foto não encontrado: {foto_path}")
                             # Não retorna URL se arquivo não existe para evitar erro 404
 
+                # Garantir que matrícula NUNCA é N/D - sempre string vazia se vazia
+                matricula_valor = lead.matricula if lead.matricula and lead.matricula.strip() else ''
+                
                 aluno_data = {
                     'id': lead.id,
-                    'evento_id': lead.evento_id,
-                    'matricula': lead.matricula,
-                    'nome': lead.nome_formando,
-                    'escola': escola_nome,
-                    'serie': lead.serie,
-                    'letra_turma': lead.letra_turma,
+                    'evento_id': lead.evento_id or '',
+                    'matricula': matricula_valor,
+                    'nome': lead.nome_formando or '',
+                    'escola': escola_nome or '',
+                    'serie': lead.serie or '',
+                    'letra_turma': lead.letra_turma or '',
                     'turma': (f"{lead.serie or ''} {lead.letra_turma or ''}").strip() or 'Não informada',
                     'ano_formatura': lead.ano_formatura or ano_evento,
-                    'email': lead.email,
-                    'whatsapp': lead.whatsapp,
+                    'email': lead.email or '',
+                    'whatsapp': lead.whatsapp or '',
                     'responsavel': lead.nome_contato if lead.tipo_cadastro == 'responsavel' else None,
                     'foto': foto_url,
-                    'cep': lead.cep,
-                    'endereco': lead.endereco,
-                    'numero': lead.numero,
-                    'complemento': lead.complemento,
-                    'tipo_imovel': lead.tipo_imovel,
+                    'cep': lead.cep or '',
+                    'endereco': lead.endereco or '',
+                    'numero': lead.numero or '',
+                    'complemento': lead.complemento or '',
+                    'tipo_imovel': lead.tipo_imovel or '',
                     'criado_em': lead.criado_em.isoformat() if lead.criado_em else None
                 }
                 

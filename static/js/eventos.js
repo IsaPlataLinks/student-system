@@ -200,6 +200,9 @@ function exportarEventosExcel() {
     return;
   }
 
+  // Debug: verificar dados de cidade/estado
+  console.log('[DEBUG EXPORT] Eventos filtrados:', eventosFiltrados.slice(0, 2));
+
   // Adiciona BOM UTF-8 para corrigir acentuação
   const BOM = '\uFEFF';
   const rows = eventosFiltrados.map((e) => {
@@ -207,11 +210,17 @@ function exportarEventosExcel() {
       ? new Date(e.data_evento).toLocaleDateString('pt-BR')
       : '';
     
+    // Garantir que cidade e estado nunca vêm em branco - SEMPRE preenchidas
+    const cidade = (e.cidade || '').trim() || 'Não informada';
+    const estado = (e.estado || '').trim() || 'Não informada';
+    
+    console.log(`[DEBUG] Evento ${e.id}: cidade="${cidade}", estado="${estado}"`);
+    
     return [
-      e.id,
+      e.id || '',
       e.escola || '',
-      e.cidade || '',
-      e.estado || '',
+      cidade,
+      estado,
       e.tipo_formatura || '',
       dataFormatada,
       e.local_evento || '',
