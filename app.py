@@ -1973,6 +1973,8 @@ def listar_alunos():
                     'matricula': lead.matricula,
                     'nome': lead.nome_formando,
                     'escola': escola_nome,
+                    'serie': lead.serie,
+                    'letra_turma': lead.letra_turma,
                     'turma': (f"{lead.serie or ''} {lead.letra_turma or ''}").strip() or 'Não informada',
                     'ano_formatura': lead.ano_formatura or ano_evento,
                     'email': lead.email,

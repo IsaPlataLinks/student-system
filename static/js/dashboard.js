@@ -302,7 +302,8 @@ function exportarExcel() {
     a.evento_id || 'N/A',
     a.matricula || 'N/A',
     a.nome,
-    a.turma,
+    a.serie || '',
+    a.letra_turma || '',
     a.ano_formatura || 'N/A',
     a.escola || '',
     a.email || '',
@@ -314,7 +315,7 @@ function exportarExcel() {
     a.complemento || ''
   ]);
 
-  const headers = ['ID Evento', 'Matrícula', 'Nome', 'Turma', 'Ano', 'Escola', 'Email', 'WhatsApp', 'Responsável', 'CEP', 'Endereço', 'Número', 'Complemento'];
+  const headers = ['ID Evento', 'Matrícula', 'Nome', 'Série', 'Turma', 'Ano', 'Escola', 'Email', 'WhatsApp', 'Responsável', 'CEP', 'Endereço', 'Número', 'Complemento'];
   
   // Criar TSV (Tab-Separated Values) que Excel interpreta melhor
   const tsv = [headers.join('\t'), ...rows.map(row => row.join('\t'))].join('\n');
