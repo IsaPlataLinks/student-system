@@ -166,7 +166,7 @@ function renderizarAlunos(alunos) {
           console.log(`[DEBUG] Aluno ${aluno.id} (${aluno.nome}): foto="${aluno.foto}" => urlFoto="${urlFoto}"`);
           
           return `
-        <div class="aluno-card" onclick="verDetalhesAluno(${aluno.id})" style="cursor:pointer" title="Clique para ver detalhes completos">
+          <div class="aluno-card" onclick="verDetalhesAluno(${aluno.id})" style="cursor:pointer" title="Clique para ver detalhes completos">
           <div class="card-header-custom">
             <h6>${aluno.escola || 'Escola não informada'}</h6>
           </div>
@@ -177,7 +177,7 @@ function renderizarAlunos(alunos) {
                   ? `<img loading="lazy" src="${urlFoto}" 
                            alt="${aluno.nome}" 
                            class="aluno-foto"
-                           onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                           onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
                      <i class="fas fa-user foto-fallback" style="display:none;"></i>`
                   : `<i class="fas fa-user"></i>`
               }
@@ -206,7 +206,7 @@ function renderizarAlunos(alunos) {
           <div style="position:absolute;top:10px;right:10px">
             <i class="fas fa-eye text-white" style="opacity:0.7"></i>
           </div>
-        </div>`;
+          </div>`;
         }
       )
       .join('');
