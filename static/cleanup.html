@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Limpeza de Dados</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 2rem;
+        }
+
+        .container-cleanup {
+            background: white;
+            border-radius: 12px;
+            padding: 3rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 2rem;
+            color: #856404;
+        }
+
+        .warning-box i {
+            margin-right: 0.5rem;
+            color: #ff9800;
+        }
+
+        .btn-cleanup {
+            width: 100%;
+            padding: 0.8rem;
+            font-size: 1rem;
+            font-weight: 600;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 0.5rem;
+        }
+
+        .btn-cleanup:hover:not(:disabled) {
+            background: #c0392b;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+        }
+
+        .btn-cleanup:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        .btn-cancel {
+            width: 100%;
+            padding: 0.8rem;
+            font-size: 1rem;
+            background: #95a5a6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-cancel:hover {
+            background: #7f8c8d;
+        }
+
+        .result {
+            display: none;
+            margin-top: 2rem;
+            padding: 1.5rem;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .result i {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .spinner {
+            display: inline-block;
+            margin-right: 0.5rem;
+        }
+
+        .stats {
+            background: #f8f9fa;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            text-align: left;
+            color: #333;
+        }
+
+        .stats div {
+            margin: 0.5rem 0;
+        }
+
+        .stats strong {
+            color: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-cleanup">
+        <div class="header">
+            <h1><i class="fas fa-trash"></i> Limpeza de Dados</h1>
+            <p>Remove todos os eventos, leads e fotos</p>
+        </div>
+
+        <div class="warning-box">
+            <i class="fas fa-exclamation-triangle"></i>
+            <strong>AVISO:</strong> Esta ação é irreversível! Todos os dados serão deletados do banco e Cloudinary.
+        </div>
+
+        <div id="formArea">
+            <button class="btn-cleanup" onclick="confirmarLimpeza()">
+                <i class="fas fa-trash-alt"></i> INICIAR LIMPEZA
+            </button>
+            <button class="btn-cancel" onclick="voltarIndex()">
+                <i class="fas fa-arrow-left"></i> Voltar
+            </button>
+        </div>
+
+        <div id="loadingArea" class="loading">
+            <div class="spinner">
+                <i class="fas fa-spinner fa-spin"></i>
+            </div>
+            <span>Processando limpeza...</span>
+        </div>
+
+        <div id="resultArea"></div>
+    </div>
+
+    <script>
+        const API_URL = `${window.location.origin}/api`;
+        const CLEANUP_TOKEN = 'cleanup-2024-secret';
+
+        function confirmarLimpeza() {
+            const confirmacao = confirm(
+                '⚠️ CUIDADO!\n\n' +
+                'Esta ação NÃO pode ser desfeita.\n' +
+                'Todos os eventos, leads e fotos serão deletados.\n\n' +
+                'Tem certeza que deseja continuar?'
+            );
+
+            if (confirmacao) {
+                executarLimpeza();
+            }
+        }
+
+        async function executarLimpeza() {
+            const formArea = document.getElementById('formArea');
+            const loadingArea = document.getElementById('loadingArea');
+            const resultArea = document.getElementById('resultArea');
+
+            // Mostrar loading
+            formArea.style.display = 'none';
+            loadingArea.style.display = 'block';
+            resultArea.innerHTML = '';
+
+            try {
+                const response = await fetch(`${API_URL}/cleanup`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Cleanup-Token': CLEANUP_TOKEN,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const dados = await response.json();
+
+                if (response.ok) {
+                    // Sucesso
+                    resultArea.className = 'result success';
+                    resultArea.innerHTML = `
+                        <i class="fas fa-check-circle"></i>
+                        <h4>✅ Limpeza Concluída!</h4>
+                        <p>Todos os dados foram removidos com sucesso.</p>
+                        <div class="stats">
+                            <div>📅 Eventos deletados: <strong>${dados.eventos_deletados}</strong></div>
+                            <div>👥 Leads deletados: <strong>${dados.leads_deletados}</strong></div>
+                            <div>🖼️ Fotos de galeria deletadas: <strong>${dados.galeria_deletada}</strong></div>
+                            <div>☁️ Fotos Cloudinary deletadas: <strong>${dados.cloudinary_deletado}</strong></div>
+                        </div>
+                    `;
+                } else {
+                    // Erro
+                    resultArea.className = 'result error';
+                    resultArea.innerHTML = `
+                        <i class="fas fa-times-circle"></i>
+                        <h4>❌ Erro na Limpeza</h4>
+                        <p>${dados.erro || 'Erro desconhecido'}</p>
+                        <p style="font-size: 0.85rem; margin-top: 0.5rem;">${dados.detalhes || ''}</p>
+                    `;
+                }
+
+                resultArea.style.display = 'block';
+                loadingArea.style.display = 'none';
+
+            } catch (error) {
+                resultArea.className = 'result error';
+                resultArea.innerHTML = `
+                    <i class="fas fa-times-circle"></i>
+                    <h4>❌ Erro de Conexão</h4>
+                    <p>${error.message}</p>
+                `;
+                resultArea.style.display = 'block';
+                loadingArea.style.display = 'none';
+            }
+        }
+
+        function voltarIndex() {
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>
