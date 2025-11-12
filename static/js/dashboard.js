@@ -148,7 +148,7 @@ function renderizarAlunos(alunos) {
           <div class="foto-container">
             ${
               aluno.foto
-                ? `<img src="${aluno.foto}" alt="${aluno.nome}">`
+                ? `<img src="${aluno.foto.startsWith('http') ? aluno.foto : '/static/uploads/' + aluno.foto}" alt="${aluno.nome}">`
                 : `<i class="fas fa-user"></i>`
             }
           </div>
@@ -503,8 +503,12 @@ function renderizarDetalhesLead() {
   
   if (!lead) return;
   
-  const fotoHtml = lead.foto 
-    ? `<img src="/static/uploads/${lead.foto}" class="img-fluid rounded" style="max-width:150px">`
+  const fotoUrl = lead.foto && lead.foto.startsWith('http') 
+    ? lead.foto 
+    : lead.foto ? `/static/uploads/${lead.foto}` : null;
+  
+  const fotoHtml = fotoUrl
+    ? `<img src="${fotoUrl}" class="img-fluid rounded" style="max-width:150px">`
     : '<i class="fas fa-user-circle fa-5x text-muted"></i>';
 
   const galeriaHtml = lead.link_galeria 

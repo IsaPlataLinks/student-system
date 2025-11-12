@@ -436,9 +436,8 @@
         const dadosCadastro = JSON.parse(localStorage.getItem('cadastroSucesso'));
         
         if (dadosCadastro) {
-            // Define prefixo de acordo com o tipo de cadastro (aluno ou responsável)
-            const tipoTexto = dadosCadastro.tipo === 'aluno' ? 'Aluno' : 'Responsável';
-            const nomeCompleto = `${tipoTexto}: ${dadosCadastro.nome}`;
+            // Exibir nome do cadastrado
+            const nomeCompleto = dadosCadastro.nome || 'Não informado';
             
             // Animar nome com efeito de digitação usando helper da UI
             UI.animarNome(nomeCompleto, 'nomeExibir');

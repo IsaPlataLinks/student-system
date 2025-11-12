@@ -381,9 +381,12 @@ def processar_foto(file):
                 unique_filename=False,
                 overwrite=True
             )
-            # Retorna o public_id (usado para acessar a foto)
-            cloudinary_id = response.get('public_id')
-            print(f"[OK] Foto enviada para Cloudinary: {cloudinary_id}")
+            # Retorna a URL HTTPS completa da foto
+            cloudinary_url = response.get('secure_url')
+            if not cloudinary_url:
+                cloudinary_url = response.get('url', '').replace('http://', 'https://')
+            
+            print(f"[OK] Foto enviada para Cloudinary: {cloudinary_url}")
             
             # Remove arquivo local após upload bem-sucedido
             try:
@@ -391,7 +394,7 @@ def processar_foto(file):
             except:
                 pass
             
-            return cloudinary_id
+            return cloudinary_url
         except Exception as e:
             print(f"[ERRO] Falha ao fazer upload para Cloudinary: {str(e)}")
             # Remove arquivo temporário
