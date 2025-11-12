@@ -3,6 +3,27 @@ let todosEventos = [];
 let eventosFiltrados = [];
 
 // ======================================================
+// 🛡️ ESCAPE HTML - Previne XSS
+// ======================================================
+
+function escapeHtml(text) {
+  if (!text || typeof text !== 'string') return '';
+  const map = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  };
+  return text.replace(/[&<>"']/g, m => map[m]);
+}
+
+function escapeAttr(text) {
+  if (!text) return '';
+  return String(text).replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+
+// ======================================================
 // 🔐 AUTENTICAÇÃO
 // ======================================================
 
@@ -123,7 +144,7 @@ function renderizarEventos(eventos) {
     
     // Desabilitar botão se QR não for válido
     const btnQR = e.qr_valido 
-      ? `<button class="btn-qr" onclick="mostrarQRCode(${e.id}, '${e.escola}', '${e.qr_url}')" title="Ver QR Code">
+      ? `<button class="btn-qr" onclick="mostrarQRCode(${e.id}, '${escapeAttr(e.escola || '')}', '${escapeAttr(e.qr_url || '')}')" title="Ver QR Code">
           <i class="fas fa-qrcode"></i>
         </button>`
       : `<button class="btn-qr" disabled title="QR Code expirado" style="opacity:0.5;cursor:not-allowed">
@@ -133,14 +154,14 @@ function renderizarEventos(eventos) {
     return `
       <tr>
         <td>${e.id}</td>
-        <td><strong>${e.escola || 'Sem escola'}</strong></td>
-        <td>${e.tipo_formatura || '-'}</td>
+        <td><strong>${escapeHtml(e.escola) || 'Sem escola'}</strong></td>
+        <td>${escapeHtml(e.tipo_formatura) || '-'}</td>
         <td>${dataFormatada}</td>
         <td>${statusBadge}</td>
         <td class="text-center">${e.total_leads || 0}</td>
         <td class="text-center">${btnQR}</td>
         <td class="text-center">
-          <button class="btn btn-outline-danger btn-sm" onclick="abrirModalDeletar(${e.id}, '${e.escola}', ${e.total_leads || 0}, ${e.galeria_count || 0})" 
+          <button class="btn btn-outline-danger btn-sm" onclick="abrirModalDeletar(${e.id}, '${escapeAttr(e.escola || '')}', ${e.total_leads || 0}, ${e.galeria_count || 0})" 
                   title="Deletar evento">
             <i class="fas fa-trash"></i>
           </button>
@@ -328,7 +349,7 @@ let inputConfirmacaoListener = null;
 function abrirModalDeletar(eventoId, nomeEscola, totalLeads, totalFotos) {
   eventoEmDelecao = { id: eventoId, escola: nomeEscola };
   
-  // Atualizar os dados no modal
+  // Atualizar os dados no modal - usando textContent para evitar XSS
   document.getElementById('nomeEvenoDeletar').textContent = nomeEscola;
   document.getElementById('totalLeadsDeletar').textContent = totalLeads;
   document.getElementById('totalFotosDeletar').textContent = totalFotos;
@@ -391,7 +412,7 @@ async function confirmarDelecaoEvento() {
       const resultado = await response.json();
       
       // Sucesso!
-      alert(`✅ Evento deletado com sucesso!\n\nEscola: ${nomeEscola}\nLeads deletados: ${resultado.leads_deletados}\nFotos deletadas: ${resultado.fotos_deletadas}`);
+      alert(`✅ Evento deletado com sucesso!\n\nEscola: ${escapeHtml(nomeEscola)}\nLeads deletados: ${resultado.leads_deletados}\nFotos deletadas: ${resultado.fotos_deletadas}`);
       
       // Fechar modal e recarregar eventos
       bootstrap.Modal.getInstance(document.getElementById('modalDeletarEvento')).hide();

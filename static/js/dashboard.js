@@ -23,6 +23,22 @@ function construirUrlFoto(foto) {
 }
 
 // ======================================================
+// 🛡️ ESCAPE HTML - Previne XSS
+// ======================================================
+
+function escapeHtml(text) {
+  if (!text || typeof text !== 'string') return '';
+  const map = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  };
+  return text.replace(/[&<>"']/g, m => map[m]);
+}
+
+// ======================================================
 // 🔐 AUTENTICAÇÃO E PERFIL
 // ======================================================
 
@@ -163,42 +179,42 @@ function renderizarAlunos(alunos) {
         (aluno) => {
           const urlFoto = construirUrlFoto(aluno.foto);
           
-          console.log(`[DEBUG] Aluno ${aluno.id} (${aluno.nome}): foto="${aluno.foto}" => urlFoto="${urlFoto}"`);
+          console.log(`[DEBUG] Aluno ${aluno.id} (${escapeHtml(aluno.nome)}): foto="${aluno.foto}" => urlFoto="${urlFoto}"`);
           
           return `
           <div class="aluno-card" onclick="verDetalhesAluno(${aluno.id})" style="cursor:pointer" title="Clique para ver detalhes completos">
           <div class="card-header-custom">
-            <h6>${aluno.escola || 'Escola não informada'}</h6>
+            <h6>${escapeHtml(aluno.escola) || 'Escola não informada'}</h6>
           </div>
           <div class="card-body-custom">
             <div class="foto-container">
               ${
                 urlFoto
                   ? `<img loading="lazy" src="${urlFoto}" 
-                           alt="${aluno.nome}" 
+                           alt="${escapeHtml(aluno.nome)}" 
                            class="aluno-foto"
                            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                     <i class="fas fa-user foto-fallback" style="display:none;"></i>`
+                      <i class="fas fa-user foto-fallback" style="display:none;"></i>`
                   : `<i class="fas fa-user"></i>`
               }
             </div>
             <div class="info-container">
-              <div class="aluno-nome">${aluno.nome}</div>
-              <div class="aluno-info"><i class="fas fa-chalkboard-teacher"></i><span>${aluno.turma}</span></div>
-              <div class="aluno-info"><i class="fas fa-calendar"></i><span>${aluno.ano_formatura || 'N/A'}</span></div>
+              <div class="aluno-nome">${escapeHtml(aluno.nome)}</div>
+              <div class="aluno-info"><i class="fas fa-chalkboard-teacher"></i><span>${escapeHtml(aluno.turma)}</span></div>
+              <div class="aluno-info"><i class="fas fa-calendar"></i><span>${escapeHtml(aluno.ano_formatura) || 'N/A'}</span></div>
               ${
                 aluno.whatsapp
-                  ? `<div class="aluno-info"><i class="fab fa-whatsapp"></i><span>${aluno.whatsapp}</span></div>`
+                  ? `<div class="aluno-info"><i class="fab fa-whatsapp"></i><span>${escapeHtml(aluno.whatsapp)}</span></div>`
                   : ''
               }
               ${
                 aluno.email
-                  ? `<div class="aluno-info"><i class="fas fa-envelope"></i><span>${aluno.email}</span></div>`
+                  ? `<div class="aluno-info"><i class="fas fa-envelope"></i><span>${escapeHtml(aluno.email)}</span></div>`
                   : ''
               }
               ${
                 aluno.responsavel
-                  ? `<div class="aluno-info"><i class="fas fa-user-tie"></i><span>${aluno.responsavel}</span></div>`
+                  ? `<div class="aluno-info"><i class="fas fa-user-tie"></i><span>${escapeHtml(aluno.responsavel)}</span></div>`
                   : ''
               }
             </div>
@@ -578,8 +594,8 @@ function renderizarDetalhesLead() {
     ? `<div class="alert mt-2" style="margin-bottom:0;background:rgba(246, 162, 30, 0.1);border:1px solid var(--gold)">
         <i class="fas fa-check-circle me-1" style="color:var(--gold)"></i>
         <strong style="color:var(--gold)">Galeria vinculada!</strong><br>
-        <small>${lead.descricao_galeria || 'Link de galeria em nuvem'}</small><br>
-        <a href="${lead.link_galeria}" target="_blank" class="btn btn-sm mt-2" style="background:var(--gold);color:var(--black);border:none;font-weight:600">
+        <small>${escapeHtml(lead.descricao_galeria) || 'Link de galeria em nuvem'}</small><br>
+        <a href="${escapeHtml(lead.link_galeria)}" target="_blank" class="btn btn-sm mt-2" style="background:var(--gold);color:var(--black);border:none;font-weight:600">
           <i class="fas fa-external-link-alt me-1"></i>Ver Galeria
         </a>
         <button class="btn btn-sm mt-2" onclick="removerGaleriaLink()" style="background:rgba(0,0,0,0.1);color:var(--black);border:none;font-weight:600">
@@ -608,19 +624,19 @@ function renderizarDetalhesLead() {
             <table class="table table-sm table-bordered">
               <tr>
                 <th width="150">Nome:</th>
-                <td id="tdNomeFormando">${lead.nome_formando}</td>
+                <td id="tdNomeFormando">${escapeHtml(lead.nome_formando)}</td>
               </tr>
               <tr>
                 <th>Matrícula:</th>
-                <td id="tdMatricula">${lead.matricula}</td>
+                <td id="tdMatricula">${escapeHtml(lead.matricula)}</td>
               </tr>
               <tr>
                 <th>Série:</th>
-                <td id="tdSerie">${lead.serie || '-'}</td>
+                <td id="tdSerie">${escapeHtml(lead.serie) || '-'}</td>
               </tr>
               <tr>
                 <th>Turma:</th>
-                <td id="tdTurma">${lead.letra_turma || '-'}</td>
+                <td id="tdTurma">${escapeHtml(lead.letra_turma) || '-'}</td>
               </tr>
               <tr><th>Tipo Cadastro:</th><td>${lead.tipo_cadastro === 'aluno' ? 'Aluno' : 'Responsável'}</td></tr>
             </table>
@@ -629,35 +645,35 @@ function renderizarDetalhesLead() {
             <table class="table table-sm table-bordered">
               <tr>
                 <th width="150">Nome:</th>
-                <td id="tdNomeContato">${lead.nome_contato}</td>
+                <td id="tdNomeContato">${escapeHtml(lead.nome_contato)}</td>
               </tr>
               <tr>
                 <th>E-mail:</th>
-                <td id="tdEmail">${lead.email}</td>
+                <td id="tdEmail">${escapeHtml(lead.email)}</td>
               </tr>
               <tr>
                 <th>WhatsApp:</th>
-                <td id="tdWhatsapp">${lead.whatsapp || '-'}</td>
+                <td id="tdWhatsapp">${escapeHtml(lead.whatsapp) || '-'}</td>
               </tr>
             </table>
 
             <h5 class="mt-4 mb-3"><i class="fas fa-map-marker-alt me-2" style="color:var(--gold)"></i>Endereço</h5>
             <table class="table table-sm table-bordered">
-              <tr><th width="150">Endereço:</th><td>${lead.endereco || '-'}</td></tr>
-              <tr><th>CEP:</th><td>${lead.cep || '-'}</td></tr>
+              <tr><th width="150">Endereço:</th><td>${escapeHtml(lead.endereco) || '-'}</td></tr>
+              <tr><th>CEP:</th><td>${escapeHtml(lead.cep) || '-'}</td></tr>
             </table>
 
             <h5 class="mt-4 mb-3"><i class="fas fa-calendar-check me-2" style="color:var(--gold)"></i>Evento</h5>
             <table class="table table-sm table-bordered">
-              <tr><th width="150">Escola:</th><td>${lead.evento?.escola || '-'}</td></tr>
-              <tr><th>Tipo:</th><td>${lead.evento?.tipo_formatura || '-'}</td></tr>
+              <tr><th width="150">Escola:</th><td>${escapeHtml(lead.evento?.escola) || '-'}</td></tr>
+              <tr><th>Tipo:</th><td>${escapeHtml(lead.evento?.tipo_formatura) || '-'}</td></tr>
               <tr><th>Data:</th><td>${lead.evento?.data_evento ? new Date(lead.evento.data_evento).toLocaleDateString('pt-BR') : '-'}</td></tr>
             </table>
 
             <h5 class="mt-4 mb-3"><i class="fas fa-info-circle me-2" style="color:var(--gold)"></i>Informações Adicionais</h5>
             <table class="table table-sm table-bordered">
-            <tr><th width="150">Status:</th><td id="tdStatusLead"><span class="badge-status ${lead.status_lead}">${lead.status_lead}</span></td></tr>
-              <tr><th>Observações:</th><td id="tdObservacoes"><small>${lead.observacoes || '-'}</small></td></tr>
+            <tr><th width="150">Status:</th><td id="tdStatusLead"><span class="badge-status ${lead.status_lead}">${escapeHtml(lead.status_lead)}</span></td></tr>
+              <tr><th>Observações:</th><td id="tdObservacoes"><small>${escapeHtml(lead.observacoes) || '-'}</small></td></tr>
               <tr><th>Cadastrado em:</th><td>${new Date(lead.criado_em).toLocaleString('pt-BR')}</td></tr>
             </table>
           </div>
@@ -666,56 +682,56 @@ function renderizarDetalhesLead() {
 }
 
 function ativarEdicaoLead() {
-  modoEdicao = true;
-  const lead = leadAtual;
-  
-  // Tornar campos editáveis
-  document.getElementById('tdNomeFormando').innerHTML = 
-    `<input type="text" class="form-control form-control-sm" id="editNomeFormando" value="${lead.nome_formando}">`;
-  
-  document.getElementById('tdMatricula').innerHTML = 
-    `<input type="text" class="form-control form-control-sm" id="editMatricula" value="${lead.matricula}" maxlength="10">`;
-  
-  document.getElementById('tdSerie').innerHTML = 
-    `<select class="form-select form-select-sm" id="editSerie">
-      <option value="1º ano" ${lead.serie === '1º ano' ? 'selected' : ''}>1º ano</option>
-      <option value="2º ano" ${lead.serie === '2º ano' ? 'selected' : ''}>2º ano</option>
-      <option value="3º ano" ${lead.serie === '3º ano' ? 'selected' : ''}>3º ano</option>
-      <option value="4º ano" ${lead.serie === '4º ano' ? 'selected' : ''}>4º ano</option>
-      <option value="5º ano" ${lead.serie === '5º ano' ? 'selected' : ''}>5º ano</option>
-      <option value="6º ano" ${lead.serie === '6º ano' ? 'selected' : ''}>6º ano</option>
-      <option value="7º ano" ${lead.serie === '7º ano' ? 'selected' : ''}>7º ano</option>
-      <option value="8º ano" ${lead.serie === '8º ano' ? 'selected' : ''}>8º ano</option>
-      <option value="9º ano" ${lead.serie === '9º ano' ? 'selected' : ''}>9º ano</option>
-      <option value="1º ano EM" ${lead.serie === '1º ano EM' ? 'selected' : ''}>1º ano EM</option>
-      <option value="2º ano EM" ${lead.serie === '2º ano EM' ? 'selected' : ''}>2º ano EM</option>
-      <option value="3º ano EM" ${lead.serie === '3º ano EM' ? 'selected' : ''}>3º ano EM</option>
-    </select>`;
-  
-  document.getElementById('tdTurma').innerHTML = 
-    `<input type="text" class="form-control form-control-sm" id="editTurma" value="${lead.letra_turma || ''}" maxlength="4">`;
-  
-  document.getElementById('tdNomeContato').innerHTML = 
-    `<input type="text" class="form-control form-control-sm" id="editNomeContato" value="${lead.nome_contato}">`;
-  
-  document.getElementById('tdEmail').innerHTML = 
-    `<input type="email" class="form-control form-control-sm" id="editEmail" value="${lead.email}">`;
-  
-  document.getElementById('tdWhatsapp').innerHTML = 
-    `<input type="text" class="form-control form-control-sm" id="editWhatsapp" value="${lead.whatsapp || ''}">`;
+   modoEdicao = true;
+   const lead = leadAtual;
+   
+   // Tornar campos editáveis
+   document.getElementById('tdNomeFormando').innerHTML = 
+     `<input type="text" class="form-control form-control-sm" id="editNomeFormando" value="${escapeHtml(lead.nome_formando)}">`;
+   
+   document.getElementById('tdMatricula').innerHTML = 
+     `<input type="text" class="form-control form-control-sm" id="editMatricula" value="${escapeHtml(lead.matricula)}" maxlength="10">`;
+   
+   document.getElementById('tdSerie').innerHTML = 
+     `<select class="form-select form-select-sm" id="editSerie">
+       <option value="1º ano" ${lead.serie === '1º ano' ? 'selected' : ''}>1º ano</option>
+       <option value="2º ano" ${lead.serie === '2º ano' ? 'selected' : ''}>2º ano</option>
+       <option value="3º ano" ${lead.serie === '3º ano' ? 'selected' : ''}>3º ano</option>
+       <option value="4º ano" ${lead.serie === '4º ano' ? 'selected' : ''}>4º ano</option>
+       <option value="5º ano" ${lead.serie === '5º ano' ? 'selected' : ''}>5º ano</option>
+       <option value="6º ano" ${lead.serie === '6º ano' ? 'selected' : ''}>6º ano</option>
+       <option value="7º ano" ${lead.serie === '7º ano' ? 'selected' : ''}>7º ano</option>
+       <option value="8º ano" ${lead.serie === '8º ano' ? 'selected' : ''}>8º ano</option>
+       <option value="9º ano" ${lead.serie === '9º ano' ? 'selected' : ''}>9º ano</option>
+       <option value="1º ano EM" ${lead.serie === '1º ano EM' ? 'selected' : ''}>1º ano EM</option>
+       <option value="2º ano EM" ${lead.serie === '2º ano EM' ? 'selected' : ''}>2º ano EM</option>
+       <option value="3º ano EM" ${lead.serie === '3º ano EM' ? 'selected' : ''}>3º ano EM</option>
+     </select>`;
+   
+   document.getElementById('tdTurma').innerHTML = 
+     `<input type="text" class="form-control form-control-sm" id="editTurma" value="${escapeHtml(lead.letra_turma || '')}" maxlength="4">`;
+   
+   document.getElementById('tdNomeContato').innerHTML = 
+     `<input type="text" class="form-control form-control-sm" id="editNomeContato" value="${escapeHtml(lead.nome_contato)}">`;
+   
+   document.getElementById('tdEmail').innerHTML = 
+     `<input type="email" class="form-control form-control-sm" id="editEmail" value="${escapeHtml(lead.email)}">`;
+   
+   document.getElementById('tdWhatsapp').innerHTML = 
+     `<input type="text" class="form-control form-control-sm" id="editWhatsapp" value="${escapeHtml(lead.whatsapp || '')}">`;
 
-  document.getElementById('tdStatusLead').innerHTML = 
-    `<select class="form-select form-select-sm" id="editStatusLead">
-      <option value="novo" ${lead.status_lead === 'novo' ? 'selected' : ''}>Novo</option>
-      <option value="contatado" ${lead.status_lead === 'contatado' ? 'selected' : ''}>Contatado</option>
-      <option value="interessado" ${lead.status_lead === 'interessado' ? 'selected' : ''}>Interessado</option>
-      <option value="convertido" ${lead.status_lead === 'convertido' ? 'selected' : ''}>Convertido</option>
-      <option value="perdido" ${lead.status_lead === 'perdido' ? 'selected' : ''}>Perdido</option>
-    </select>`;
+   document.getElementById('tdStatusLead').innerHTML = 
+     `<select class="form-select form-select-sm" id="editStatusLead">
+       <option value="novo" ${lead.status_lead === 'novo' ? 'selected' : ''}>Novo</option>
+       <option value="contatado" ${lead.status_lead === 'contatado' ? 'selected' : ''}>Contatado</option>
+       <option value="interessado" ${lead.status_lead === 'interessado' ? 'selected' : ''}>Interessado</option>
+       <option value="convertido" ${lead.status_lead === 'convertido' ? 'selected' : ''}>Convertido</option>
+       <option value="perdido" ${lead.status_lead === 'perdido' ? 'selected' : ''}>Perdido</option>
+     </select>`;
 
-  document.getElementById('tdObservacoes').innerHTML = 
-    `<textarea class="form-control form-control-sm" id="editObservacoes" maxlength="2000" rows="3" placeholder="Até 2000 caracteres">${lead.observacoes || ''}</textarea>
-     <small class="text-muted d-block mt-1"><span id="countObservacoes">0</span>/2000 caracteres</small>`;
+   document.getElementById('tdObservacoes').innerHTML = 
+     `<textarea class="form-control form-control-sm" id="editObservacoes" maxlength="2000" rows="3" placeholder="Até 2000 caracteres">${escapeHtml(lead.observacoes || '')}</textarea>
+      <small class="text-muted d-block mt-1"><span id="countObservacoes">0</span>/2000 caracteres</small>`;
 
   // Contador de caracteres
   document.getElementById('editObservacoes').addEventListener('input', function() {
