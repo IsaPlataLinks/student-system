@@ -368,35 +368,38 @@ def processar_foto(file):
             img = img.resize((target_width, target_height), Image.Resampling.LANCZOS)
             img.save(temp_path, 'JPEG', quality=85, optimize=True)
         
-        # Faz upload para Cloudinary se configurado
-        if os.getenv('CLOUDINARY_URL'):
+        # Faz upload para Cloudinary (obrigatório)
+        if not os.getenv('CLOUDINARY_URL'):
+            raise Exception("[ERRO] CLOUDINARY_URL não configurado. Upload de fotos requer Cloudinary em produção.")
+        
+        try:
+            response = cloudinary.uploader.upload(
+                temp_path,
+                folder='fotos-alunos',
+                resource_type='image',
+                use_filename=True,
+                unique_filename=False,
+                overwrite=True
+            )
+            # Retorna o public_id (usado para acessar a foto)
+            cloudinary_id = response.get('public_id')
+            print(f"[OK] Foto enviada para Cloudinary: {cloudinary_id}")
+            
+            # Remove arquivo local após upload bem-sucedido
             try:
-                response = cloudinary.uploader.upload(
-                    temp_path,
-                    folder='fotos-alunos',
-                    resource_type='image',
-                    use_filename=True,
-                    unique_filename=False,
-                    overwrite=True
-                )
-                # Retorna o public_id (usado para acessar a foto)
-                cloudinary_id = response.get('public_id')
-                print(f"[OK] Foto enviada para Cloudinary: {cloudinary_id}")
-                
-                # Remove arquivo local após upload bem-sucedido
-                try:
-                    os.remove(temp_path)
-                except:
-                    pass
-                
-                return cloudinary_id
-            except Exception as e:
-                print(f"[AVISO] Erro ao fazer upload para Cloudinary: {str(e)}")
-                print(f"[FALLBACK] Usando arquivo local: {nome_arquivo}")
-                return nome_arquivo
-        else:
-            # Sem Cloudinary, retorna caminho local
-            return nome_arquivo
+                os.remove(temp_path)
+            except:
+                pass
+            
+            return cloudinary_id
+        except Exception as e:
+            print(f"[ERRO] Falha ao fazer upload para Cloudinary: {str(e)}")
+            # Remove arquivo temporário
+            try:
+                os.remove(temp_path)
+            except:
+                pass
+            raise
     
     except Exception as e:
         print(f"[ERRO] Erro ao processar imagem: {str(e)}")
@@ -422,6 +425,72 @@ def not_found(e):
 @app.errorhandler(401)
 def unauthorized(e):
     return jsonify({'erro': 'Não autorizado'}), 401
+
+# ==================== CLEANUP ====================
+
+@app.route('/api/cleanup', methods=['POST'])
+def cleanup():
+    """
+    Limpa todos os leads e fotos para resetar o ambiente
+    Requer header de autenticação: X-Cleanup-Token
+    """
+    token = request.headers.get('X-Cleanup-Token', '')
+    cleanup_token = os.getenv('CLEANUP_TOKEN', 'cleanup-2024-secret')
+    
+    if token != cleanup_token:
+        print(f"[ERRO] Tentativa de cleanup com token inválido: {token}")
+        return jsonify({'erro': 'Token inválido'}), 401
+    
+    try:
+        print("\n[CLEANUP] Iniciando limpeza de dados...")
+        
+        # Deletar galeria primeiro
+        galeria_count = GaleriaFoto.query.count()
+        GaleriaFoto.query.delete()
+        db.session.commit()
+        print(f"[OK] {galeria_count} fotos de galeria deletadas")
+        
+        # Deletar leads
+        leads_count = Lead.query.count()
+        Lead.query.delete()
+        db.session.commit()
+        print(f"[OK] {leads_count} leads deletados")
+        
+        # Limpar Cloudinary se configurado
+        cloudinary_deleted = 0
+        if os.getenv('CLOUDINARY_URL'):
+            try:
+                resultado = cloudinary.api.resources(
+                    type='upload',
+                    prefix='fotos-alunos/',
+                    max_results=500
+                )
+                fotos = resultado.get('resources', [])
+                for foto in fotos:
+                    cloudinary.api.delete_resources([foto['public_id']])
+                    cloudinary_deleted += 1
+                print(f"[OK] {cloudinary_deleted} fotos do Cloudinary deletadas")
+            except Exception as e:
+                print(f"[AVISO] Erro ao limpar Cloudinary: {str(e)}")
+        
+        print("[OK] Limpeza concluída com sucesso!\n")
+        
+        return jsonify({
+            'mensagem': 'Ambiente limpo com sucesso!',
+            'leads_deletados': leads_count,
+            'galeria_deletada': galeria_count,
+            'cloudinary_deletado': cloudinary_deleted
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"[ERRO] Falha na limpeza: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'erro': 'Erro ao limpar',
+            'detalhes': str(e)
+        }), 500
 
 # ==================== RESET DB ====================
 
@@ -1656,11 +1725,6 @@ def servir_upload(filename):
     print(f"[DEBUG] Upload folder: {upload_folder}")
     print(f"[DEBUG] Arquivo existe: {os.path.exists(os.path.join(upload_folder, filename))}")
     return send_from_directory(upload_folder, filename)
-
-@app.route('/static/uploads/<filename>')
-def servir_upload_legacy(filename):
-    """Legacy route - redireciona para novo endpoint"""
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 @app.route('/<path:path>')
 def static_files(path):
