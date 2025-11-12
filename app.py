@@ -757,16 +757,20 @@ def deletar_evento(evento_id):
         total_leads = len(evento.leads)
         total_fotos = len(evento.galeria_fotos)
         
-        # Deletar arquivos de foto dos leads
+        # Deletar arquivos de foto dos leads (apenas locais)
         for lead in evento.leads:
             if lead.foto:
-                foto_path = os.path.join(app.config['UPLOAD_FOLDER'], lead.foto)
-                if os.path.exists(foto_path):
-                    try:
-                        os.remove(foto_path)
-                        print(f"✅ Foto do lead {lead.id} deletada")
-                    except Exception as e:
-                        print(f"⚠️  Erro ao deletar foto: {str(e)}")
+                # Se não for do Cloudinary, deletar arquivo local
+                if not lead.foto.startswith('fotos-alunos/'):
+                    foto_path = os.path.join(app.config['UPLOAD_FOLDER'], lead.foto)
+                    if os.path.exists(foto_path):
+                        try:
+                            os.remove(foto_path)
+                            print(f"✅ Foto do lead {lead.id} deletada")
+                        except Exception as e:
+                            print(f"⚠️  Erro ao deletar foto: {str(e)}")
+                else:
+                    print(f"[INFO] Foto do lead {lead.id} é do Cloudinary: {lead.foto}")
         
         # Deletar arquivos da galeria
         for foto_galeria in evento.galeria_fotos:
@@ -1172,14 +1176,19 @@ def atualizar_foto_lead(lead_id):
     if foto_file.filename == '':
         return jsonify({'erro': 'Arquivo vazio'}), 400
 
-    # Se o lead já tem uma foto, deletar a antiga
+    # Se o lead já tem uma foto, deletar a antiga (apenas se for local)
     if lead.foto:
-        caminho_antigo = os.path.join(app.config['UPLOAD_FOLDER'], lead.foto)
-        if os.path.exists(caminho_antigo):
-            try:
-                os.remove(caminho_antigo)
-            except Exception as e:
-                print(f"Aviso: não foi possível deletar foto antiga: {str(e)}")
+        # Se começa com 'fotos-alunos/', é do Cloudinary - não deletar
+        if not lead.foto.startswith('fotos-alunos/'):
+            caminho_antigo = os.path.join(app.config['UPLOAD_FOLDER'], lead.foto)
+            if os.path.exists(caminho_antigo):
+                try:
+                    os.remove(caminho_antigo)
+                except Exception as e:
+                    print(f"Aviso: não foi possível deletar foto antiga: {str(e)}")
+        else:
+            # Se é Cloudinary, apenas log
+            print(f"[INFO] Foto anterior era Cloudinary: {lead.foto}")
 
     # Processar e salvar a nova foto
     nome_foto = processar_foto(foto_file)
@@ -1535,12 +1544,16 @@ def deletar_lead(lead_id):
         return jsonify({'erro': 'Lead não encontrado'}), 404
     
     try:
-        # Deletar foto se existir
+        # Deletar foto se existir (apenas se for local)
         if lead.foto:
-            foto_path = os.path.join(app.config['UPLOAD_FOLDER'], lead.foto)
-            if os.path.exists(foto_path):
-                os.remove(foto_path)
-                print(f"✅ Foto deletada: {foto_path}")
+            # Se não for do Cloudinary, deletar arquivo local
+            if not lead.foto.startswith('fotos-alunos/'):
+                foto_path = os.path.join(app.config['UPLOAD_FOLDER'], lead.foto)
+                if os.path.exists(foto_path):
+                    os.remove(foto_path)
+                    print(f"✅ Foto deletada: {foto_path}")
+            else:
+                print(f"[INFO] Foto é do Cloudinary, não deletando arquivo local: {lead.foto}")
         
         # Deletar lead
         db.session.delete(lead)
