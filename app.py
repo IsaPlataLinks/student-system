@@ -1969,6 +1969,8 @@ def listar_alunos():
 
                 aluno_data = {
                     'id': lead.id,
+                    'evento_id': lead.evento_id,
+                    'matricula': lead.matricula,
                     'nome': lead.nome_formando,
                     'escola': escola_nome,
                     'turma': (f"{lead.serie or ''} {lead.letra_turma or ''}").strip() or 'Não informada',
@@ -1977,6 +1979,10 @@ def listar_alunos():
                     'whatsapp': lead.whatsapp,
                     'responsavel': lead.nome_contato if lead.tipo_cadastro == 'responsavel' else None,
                     'foto': foto_url,
+                    'cep': lead.cep,
+                    'endereco': lead.endereco,
+                    'numero': lead.numero,
+                    'complemento': lead.complemento,
                     'criado_em': lead.criado_em.isoformat() if lead.criado_em else None
                 }
                 

@@ -299,6 +299,7 @@ function exportarExcel() {
   const BOM = '\uFEFF';
   
   const rows = alunosFiltrados.map((a) => [
+    a.evento_id || 'N/A',
     a.matricula || 'N/A',
     a.nome,
     a.turma,
@@ -306,10 +307,14 @@ function exportarExcel() {
     a.escola || '',
     a.email || '',
     a.whatsapp || '',
-    a.responsavel || ''
+    a.responsavel || '',
+    a.cep || '',
+    a.endereco || '',
+    a.numero || '',
+    a.complemento || ''
   ]);
 
-  const headers = ['Matrícula', 'Nome', 'Turma', 'Ano', 'Escola', 'Email', 'WhatsApp', 'Responsável'];
+  const headers = ['ID Evento', 'Matrícula', 'Nome', 'Turma', 'Ano', 'Escola', 'Email', 'WhatsApp', 'Responsável', 'CEP', 'Endereço', 'Número', 'Complemento'];
   
   // Criar TSV (Tab-Separated Values) que Excel interpreta melhor
   const tsv = [headers.join('\t'), ...rows.map(row => row.join('\t'))].join('\n');
