@@ -299,12 +299,12 @@ function exportarExcel() {
   const BOM = '\uFEFF';
   
   const rows = alunosFiltrados.map((a) => [
-    a.evento_id || 'N/A',
-    a.matricula || 'N/A',
+    a.evento_id || '',
+    a.matricula || '',
     a.nome,
     a.serie || '',
     a.letra_turma || '',
-    a.ano_formatura || 'N/A',
+    a.ano_formatura || '',
     a.escola || '',
     a.email || '',
     a.whatsapp || '',
