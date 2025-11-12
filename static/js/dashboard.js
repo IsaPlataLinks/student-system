@@ -2,6 +2,7 @@ const API_URL = `${window.location.origin}/api`;
 let todosAlunos = [];
 let alunosFiltrados = [];
 let sparklineCharts = {};
+let carregandoAlunos = false; // Previne múltiplas requisições simultâneas
 
 // ======================================================
 // 🖼️ HELPER PARA CONSTRUIR URL DE FOTO
@@ -132,41 +133,46 @@ async function parseResposta(resp) {
 // ======================================================
 
 async function carregarAlunos() {
-  const token = verificarAutenticacao();
-  if (!token) return;
+   if (carregandoAlunos) return; // Previne múltiplas chamadas
+   
+   const token = verificarAutenticacao();
+   if (!token) return;
 
-  try {
-    const response = await fetch(`${API_URL}/alunos`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/json',
-      },
-    });
+   carregandoAlunos = true;
+   try {
+     const response = await fetch(`${API_URL}/alunos`, {
+       headers: {
+         Authorization: `Bearer ${token}`,
+         Accept: 'application/json',
+       },
+     });
 
-    if (response.status === 401 || response.status === 422) {
-      console.error('Token inválido ou expirado. Status:', response.status);
-      alert('Sessão expirada. Faça login novamente.');
-      localStorage.removeItem('token');
-      window.location.href = 'login.html';
-      return;
-    }
+     if (response.status === 401 || response.status === 422) {
+       console.error('Token inválido ou expirado. Status:', response.status);
+       alert('Sessão expirada. Faça login novamente.');
+       localStorage.removeItem('token');
+       window.location.href = 'login.html';
+       return;
+     }
 
-    const payload = await parseResposta(response);
+     const payload = await parseResposta(response);
 
-    if (response.ok) {
-      todosAlunos = payload;
-      alunosFiltrados = [...todosAlunos];
-      renderizarAlunos(alunosFiltrados);
-      atualizarEstatisticas();
-      carregarEscolasNoFiltro();
-    } else {
-      console.error('Erro ao carregar alunos:', payload.erro || payload);
-      alert(`Erro ao carregar alunos: ${payload.erro || 'Erro desconhecido'}`);
-    }
-  } catch (error) {
-    console.error('Erro:', error);
-    alert('Erro ao conectar com o servidor.');
-  }
+     if (response.ok) {
+       todosAlunos = payload;
+       alunosFiltrados = [...todosAlunos];
+       renderizarAlunos(alunosFiltrados);
+       atualizarEstatisticas();
+       carregarEscolasNoFiltro();
+     } else {
+       console.error('Erro ao carregar alunos:', payload.erro || payload);
+       alert(`Erro ao carregar alunos: ${payload.erro || 'Erro desconhecido'}`);
+     }
+   } catch (error) {
+     console.error('Erro:', error);
+     alert('Erro ao conectar com o servidor.');
+   } finally {
+     carregandoAlunos = false;
+   }
 }
 
 function renderizarAlunos(alunos) {
@@ -183,14 +189,19 @@ function renderizarAlunos(alunos) {
       return;
     }
 
-    console.log('[DEBUG] Renderizando', alunos.length, 'alunos');
-    
     container.innerHTML = alunos
       .map(
         (aluno) => {
           const urlFoto = construirUrlFoto(aluno.foto);
-          
-          console.log(`[DEBUG] Aluno ${aluno.id} (${escapeHtml(aluno.nome)}): foto="${aluno.foto}" => urlFoto="${urlFoto}"`);
+          const fotoHtml = urlFoto
+            ? `<img 
+                loading="lazy" 
+                src="${sanitizeAttr(urlFoto)}" 
+                alt="${escapeHtml(aluno.nome)}" 
+                class="aluno-foto"
+                onerror="this.style.display='none'; this.nextElementSibling && (this.nextElementSibling.style.display='flex')">
+              <i class="fas fa-user foto-fallback" style="display:none;"></i>`
+            : `<i class="fas fa-user"></i>`;
           
           return `
           <div class="aluno-card" onclick="verDetalhesAluno(${aluno.id})" style="cursor:pointer" title="Clique para ver detalhes completos">
@@ -199,15 +210,7 @@ function renderizarAlunos(alunos) {
           </div>
           <div class="card-body-custom">
             <div class="foto-container">
-              ${
-                urlFoto
-                  ? `<img loading="lazy" src="${urlFoto}" 
-                           alt="${escapeHtml(aluno.nome)}" 
-                           class="aluno-foto"
-                           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                      <i class="fas fa-user foto-fallback" style="display:none;"></i>`
-                  : `<i class="fas fa-user"></i>`
-              }
+              ${fotoHtml}
             </div>
             <div class="info-container">
               <div class="aluno-nome">${escapeHtml(aluno.nome)}</div>
@@ -267,7 +270,6 @@ async function carregarContagemFotos() {
        const data = await response.json();
        // Usar total_fotos (galeria + leads com foto)
        document.getElementById('totalFotos').textContent = data.total_fotos;
-       console.log(`[OK] Fotos contadas: ${data.fotos_galeria} galeria + ${data.leads_com_foto} leads = ${data.total_fotos}`);
      } else {
        console.error('Erro ao contar fotos:', response.status);
      }
@@ -1189,6 +1191,24 @@ document.addEventListener('DOMContentLoaded', function () {
   carregarAlunos();
   carregarEventos();
 
+  // Listener para filtros - com debounce para evitar múltiplas chamadas
   const filtroBusca = document.getElementById('filtroBusca');
-  if (filtroBusca) filtroBusca.addEventListener('input', aplicarFiltros);
+  if (filtroBusca) {
+    let timeoutId;
+    filtroBusca.addEventListener('input', function() {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(aplicarFiltros, 300);
+    });
+  }
+  
+  // Desabilitar logs excessivos em produção
+  if (window.location.hostname !== 'localhost') {
+    const originalLog = console.log;
+    let logCount = 0;
+    console.log = function(...args) {
+      logCount++;
+      if (logCount > 50) return; // Limita logs
+      originalLog.apply(console, args);
+    };
+  }
 });
