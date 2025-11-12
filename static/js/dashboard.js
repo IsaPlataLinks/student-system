@@ -593,9 +593,7 @@ function renderizarDetalhesLead() {
    const fotoUrl = construirUrlFoto(lead.foto);
    
    const fotoHtml = fotoUrl
-     ? `<div style="width:100%; max-height:300px; border-radius:10px; overflow:hidden; display:flex; align-items:center; justify-content:center; background:#f5f5f5; border:2px solid #e0e0e0;">
-          <img src="${sanitizeAttr(fotoUrl)}" alt="Foto do formando" style="max-width:100%; max-height:100%; object-fit:contain;" />
-        </div>`
+     ? `<img src="${sanitizeAttr(fotoUrl)}" alt="Foto do formando" class="img-fluid rounded" style="max-width:100%; border:2px solid #e0e0e0; border-radius:10px;" />`
      : '<i class="fas fa-user-circle fa-5x text-muted"></i>';
 
   const galeriaHtml = lead.link_galeria 
