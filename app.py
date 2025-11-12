@@ -431,7 +431,7 @@ def unauthorized(e):
 @app.route('/api/cleanup', methods=['POST'])
 def cleanup():
     """
-    Reset TOTAL do banco de dados - deleta todas as tabelas e recria
+    Reset TOTAL do banco de dados - deleta todas as tabelas e reseta sequências
     Requer header de autenticação: X-Cleanup-Token
     """
     token = request.headers.get('X-Cleanup-Token', '')
@@ -443,35 +443,60 @@ def cleanup():
     
     try:
         print("\n[CLEANUP] Iniciando RESET TOTAL do banco de dados...")
+        from sqlalchemy import text
         
-        # 1. Deletar todos os dados das tabelas
+        # 1. Contar antes de deletar
         galeria_count = GaleriaFoto.query.count()
+        leads_count = Lead.query.count()
+        eventos_count = Evento.query.count()
+        escolas_count = Escola.query.count()
+        usuarios_count = Usuario.query.count()
+        
+        # 2. Deletar todos os dados das tabelas (ordem importa: FK dependencies)
         GaleriaFoto.query.delete()
         db.session.commit()
         print(f"[OK] {galeria_count} fotos de galeria deletadas")
         
-        leads_count = Lead.query.count()
         Lead.query.delete()
         db.session.commit()
         print(f"[OK] {leads_count} leads deletados")
         
-        eventos_count = Evento.query.count()
         Evento.query.delete()
         db.session.commit()
         print(f"[OK] {eventos_count} eventos deletados")
         
-        escolas_count = Escola.query.count()
         Escola.query.delete()
         db.session.commit()
         print(f"[OK] {escolas_count} escolas deletadas")
         
-        usuarios_count = Usuario.query.count()
         # Deletar todos EXCETO admin
         Usuario.query.filter(Usuario.login != 'admin').delete()
         db.session.commit()
         print(f"[OK] {usuarios_count - 1} usuários deletados (admin preservado)")
         
-        # 2. Limpar Cloudinary
+        # 3. RESETAR AUTO-INCREMENT (para SQLite e PostgreSQL)
+        try:
+            db_url = app.config['SQLALCHEMY_DATABASE_URI']
+            if 'sqlite' in db_url:
+                # SQLite: resetar sequences
+                db.session.execute(text("DELETE FROM sqlite_sequence WHERE name='galeria_fotos'"))
+                db.session.execute(text("DELETE FROM sqlite_sequence WHERE name='leads'"))
+                db.session.execute(text("DELETE FROM sqlite_sequence WHERE name='eventos'"))
+                db.session.execute(text("DELETE FROM sqlite_sequence WHERE name='escolas'"))
+                db.session.execute(text("DELETE FROM sqlite_sequence WHERE name='usuarios'"))
+            elif 'postgresql' in db_url:
+                # PostgreSQL: resetar sequences
+                db.session.execute(text("ALTER SEQUENCE galeria_fotos_id_seq RESTART WITH 1"))
+                db.session.execute(text("ALTER SEQUENCE leads_id_seq RESTART WITH 1"))
+                db.session.execute(text("ALTER SEQUENCE eventos_id_seq RESTART WITH 1"))
+                db.session.execute(text("ALTER SEQUENCE escolas_id_seq RESTART WITH 1"))
+                db.session.execute(text("ALTER SEQUENCE usuarios_id_seq RESTART WITH 1"))
+            db.session.commit()
+            print("[OK] Auto-increment resetado")
+        except Exception as seq_err:
+            print(f"[AVISO] Erro ao resetar auto-increment: {str(seq_err)}")
+        
+        # 4. Limpar Cloudinary
         cloudinary_deleted = 0
         if os.getenv('CLOUDINARY_URL'):
             try:
