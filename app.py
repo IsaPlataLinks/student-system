@@ -1989,7 +1989,7 @@ def listar_alunos():
                     'ano_formatura': lead.ano_formatura or ano_evento,
                     'email': lead.email or '',
                     'whatsapp': lead.whatsapp or '',
-                    'responsavel': lead.nome_contato if lead.tipo_cadastro == 'responsavel' else None,
+                    'responsavel': lead.nome_contato or '',
                     'foto': foto_url,
                     'cep': lead.cep or '',
                     'endereco': lead.endereco or '',
