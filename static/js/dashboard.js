@@ -4,6 +4,25 @@ let alunosFiltrados = [];
 let sparklineCharts = {};
 
 // ======================================================
+// 🖼️ HELPER PARA CONSTRUIR URL DE FOTO
+// ======================================================
+
+function construirUrlFoto(foto) {
+  if (!foto || typeof foto !== 'string') return null;
+  foto = foto.trim();
+  if (!foto) return null;
+  
+  // URL completa (https://res.cloudinary.com/... ou qualquer http)
+  if (foto.startsWith('http://') || foto.startsWith('https://')) return foto;
+  
+  // Caminho relativo (/uploads/...)
+  if (foto.startsWith('/')) return foto;
+  
+  // Apenas nome do arquivo
+  return '/uploads/' + foto;
+}
+
+// ======================================================
 // 🔐 AUTENTICAÇÃO E PERFIL
 // ======================================================
 
@@ -142,10 +161,9 @@ function renderizarAlunos(alunos) {
     container.innerHTML = alunos
       .map(
         (aluno) => {
-          const temFoto = aluno.foto && typeof aluno.foto === 'string' && aluno.foto.trim();
-          const urlFoto = temFoto ? (aluno.foto.startsWith('http') ? aluno.foto : '/uploads/' + aluno.foto) : null;
+          const urlFoto = construirUrlFoto(aluno.foto);
           
-          console.log(`[DEBUG] Aluno ${aluno.id} (${aluno.nome}): foto="${aluno.foto}" => temFoto=${temFoto} => urlFoto="${urlFoto}"`);
+          console.log(`[DEBUG] Aluno ${aluno.id} (${aluno.nome}): foto="${aluno.foto}" => urlFoto="${urlFoto}"`);
           
           return `
         <div class="aluno-card" onclick="verDetalhesAluno(${aluno.id})" style="cursor:pointer" title="Clique para ver detalhes completos">
@@ -155,10 +173,12 @@ function renderizarAlunos(alunos) {
           <div class="card-body-custom">
             <div class="foto-container">
               ${
-                temFoto
+                urlFoto
                   ? `<img loading="lazy" src="${urlFoto}" 
                            alt="${aluno.nome}" 
-                           onerror="console.error('Erro ao carregar foto:', this.src); this.style.display='none'; this.parentElement.innerHTML='<i class=\"fas fa-user\"></i>';">`
+                           class="aluno-foto"
+                           onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                     <i class="fas fa-user foto-fallback" style="display:none;"></i>`
                   : `<i class="fas fa-user"></i>`
               }
             </div>
@@ -535,18 +555,17 @@ async function verDetalhesAluno(alunoId) {
 }
 
 function renderizarDetalhesLead() {
-  const body = document.getElementById('detalhesLeadBody');
-  const lead = leadAtual;
-  
-  if (!lead) return;
-  
-  const fotoUrl = lead.foto && lead.foto.startsWith('http') 
-    ? lead.foto 
-    : lead.foto ? `/static/uploads/${lead.foto}` : null;
-  
-  const fotoHtml = fotoUrl
-    ? `<img src="${fotoUrl}" class="img-fluid rounded" style="max-width:150px">`
-    : '<i class="fas fa-user-circle fa-5x text-muted"></i>';
+   const body = document.getElementById('detalhesLeadBody');
+   const lead = leadAtual;
+   
+   if (!lead) return;
+   
+   const fotoUrl = construirUrlFoto(lead.foto);
+   
+   const fotoHtml = fotoUrl
+     ? `<img src="${fotoUrl}" class="img-fluid rounded" style="max-width:150px; object-fit:cover" 
+             onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\"fas fa-user-circle fa-5x text-muted\"></i>';">`
+     : '<i class="fas fa-user-circle fa-5x text-muted"></i>';
 
   const galeriaHtml = lead.link_galeria 
     ? `<div class="alert mt-2" style="margin-bottom:0;background:rgba(246, 162, 30, 0.1);border:1px solid var(--gold)">
