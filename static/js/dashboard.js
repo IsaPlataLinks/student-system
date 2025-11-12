@@ -177,7 +177,7 @@ function renderizarAlunos(alunos) {
                   ? `<img loading="lazy" src="${urlFoto}" 
                            alt="${aluno.nome}" 
                            class="aluno-foto"
-                           onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
                      <i class="fas fa-user foto-fallback" style="display:none;"></i>`
                   : `<i class="fas fa-user"></i>`
               }
