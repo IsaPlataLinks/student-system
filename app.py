@@ -13,6 +13,9 @@ import os
 import re
 from sqlalchemy import extract, or_
 from sqlalchemy.exc import IntegrityError
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
 
 
 # ==================== HELPERS/JWT ====================
@@ -71,24 +74,28 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'r3-formaturas-secret-2024')
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=8)
 
-# Pasta de uploads: SEMPRE remota em produção
-upload_path = os.getenv('UPLOAD_PATH')
-if not upload_path:
-    if ENV == 'production':
-        print('\n❌ ERRO CRÍTICO: Produção detectada sem UPLOAD_PATH!')
-        print('   Configure UPLOAD_PATH=/mnt/data/uploads no Render.')
-        import sys
-        sys.exit(1)
-    else:
-        # Em desenvolvimento, usa pasta local
-        upload_path = 'static/uploads'
+# Configurar Cloudinary
+cloudinary_url = os.getenv('CLOUDINARY_URL')
+if cloudinary_url:
+    cloudinary.config(url=cloudinary_url)
+    print("[OK] Cloudinary configurado com sucesso")
+else:
+    print("[AVISO] CLOUDINARY_URL não configurado - uploads podem falhar em produção")
 
+# Pasta de uploads local (apenas para desenvolvimento)
+upload_path = 'static/uploads'
 app.config['UPLOAD_FOLDER'] = upload_path
 app.config['MAX_CONTENT_LENGTH'] = 15 * 1024 * 1024  # 15MB
 
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+# Criar pasta se não existir (apenas para desenvolvimento)
+try:
+    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    print(f"[OK] Pasta de uploads local criada/verificada: {app.config['UPLOAD_FOLDER']}")
+except Exception as e:
+    print(f"[AVISO] Falha ao criar pasta de uploads local: {str(e)}")
 
 
 # ==================== MODELS ====================
@@ -315,43 +322,85 @@ def processar_foto(file):
     filename = secure_filename(file.filename or 'foto.jpg')
     timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
     nome_arquivo = f"{timestamp}_{filename}"
-    caminho = os.path.join(app.config['UPLOAD_FOLDER'], nome_arquivo)
 
-    # salva original
-    file.save(caminho)
+    print(f"[DEBUG] Processando foto: {file.filename}")
+    
+    # Salva temporariamente em local para processar
+    temp_path = os.path.join(app.config['UPLOAD_FOLDER'], nome_arquivo)
+    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    
+    try:
+        file.save(temp_path)
+        print(f"[OK] Arquivo salvo temporariamente: {temp_path}")
+    except Exception as e:
+        print(f"[ERRO] Falha ao salvar arquivo: {str(e)}")
+        raise
 
     # Abre com PIL para redimensionamento e correção de orientação
-    with Image.open(caminho) as img:
-        # Corrige orientação EXIF
-        img = corrigir_orientacao_exif(img)
+    try:
+        with Image.open(temp_path) as img:
+            # Corrige orientação EXIF
+            img = corrigir_orientacao_exif(img)
+            
+            if img.mode != 'RGB':
+                img = img.convert('RGB')
+            
+            width, height = img.size
+            target_width, target_height = 300, 400
+            aspect_ratio = target_width / target_height  # 0.75 (3x4)
+            
+            # Calcula crop inteligente mantendo aspect ratio
+            current_ratio = width / height
+            
+            if current_ratio > aspect_ratio:
+                # Imagem muito larga - croppa os lados
+                new_width = int(height * aspect_ratio)
+                left = (width - new_width) // 2
+                img = img.crop((left, 0, left + new_width, height))
+            else:
+                # Imagem muito alta - croppa o topo e parte inferior
+                new_height = int(width / aspect_ratio)
+                # Prioriza a parte superior (rosto geralmente está acima do centro)
+                top = int(height * 0.15)  # começa 15% do topo
+                img = img.crop((0, top, width, top + new_height))
+            
+            # Redimensiona para o tamanho final (300x400)
+            img = img.resize((target_width, target_height), Image.Resampling.LANCZOS)
+            img.save(temp_path, 'JPEG', quality=85, optimize=True)
         
-        if img.mode != 'RGB':
-            img = img.convert('RGB')
-        
-        width, height = img.size
-        target_width, target_height = 300, 400
-        aspect_ratio = target_width / target_height  # 0.75 (3x4)
-        
-        # Calcula crop inteligente mantendo aspect ratio
-        current_ratio = width / height
-        
-        if current_ratio > aspect_ratio:
-            # Imagem muito larga - croppa os lados
-            new_width = int(height * aspect_ratio)
-            left = (width - new_width) // 2
-            img = img.crop((left, 0, left + new_width, height))
+        # Faz upload para Cloudinary se configurado
+        if os.getenv('CLOUDINARY_URL'):
+            try:
+                response = cloudinary.uploader.upload(
+                    temp_path,
+                    folder='fotos-alunos',
+                    resource_type='image',
+                    use_filename=True,
+                    unique_filename=False,
+                    overwrite=True
+                )
+                # Retorna o public_id (usado para acessar a foto)
+                cloudinary_id = response.get('public_id')
+                print(f"[OK] Foto enviada para Cloudinary: {cloudinary_id}")
+                
+                # Remove arquivo local após upload bem-sucedido
+                try:
+                    os.remove(temp_path)
+                except:
+                    pass
+                
+                return cloudinary_id
+            except Exception as e:
+                print(f"[AVISO] Erro ao fazer upload para Cloudinary: {str(e)}")
+                print(f"[FALLBACK] Usando arquivo local: {nome_arquivo}")
+                return nome_arquivo
         else:
-            # Imagem muito alta - croppa o topo e parte inferior
-            new_height = int(width / aspect_ratio)
-            # Prioriza a parte superior (rosto geralmente está acima do centro)
-            top = int(height * 0.15)  # começa 15% do topo
-            img = img.crop((0, top, width, top + new_height))
-        
-        # Redimensiona para o tamanho final (300x400)
-        img = img.resize((target_width, target_height), Image.Resampling.LANCZOS)
-        img.save(caminho, 'JPEG', quality=85, optimize=True)
-
-    return nome_arquivo
+            # Sem Cloudinary, retorna caminho local
+            return nome_arquivo
+    
+    except Exception as e:
+        print(f"[ERRO] Erro ao processar imagem: {str(e)}")
+        raise
 
 # ==================== ERROR HANDLERS ====================
 
@@ -1646,15 +1695,21 @@ def listar_alunos():
                     except Exception as escola_err:
                         print(f"[AVISO] Erro ao acessar escola do evento {getattr(ev, 'id', '?')}: {str(escola_err)}")
                 
-                # Validar se arquivo de foto existe
+                # Gerar URL da foto (Cloudinary ou local)
                 if lead.foto:
-                    foto_path = os.path.join(app.config['UPLOAD_FOLDER'], lead.foto)
-                    if os.path.exists(foto_path):
-                        foto_url = f'/uploads/{lead.foto}'
-                        print(f"[OK] Foto encontrada para lead {lead.id}: {lead.foto}")
+                    # Se começa com 'fotos-alunos/', é uma foto do Cloudinary
+                    if lead.foto.startswith('fotos-alunos/'):
+                        foto_url = cloudinary.CloudinaryResource(lead.foto).build_url()
+                        print(f"[OK] Foto Cloudinary encontrada para lead {lead.id}: {foto_url}")
                     else:
-                        print(f"[AVISO] Arquivo de foto não encontrado: {foto_path}")
-                        # Não retorna URL se arquivo não existe para evitar erro 404
+                        # É um arquivo local
+                        foto_path = os.path.join(app.config['UPLOAD_FOLDER'], lead.foto)
+                        if os.path.exists(foto_path):
+                            foto_url = f'/uploads/{lead.foto}'
+                            print(f"[OK] Foto local encontrada para lead {lead.id}: {lead.foto}")
+                        else:
+                            print(f"[AVISO] Arquivo de foto não encontrado: {foto_path}")
+                            # Não retorna URL se arquivo não existe para evitar erro 404
 
                 aluno_data = {
                     'id': lead.id,
