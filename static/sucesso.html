@@ -385,7 +385,7 @@
     <!-- Área que exibe o tipo e o nome do cadastrado -->
     <div class="nome-cadastrado" id="nomeCadastrado" style="display:none;">
         <i class="fas fa-user-check me-2"></i>
-        <span id="nomeExibir">Carregando...</span>
+        <span id="nomeExibir"></span>
     </div>
 
     <div class="opcoes-container">
@@ -438,8 +438,7 @@
         
         if (!dadosJSON) {
             console.warn('[AVISO] Nenhum dado de cadastro encontrado no localStorage');
-            // Fallback: exibir mensagem genérica
-            document.getElementById('nomeExibir').textContent = 'Seus dados foram cadastrados com sucesso!';
+            // Fallback: não mostrar a caixa de nome se não houver dados
             return;
         }
         
@@ -486,8 +485,7 @@
             }
         } catch (erro) {
              console.error('[ERRO] Falha ao parsear dados:', erro);
-             document.getElementById('nomeCadastrado').style.display = 'block';
-             document.getElementById('nomeExibir').textContent = 'Seus dados foram cadastrados com sucesso!';
+             // Não exibir caixa de nome se houver erro
          }
 
         // Usar confete realista da biblioteca UI se disponível

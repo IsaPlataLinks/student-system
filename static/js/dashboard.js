@@ -124,64 +124,73 @@ async function carregarAlunos() {
 }
 
 function renderizarAlunos(alunos) {
-   const container = document.getElementById('alunosGrid');
-   if (!container) return;
+    const container = document.getElementById('alunosGrid');
+    if (!container) return;
 
-   if (alunos.length === 0) {
-     container.innerHTML = `
-       <div class="empty-state" style="grid-column: 1 / -1;">
-         <i class="fas fa-inbox"></i>
-         <h4>Nenhum aluno encontrado</h4>
-         <p>Tente ajustar os filtros de busca ou aguarde novos cadastros.</p>
-       </div>`;
-     return;
-   }
+    if (alunos.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state" style="grid-column: 1 / -1;">
+          <i class="fas fa-inbox"></i>
+          <h4>Nenhum aluno encontrado</h4>
+          <p>Tente ajustar os filtros de busca ou aguarde novos cadastros.</p>
+        </div>`;
+      return;
+    }
 
-   container.innerHTML = alunos
-     .map(
-       (aluno) => `
-       <div class="aluno-card" onclick="verDetalhesAluno(${aluno.id})" style="cursor:pointer" title="Clique para ver detalhes completos">
-         <div class="card-header-custom">
-           <h6>${aluno.escola || 'Escola não informada'}</h6>
-         </div>
-         <div class="card-body-custom">
-           <div class="foto-container">
-             ${
-               aluno.foto && typeof aluno.foto === 'string' && aluno.foto.trim()
-                 ? `<img loading="lazy" src="${aluno.foto.startsWith('http') ? aluno.foto : '/uploads/' + aluno.foto}" 
-                          alt="${aluno.nome}" 
-                          onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\"fas fa-user\"></i>';">`
-                 : `<i class="fas fa-user"></i>`
-             }
-           </div>
-           <div class="info-container">
-             <div class="aluno-nome">${aluno.nome}</div>
-             <div class="aluno-info"><i class="fas fa-chalkboard-teacher"></i><span>${aluno.turma}</span></div>
-             <div class="aluno-info"><i class="fas fa-calendar"></i><span>${aluno.ano_formatura || 'N/A'}</span></div>
-             ${
-               aluno.whatsapp
-                 ? `<div class="aluno-info"><i class="fab fa-whatsapp"></i><span>${aluno.whatsapp}</span></div>`
-                 : ''
-             }
-             ${
-               aluno.email
-                 ? `<div class="aluno-info"><i class="fas fa-envelope"></i><span>${aluno.email}</span></div>`
-                 : ''
-             }
-             ${
-               aluno.responsavel
-                 ? `<div class="aluno-info"><i class="fas fa-user-tie"></i><span>${aluno.responsavel}</span></div>`
-                 : ''
-             }
-           </div>
-         </div>
-         <div style="position:absolute;top:10px;right:10px">
-           <i class="fas fa-eye text-white" style="opacity:0.7"></i>
-         </div>
-       </div>`
-     )
-     .join('');
- }
+    console.log('[DEBUG] Renderizando', alunos.length, 'alunos');
+    
+    container.innerHTML = alunos
+      .map(
+        (aluno) => {
+          const temFoto = aluno.foto && typeof aluno.foto === 'string' && aluno.foto.trim();
+          const urlFoto = temFoto ? (aluno.foto.startsWith('http') ? aluno.foto : '/uploads/' + aluno.foto) : null;
+          
+          console.log(`[DEBUG] Aluno ${aluno.id} (${aluno.nome}): foto="${aluno.foto}" => temFoto=${temFoto} => urlFoto="${urlFoto}"`);
+          
+          return `
+        <div class="aluno-card" onclick="verDetalhesAluno(${aluno.id})" style="cursor:pointer" title="Clique para ver detalhes completos">
+          <div class="card-header-custom">
+            <h6>${aluno.escola || 'Escola não informada'}</h6>
+          </div>
+          <div class="card-body-custom">
+            <div class="foto-container">
+              ${
+                temFoto
+                  ? `<img loading="lazy" src="${urlFoto}" 
+                           alt="${aluno.nome}" 
+                           onerror="console.error('Erro ao carregar foto:', this.src); this.style.display='none'; this.parentElement.innerHTML='<i class=\"fas fa-user\"></i>';">`
+                  : `<i class="fas fa-user"></i>`
+              }
+            </div>
+            <div class="info-container">
+              <div class="aluno-nome">${aluno.nome}</div>
+              <div class="aluno-info"><i class="fas fa-chalkboard-teacher"></i><span>${aluno.turma}</span></div>
+              <div class="aluno-info"><i class="fas fa-calendar"></i><span>${aluno.ano_formatura || 'N/A'}</span></div>
+              ${
+                aluno.whatsapp
+                  ? `<div class="aluno-info"><i class="fab fa-whatsapp"></i><span>${aluno.whatsapp}</span></div>`
+                  : ''
+              }
+              ${
+                aluno.email
+                  ? `<div class="aluno-info"><i class="fas fa-envelope"></i><span>${aluno.email}</span></div>`
+                  : ''
+              }
+              ${
+                aluno.responsavel
+                  ? `<div class="aluno-info"><i class="fas fa-user-tie"></i><span>${aluno.responsavel}</span></div>`
+                  : ''
+              }
+            </div>
+          </div>
+          <div style="position:absolute;top:10px;right:10px">
+            <i class="fas fa-eye text-white" style="opacity:0.7"></i>
+          </div>
+        </div>`;
+        }
+      )
+      .join('');
+  }
 
 function atualizarEstatisticas() {
    document.getElementById('totalAlunos').textContent = todosAlunos.length;
@@ -824,31 +833,34 @@ async function enviarFoto() {
     });
 
     if (response.ok) {
-      const resultado = await response.json();
-      alert('Foto enviada com sucesso!');
-      
-      // Atualizar leadAtual com a nova foto
-      leadAtual.foto = resultado.foto;
-      renderizarDetalhesLead();
-      
-      // Fechar modal
-      const modal = bootstrap.Modal.getInstance(document.getElementById('modalUploadFoto'));
-      if (modal) modal.hide();
-      
-      // Resetar input
-      fileInput.value = '';
-      
-      // Recarregar lista de alunos
-      carregarAlunos();
+       const resultado = await response.json();
+       alert('Foto enviada com sucesso!');
+       
+       // Atualizar leadAtual com a nova foto
+       leadAtual.foto = resultado.foto;
+       renderizarDetalhesLead();
+       
+       // Fechar modal
+       const modal = bootstrap.Modal.getInstance(document.getElementById('modalUploadFoto'));
+       if (modal) modal.hide();
+       
+       // Resetar input
+       fileInput.value = '';
+       
+       // Recarregar lista de alunos E estatísticas (com delay para garantir renderização)
+       setTimeout(() => {
+         carregarAlunos();
+         carregarContagemFotos();
+       }, 300);
     } else {
       const erro = await response.json();
       alert(`Erro ao enviar foto: ${erro.erro || 'Erro desconhecido'}`);
     }
-  } catch (error) {
+    } catch (error) {
     console.error('Erro:', error);
     alert('Erro ao conectar com o servidor.');
-  }
-}
+    }
+    }
 
 // ======================================================
 // 🗑️ DELETAR LEAD
