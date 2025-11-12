@@ -898,9 +898,21 @@ def listar_eventos():
                 except Exception as escola_err:
                     print(f"Aviso: erro ao acessar escola do evento {e.id}: {str(escola_err)}")
                 
+                # Pega cidade e estado da escola se existir
+                escola_cidade = None
+                escola_estado = None
+                try:
+                    if e.escola:
+                        escola_cidade = e.escola.cidade
+                        escola_estado = e.escola.estado
+                except Exception as escola_detail_err:
+                    print(f"Aviso: erro ao acessar detalhes da escola do evento {e.id}: {str(escola_detail_err)}")
+                
                 payload.append({
                     'id': e.id,
                     'escola': escola_nome,
+                    'cidade': escola_cidade,
+                    'estado': escola_estado,
                     'tipo_formatura': e.tipo_formatura,
                     'data_evento': e.data_evento.isoformat() if e.data_evento else None,
                     'local_evento': e.local_evento,
