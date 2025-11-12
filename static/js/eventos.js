@@ -193,24 +193,13 @@ document.getElementById('buscaEvento')?.addEventListener('input', (e) => {
 // 📥 EXPORTAR EXCEL
 // ======================================================
 
-function escaparCSV(valor) {
-  if (valor === null || valor === undefined) return '';
-  const str = String(valor);
-  // Se contém vírgula, aspas ou quebra de linha, envolve em aspas e escapa aspas internas
-  if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
-    return '"' + str.replace(/"/g, '""') + '"';
-  }
-  return str;
-}
-
 function exportarEventosExcel() {
   if (eventosFiltrados.length === 0) {
     alert('Não há eventos para exportar!');
     return;
   }
 
-  // Adiciona BOM UTF-8 para corrigir acentuação
-  const BOM = '\uFEFF';
+  // Preparar dados para exportação
   const rows = eventosFiltrados.map((e) => {
     const dataFormatada = e.data_evento 
       ? new Date(e.data_evento).toLocaleDateString('pt-BR')
@@ -220,35 +209,30 @@ function exportarEventosExcel() {
     const cidade = (e.cidade || '').trim() || 'Não informada';
     const estado = (e.estado || '').trim() || 'Não informada';
     
-    return [
-      e.id || '',
-      e.escola || '',
-      cidade,
-      estado,
-      e.tipo_formatura || '',
-      dataFormatada,
-      e.local_evento || '',
-      e.status || '',
-      e.total_leads || 0,
-      e.qr_url || ''
-    ];
+    return {
+      'ID': e.id || '',
+      'Escola': e.escola || '',
+      'Cidade': cidade,
+      'Estado': estado,
+      'Tipo de Formatura': e.tipo_formatura || '',
+      'Data do Evento': dataFormatada,
+      'Local': e.local_evento || '',
+      'Status': e.status || '',
+      'Total de Cadastros': e.total_leads || 0,
+      'Link de Cadastro': e.qr_url || ''
+    };
   });
 
-  const headers = ['ID', 'Escola', 'Cidade', 'Estado', 'Tipo de Formatura', 'Data do Evento', 'Local', 'Status', 'Total de Cadastros', 'Link de Cadastro'];
+  // Usar SheetJS para criar workbook
+  const workbook = XLSX.utils.book_new();
+  const worksheet = XLSX.utils.json_to_sheet(rows);
   
-  // Criar CSV com escapagem apropriada
-  const csv = [
-    headers.map(h => escaparCSV(h)).join(','),
-    ...rows.map(row => row.map(cell => escaparCSV(cell)).join(','))
-  ].join('\n');
+  // Ajustar largura das colunas
+  const colWidths = [5, 30, 15, 8, 20, 12, 20, 12, 15, 30];
+  worksheet['!cols'] = colWidths.map(w => ({ wch: w }));
   
-  const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `eventos_${new Date().toISOString().split('T')[0]}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Eventos');
+  XLSX.writeFile(workbook, `eventos_${new Date().toISOString().split('T')[0]}.xlsx`);
 }
 
 // ======================================================

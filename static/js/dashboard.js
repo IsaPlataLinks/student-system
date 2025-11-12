@@ -319,55 +319,38 @@ function limparFiltros() {
 // 📁 EXPORTAR EXCEL
 // ======================================================
 
-function escaparCSV(valor) {
-  if (valor === null || valor === undefined) return '';
-  const str = String(valor);
-  // Se contém vírgula, aspas ou quebra de linha, envolve em aspas e escapa aspas internas
-  if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
-    return '"' + str.replace(/"/g, '""') + '"';
-  }
-  return str;
-}
-
 function exportarExcel() {
     if (alunosFiltrados.length === 0) return alert('Não há dados para exportar!');
     
-    // Adiciona BOM UTF-8 para corrigir acentuação
-    const BOM = '\uFEFF';
-    
-    const rows = alunosFiltrados.map((a) => [
-       a.evento_id || '',
-       a.matricula || '',
-       a.nome || '',
-       a.serie || '',
-       a.letra_turma || '',
-       a.ano_formatura || '',
-       a.escola || '',
-       a.email || '',
-       a.whatsapp || '',
-       a.responsavel || '',
-       a.cep || '',
-       a.endereco || '',
-       a.numero || '',
-       a.complemento || '',
-       a.tipo_imovel || ''
-    ]);
+    // Preparar dados para exportação
+    const rows = alunosFiltrados.map((a) => ({
+       'ID Evento': a.evento_id || '',
+       'Matrícula': a.matricula || '',
+       'Nome': a.nome || '',
+       'Série': a.serie || '',
+       'Turma': a.letra_turma || '',
+       'Ano': a.ano_formatura || '',
+       'Escola': a.escola || '',
+       'Email': a.email || '',
+       'WhatsApp': a.whatsapp || '',
+       'Responsável': a.responsavel || '',
+       'CEP': a.cep || '',
+       'Endereço': a.endereco || '',
+       'Número': a.numero || '',
+       'Complemento': a.complemento || '',
+       'Tipo Imóvel': a.tipo_imovel || ''
+    }));
 
-    const headers = ['ID Evento', 'Matrícula', 'Nome', 'Série', 'Turma', 'Ano', 'Escola', 'Email', 'WhatsApp', 'Responsável', 'CEP', 'Endereço', 'Número', 'Complemento', 'Tipo Imóvel'];
-  
-   // Criar CSV com escapagem apropriada
-   const csv = [
-     headers.map(h => escaparCSV(h)).join(','),
-     ...rows.map(row => row.map(cell => escaparCSV(cell)).join(','))
-   ].join('\n');
-   
-   const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8' });
-   const url = URL.createObjectURL(blob);
-   const a = document.createElement('a');
-   a.href = url;
-   a.download = `alunos_${new Date().toISOString().split('T')[0]}.csv`;
-   a.click();
-   URL.revokeObjectURL(url);
+    // Usar SheetJS para criar workbook
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    
+    // Ajustar largura das colunas
+    const colWidths = [12, 12, 25, 10, 12, 8, 25, 20, 15, 20, 10, 25, 8, 15, 12];
+    worksheet['!cols'] = colWidths.map(w => ({ wch: w }));
+    
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Alunos');
+    XLSX.writeFile(workbook, `alunos_${new Date().toISOString().split('T')[0]}.xlsx`);
 }
 
 // ======================================================
