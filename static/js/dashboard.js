@@ -184,14 +184,40 @@ function renderizarAlunos(alunos) {
  }
 
 function atualizarEstatisticas() {
-  document.getElementById('totalAlunos').textContent = todosAlunos.length;
-  const escolasUnicas = new Set(todosAlunos.map((a) => a.escola).filter(Boolean));
-  document.getElementById('totalEscolas').textContent = escolasUnicas.size;
-  const comFotos = todosAlunos.filter((a) => a.foto).length;
-  document.getElementById('totalFotos').textContent = comFotos;
-  
-  // Atualizar sparklines
-  atualizarSparklines();
+   document.getElementById('totalAlunos').textContent = todosAlunos.length;
+   const escolasUnicas = new Set(todosAlunos.map((a) => a.escola).filter(Boolean));
+   document.getElementById('totalEscolas').textContent = escolasUnicas.size;
+   
+   // Buscar contagem correta de fotos da galeria
+   carregarContagemFotos();
+   
+   // Atualizar sparklines
+   atualizarSparklines();
+}
+
+async function carregarContagemFotos() {
+   const token = verificarAutenticacao();
+   if (!token) return;
+   
+   try {
+     const response = await fetch(`${API_URL}/dashboard/fotos-count`, {
+       headers: {
+         Authorization: `Bearer ${token}`,
+         Accept: 'application/json',
+       },
+     });
+     
+     if (response.ok) {
+       const data = await response.json();
+       // Usar total_fotos (galeria + leads com foto)
+       document.getElementById('totalFotos').textContent = data.total_fotos;
+       console.log(`[OK] Fotos contadas: ${data.fotos_galeria} galeria + ${data.leads_com_foto} leads = ${data.total_fotos}`);
+     } else {
+       console.error('Erro ao contar fotos:', response.status);
+     }
+   } catch (error) {
+     console.error('Erro ao carregar contagem de fotos:', error);
+   }
 }
 
 // ======================================================

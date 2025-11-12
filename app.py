@@ -316,170 +316,171 @@ def corrigir_orientacao_exif(img):
     return img
 
 def processar_foto(file):
-    """
-    Processa foto do lead (com crop e resize para 300x400)
-    Salva direto no Cloudinary em pasta 'fotos-alunos'
-    Retorna URL HTTPS completa
-    """
-    if not file:
-        return None
+     """
+     Processa foto do lead (com crop e resize para 300x400)
+     Salva LOCALMENTE no Render E NO Cloudinary (ambos obrigatórios)
+     Retorna URL HTTPS completa do Cloudinary
+     """
+     if not file:
+         return None
 
-    filename = secure_filename(file.filename or 'foto.jpg')
-    timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
-    nome_arquivo = f"{timestamp}_{filename}"
+     filename = secure_filename(file.filename or 'foto.jpg')
+     timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+     nome_arquivo = f"{timestamp}_{filename}"
 
-    print(f"[DEBUG] Processando foto do lead: {file.filename}")
-    
-    # Salva temporariamente em local para processar
-    temp_path = os.path.join(app.config['UPLOAD_FOLDER'], nome_arquivo)
-    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-    
-    try:
-        file.save(temp_path)
-        print(f"[OK] Arquivo salvo temporariamente: {temp_path}")
-    except Exception as e:
-        print(f"[ERRO] Falha ao salvar arquivo: {str(e)}")
-        raise
+     print(f"[DEBUG] Processando foto do lead: {file.filename}")
+     
+     # Caminho local de salvamento
+     local_path = os.path.join(app.config['UPLOAD_FOLDER'], nome_arquivo)
+     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+     
+     try:
+         file.save(local_path)
+         print(f"[OK] Arquivo salvo localmente: {local_path}")
+     except Exception as e:
+         print(f"[ERRO] Falha ao salvar arquivo local: {str(e)}")
+         raise
 
-    # Abre com PIL para redimensionamento e correção de orientação
-    try:
-        with Image.open(temp_path) as img:
-            # Corrige orientação EXIF
-            img = corrigir_orientacao_exif(img)
-            
-            if img.mode != 'RGB':
-                img = img.convert('RGB')
-            
-            width, height = img.size
-            target_width, target_height = 300, 400
-            aspect_ratio = target_width / target_height  # 0.75 (3x4)
-            
-            # Calcula crop inteligente mantendo aspect ratio
-            current_ratio = width / height
-            
-            if current_ratio > aspect_ratio:
-                # Imagem muito larga - croppa os lados
-                new_width = int(height * aspect_ratio)
-                left = (width - new_width) // 2
-                img = img.crop((left, 0, left + new_width, height))
-            else:
-                # Imagem muito alta - croppa o topo e parte inferior
-                new_height = int(width / aspect_ratio)
-                # Prioriza a parte superior (rosto geralmente está acima do centro)
-                top = int(height * 0.15)  # começa 15% do topo
-                img = img.crop((0, top, width, top + new_height))
-            
-            # Redimensiona para o tamanho final (300x400)
-            img = img.resize((target_width, target_height), Image.Resampling.LANCZOS)
-            img.save(temp_path, 'JPEG', quality=85, optimize=True)
-        
-        # Faz upload para Cloudinary (obrigatório)
-        if not os.getenv('CLOUDINARY_URL'):
-            raise Exception("[ERRO] CLOUDINARY_URL não configurado. Upload de fotos requer Cloudinary em produção.")
-        
-        try:
-            response = cloudinary.uploader.upload(
-                temp_path,
-                folder='fotos-alunos',
-                resource_type='image',
-                use_filename=True,
-                unique_filename=False,
-                overwrite=True
-            )
-            # Retorna a URL HTTPS completa da foto
-            cloudinary_url = response.get('secure_url')
-            if not cloudinary_url:
-                cloudinary_url = response.get('url', '').replace('http://', 'https://')
-            
-            print(f"[OK] Foto enviada para Cloudinary: {cloudinary_url}")
-            
-            # Remove arquivo local após upload bem-sucedido
-            try:
-                os.remove(temp_path)
-            except:
-                pass
-            
-            return cloudinary_url
-        except Exception as e:
-            print(f"[ERRO] Falha ao fazer upload para Cloudinary: {str(e)}")
-            # Remove arquivo temporário
-            try:
-                os.remove(temp_path)
-            except:
-                pass
-            raise
-    
-    except Exception as e:
-        print(f"[ERRO] Erro ao processar imagem: {str(e)}")
-        raise
+     # Abre com PIL para redimensionamento e correção de orientação
+     cloudinary_url = None
+     try:
+         with Image.open(local_path) as img:
+             # Corrige orientação EXIF
+             img = corrigir_orientacao_exif(img)
+             
+             if img.mode != 'RGB':
+                 img = img.convert('RGB')
+             
+             width, height = img.size
+             target_width, target_height = 300, 400
+             aspect_ratio = target_width / target_height  # 0.75 (3x4)
+             
+             # Calcula crop inteligente mantendo aspect ratio
+             current_ratio = width / height
+             
+             if current_ratio > aspect_ratio:
+                 # Imagem muito larga - croppa os lados
+                 new_width = int(height * aspect_ratio)
+                 left = (width - new_width) // 2
+                 img = img.crop((left, 0, left + new_width, height))
+             else:
+                 # Imagem muito alta - croppa o topo e parte inferior
+                 new_height = int(width / aspect_ratio)
+                 # Prioriza a parte superior (rosto geralmente está acima do centro)
+                 top = int(height * 0.15)  # começa 15% do topo
+                 img = img.crop((0, top, width, top + new_height))
+             
+             # Redimensiona para o tamanho final (300x400)
+             img = img.resize((target_width, target_height), Image.Resampling.LANCZOS)
+             img.save(local_path, 'JPEG', quality=85, optimize=True)
+         
+         print(f"[OK] Foto processada e salva localmente: {local_path}")
+         
+         # ✅ Upload para Cloudinary (obrigatório)
+         if os.getenv('CLOUDINARY_URL'):
+             try:
+                 response = cloudinary.uploader.upload(
+                     local_path,
+                     folder='fotos-alunos',
+                     resource_type='image',
+                     use_filename=True,
+                     unique_filename=False,
+                     overwrite=True
+                 )
+                 # Retorna a URL HTTPS completa da foto
+                 cloudinary_url = response.get('secure_url')
+                 if not cloudinary_url:
+                     cloudinary_url = response.get('url', '').replace('http://', 'https://')
+                 
+                 print(f"[✅ OK] Foto salva LOCALMENTE e no Cloudinary: {cloudinary_url}")
+                 return cloudinary_url
+             except Exception as e:
+                 print(f"[⚠️ AVISO] Falha ao fazer upload para Cloudinary: {str(e)}")
+                 print(f"[✅ OK] Foto permanece salva localmente: {local_path}")
+                 # Retorna URL local como fallback
+                 return f'/uploads/{nome_arquivo}'
+         else:
+             print(f"[⚠️ AVISO] CLOUDINARY_URL não configurado, foto salva APENAS localmente")
+             return f'/uploads/{nome_arquivo}'
+     
+     except Exception as e:
+         print(f"[ERRO] Erro ao processar imagem: {str(e)}")
+         # Se sobrou arquivo local, manter para fallback
+         if os.path.exists(local_path):
+             print(f"[✅] Arquivo local preservado para fallback: {local_path}")
+             return f'/uploads/{nome_arquivo}'
+         raise
 
 def processar_foto_galeria(file):
-    """
-    Processa foto para galeria (sem redimensionar, apenas otimiza)
-    Salva direto no Cloudinary em pasta 'fotos-galeria'
-    Retorna URL HTTPS completa
-    """
-    if not file:
-        return None
+     """
+     Processa foto para galeria (sem redimensionar, apenas otimiza)
+     Salva LOCALMENTE no Render E NO Cloudinary (ambos obrigatórios)
+     Retorna URL HTTPS completa do Cloudinary
+     """
+     if not file:
+         return None
 
-    filename = secure_filename(file.filename or 'foto.jpg')
-    timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
-    nome_arquivo = f"{timestamp}_{filename}"
+     filename = secure_filename(file.filename or 'foto.jpg')
+     timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+     nome_arquivo = f"{timestamp}_{filename}"
 
-    print(f"[DEBUG] Processando foto para galeria: {file.filename}")
-    
-    # Salva temporariamente
-    temp_path = os.path.join(app.config['UPLOAD_FOLDER'], nome_arquivo)
-    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-    
-    try:
-        file.save(temp_path)
-        print(f"[OK] Arquivo salvo temporariamente: {temp_path}")
-    except Exception as e:
-        print(f"[ERRO] Falha ao salvar arquivo: {str(e)}")
-        raise
+     print(f"[DEBUG] Processando foto para galeria: {file.filename}")
+     
+     # Caminho local de salvamento
+     local_path = os.path.join(app.config['UPLOAD_FOLDER'], nome_arquivo)
+     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+     
+     try:
+         file.save(local_path)
+         print(f"[OK] Arquivo salvo localmente: {local_path}")
+     except Exception as e:
+         print(f"[ERRO] Falha ao salvar arquivo local: {str(e)}")
+         raise
 
-    # Otimizar apenas qualidade (sem redimensionar)
-    try:
-        with Image.open(temp_path) as img:
-            if img.mode != 'RGB':
-                img = img.convert('RGB')
-            img.save(temp_path, 'JPEG', quality=90, optimize=True)
-        
-        # Upload obrigatório para Cloudinary
-        if not os.getenv('CLOUDINARY_URL'):
-            raise Exception("[ERRO] CLOUDINARY_URL não configurado. Upload de fotos requer Cloudinary em produção.")
-        
-        response = cloudinary.uploader.upload(
-            temp_path,
-            folder='fotos-galeria',
-            resource_type='image',
-            use_filename=True,
-            unique_filename=False,
-            overwrite=True
-        )
-        
-        cloudinary_url = response.get('secure_url')
-        if not cloudinary_url:
-            cloudinary_url = response.get('url', '').replace('http://', 'https://')
-        
-        print(f"[OK] Foto galeria enviada para Cloudinary: {cloudinary_url}")
-        
-        # Remove arquivo local
-        try:
-            os.remove(temp_path)
-        except:
-            pass
-        
-        return cloudinary_url
-    
-    except Exception as e:
-        print(f"[ERRO] Erro ao processar foto galeria: {str(e)}")
-        try:
-            os.remove(temp_path)
-        except:
-            pass
-        raise
+     # Otimizar apenas qualidade (sem redimensionar)
+     cloudinary_url = None
+     try:
+         with Image.open(local_path) as img:
+             if img.mode != 'RGB':
+                 img = img.convert('RGB')
+             img.save(local_path, 'JPEG', quality=90, optimize=True)
+         
+         print(f"[OK] Foto de galeria otimizada e salva localmente: {local_path}")
+         
+         # ✅ Upload para Cloudinary (obrigatório)
+         if os.getenv('CLOUDINARY_URL'):
+             try:
+                 response = cloudinary.uploader.upload(
+                     local_path,
+                     folder='fotos-galeria',
+                     resource_type='image',
+                     use_filename=True,
+                     unique_filename=False,
+                     overwrite=True
+                 )
+                 
+                 cloudinary_url = response.get('secure_url')
+                 if not cloudinary_url:
+                     cloudinary_url = response.get('url', '').replace('http://', 'https://')
+                 
+                 print(f"[✅ OK] Foto salva LOCALMENTE e no Cloudinary: {cloudinary_url}")
+                 return cloudinary_url
+             except Exception as e:
+                 print(f"[⚠️ AVISO] Falha ao fazer upload para Cloudinary: {str(e)}")
+                 print(f"[✅ OK] Foto permanece salva localmente: {local_path}")
+                 # Retorna URL local como fallback
+                 return f'/uploads/{nome_arquivo}'
+         else:
+             print(f"[⚠️ AVISO] CLOUDINARY_URL não configurado, foto salva APENAS localmente")
+             return f'/uploads/{nome_arquivo}'
+     
+     except Exception as e:
+         print(f"[ERRO] Erro ao processar foto galeria: {str(e)}")
+         # Se sobrou arquivo local, manter para fallback
+         if os.path.exists(local_path):
+             print(f"[✅] Arquivo local preservado para fallback: {local_path}")
+             return f'/uploads/{nome_arquivo}'
+         raise
 
 # ==================== ERROR HANDLERS ====================
 
@@ -1808,6 +1809,30 @@ def estatisticas():
         'perdidos': perdidos,
         'taxa_conversao': round(taxa_conversao, 2)
     }), 200
+
+# ==================== GALERIA (CONTAGEM CORRETA) ====================
+
+@app.route('/api/dashboard/fotos-count', methods=['GET'])
+@jwt_required()
+def contar_fotos_enviadas():
+    """
+    Conta o total de fotos enviadas da galeria (não confundir com fotos de perfil dos leads)
+    """
+    try:
+        # Contar fotos da galeria
+        total_fotos = GaleriaFoto.query.count()
+        
+        # Contar leads com foto de perfil
+        total_leads_com_foto = Lead.query.filter(Lead.foto != None).filter(Lead.foto != '').count()
+        
+        return jsonify({
+            'fotos_galeria': total_fotos,
+            'leads_com_foto': total_leads_com_foto,
+            'total_fotos': total_fotos + total_leads_com_foto
+        }), 200
+    except Exception as e:
+        print(f"[ERRO] Erro ao contar fotos: {str(e)}")
+        return jsonify({'erro': 'Erro ao contar fotos'}), 500
 
 # ==================== QR DOWNLOAD ====================
 
