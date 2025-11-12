@@ -194,14 +194,21 @@ document.getElementById('buscaEvento')?.addEventListener('input', (e) => {
 // 📥 EXPORTAR EXCEL
 // ======================================================
 
+function escaparCSV(valor) {
+  if (valor === null || valor === undefined) return '';
+  const str = String(valor);
+  // Se contém vírgula, aspas ou quebra de linha, envolve em aspas e escapa aspas internas
+  if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+    return '"' + str.replace(/"/g, '""') + '"';
+  }
+  return str;
+}
+
 function exportarEventosExcel() {
   if (eventosFiltrados.length === 0) {
     alert('Não há eventos para exportar!');
     return;
   }
-
-  // Debug: verificar dados de cidade/estado
-  console.log('[DEBUG EXPORT] Eventos filtrados:', eventosFiltrados.slice(0, 2));
 
   // Adiciona BOM UTF-8 para corrigir acentuação
   const BOM = '\uFEFF';
@@ -213,8 +220,6 @@ function exportarEventosExcel() {
     // Garantir que cidade e estado nunca vêm em branco - SEMPRE preenchidas
     const cidade = (e.cidade || '').trim() || 'Não informada';
     const estado = (e.estado || '').trim() || 'Não informada';
-    
-    console.log(`[DEBUG] Evento ${e.id}: cidade="${cidade}", estado="${estado}"`);
     
     return [
       e.id || '',
@@ -232,14 +237,17 @@ function exportarEventosExcel() {
 
   const headers = ['ID', 'Escola', 'Cidade', 'Estado', 'Tipo de Formatura', 'Data do Evento', 'Local', 'Status', 'Total de Cadastros', 'Link de Cadastro'];
   
-  // Criar TSV (Tab-Separated Values) que Excel interpreta melhor
-  const tsv = [headers.join('\t'), ...rows.map(row => row.join('\t'))].join('\n');
+  // Criar CSV com escapagem apropriada
+  const csv = [
+    headers.map(h => escaparCSV(h)).join(','),
+    ...rows.map(row => row.map(cell => escaparCSV(cell)).join(','))
+  ].join('\n');
   
-  const blob = new Blob([BOM + tsv], { type: 'text/plain;charset=utf-8' });
+  const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `eventos_${new Date().toISOString().split('T')[0]}.xls`;
+  a.download = `eventos_${new Date().toISOString().split('T')[0]}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }

@@ -319,12 +319,18 @@ function limparFiltros() {
 // 📁 EXPORTAR EXCEL
 // ======================================================
 
+function escaparCSV(valor) {
+  if (valor === null || valor === undefined) return '';
+  const str = String(valor);
+  // Se contém vírgula, aspas ou quebra de linha, envolve em aspas e escapa aspas internas
+  if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+    return '"' + str.replace(/"/g, '""') + '"';
+  }
+  return str;
+}
+
 function exportarExcel() {
     if (alunosFiltrados.length === 0) return alert('Não há dados para exportar!');
-    
-    // Debug: Verificar dados
-    console.log('[EXPORT DEBUG] Primeiros alunos:', alunosFiltrados.slice(0, 3));
-    console.log('[EXPORT DEBUG] Campos disponíveis no primeiro aluno:', Object.keys(alunosFiltrados[0] || {}));
     
     // Adiciona BOM UTF-8 para corrigir acentuação
     const BOM = '\uFEFF';
@@ -349,14 +355,17 @@ function exportarExcel() {
 
     const headers = ['ID Evento', 'Matrícula', 'Nome', 'Série', 'Turma', 'Ano', 'Escola', 'Email', 'WhatsApp', 'Responsável', 'CEP', 'Endereço', 'Número', 'Complemento', 'Tipo Imóvel'];
   
-   // Criar TSV (Tab-Separated Values) que Excel interpreta melhor
-   const tsv = [headers.join('\t'), ...rows.map(row => row.join('\t'))].join('\n');
+   // Criar CSV com escapagem apropriada
+   const csv = [
+     headers.map(h => escaparCSV(h)).join(','),
+     ...rows.map(row => row.map(cell => escaparCSV(cell)).join(','))
+   ].join('\n');
    
-   const blob = new Blob([BOM + tsv], { type: 'text/plain;charset=utf-8' });
+   const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8' });
    const url = URL.createObjectURL(blob);
    const a = document.createElement('a');
    a.href = url;
-   a.download = `alunos_${new Date().toISOString().split('T')[0]}.xls`;
+   a.download = `alunos_${new Date().toISOString().split('T')[0]}.csv`;
    a.click();
    URL.revokeObjectURL(url);
 }
