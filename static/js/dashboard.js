@@ -571,7 +571,7 @@ function renderizarDetalhesLead() {
    
    const fotoHtml = fotoUrl
      ? `<img src="${fotoUrl}" class="img-fluid rounded" style="max-width:150px; object-fit:cover" 
-             onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\"fas fa-user-circle fa-5x text-muted\"></i>';">`
+             alt="Foto do formando" />`
      : '<i class="fas fa-user-circle fa-5x text-muted"></i>';
 
   const galeriaHtml = lead.link_galeria 
