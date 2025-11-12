@@ -178,62 +178,33 @@ function exportarEventosExcel() {
     return;
   }
 
-  // Adiciona BOM UTF-8 para corrigir acentuação no Excel
+  // Adiciona BOM UTF-8 para corrigir acentuação
   const BOM = '\uFEFF';
-  const html = `${BOM}<html xmlns:x="urn:schemas-microsoft-com:office:excel">
-<head>
-  <meta charset="UTF-8"/>
-  <style>
-    table { border-collapse: collapse; }
-    th { background-color: #F6A21E; color: #0D0D0D; font-weight: bold; border: 1px solid #ccc; padding: 8px; }
-    td { border: 1px solid #ccc; padding: 8px; }
-  </style>
-</head>
-<body>
-  <table>
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Escola</th>
-        <th>Cidade</th>
-        <th>Estado</th>
-        <th>Tipo de Formatura</th>
-        <th>Data do Evento</th>
-        <th>Local</th>
-        <th>Status</th>
-        <th>Total de Cadastros</th>
-        <th>Link de Cadastro</th>
-      </tr>
-    </thead>
-    <tbody>${eventosFiltrados
-      .map(
-        (e) => {
-          const dataFormatada = e.data_evento 
-            ? new Date(e.data_evento).toLocaleDateString('pt-BR')
-            : '';
-          
-          return `
-          <tr>
-            <td>${e.id}</td>
-            <td>${e.escola || ''}</td>
-            <td>${e.cidade || ''}</td>
-            <td>${e.estado || ''}</td>
-            <td>${e.tipo_formatura || ''}</td>
-            <td>${dataFormatada}</td>
-            <td>${e.local_evento || ''}</td>
-            <td>${e.status || ''}</td>
-            <td>${e.total_leads || 0}</td>
-            <td>${e.qr_url || ''}</td>
-          </tr>`;
-        }
-      )
-      .join('')}
-    </tbody>
-  </table>
-</body>
-</html>`;
+  const rows = eventosFiltrados.map((e) => {
+    const dataFormatada = e.data_evento 
+      ? new Date(e.data_evento).toLocaleDateString('pt-BR')
+      : '';
+    
+    return [
+      e.id,
+      e.escola || '',
+      e.cidade || '',
+      e.estado || '',
+      e.tipo_formatura || '',
+      dataFormatada,
+      e.local_evento || '',
+      e.status || '',
+      e.total_leads || 0,
+      e.qr_url || ''
+    ];
+  });
+
+  const headers = ['ID', 'Escola', 'Cidade', 'Estado', 'Tipo de Formatura', 'Data do Evento', 'Local', 'Status', 'Total de Cadastros', 'Link de Cadastro'];
   
-  const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8' });
+  // Criar TSV (Tab-Separated Values) que Excel interpreta melhor
+  const tsv = [headers.join('\t'), ...rows.map(row => row.join('\t'))].join('\n');
+  
+  const blob = new Blob([BOM + tsv], { type: 'text/plain;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;

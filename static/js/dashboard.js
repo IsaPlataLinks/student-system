@@ -295,51 +295,26 @@ function limparFiltros() {
 function exportarExcel() {
   if (alunosFiltrados.length === 0) return alert('Não há dados para exportar!');
   
-  // Adiciona BOM UTF-8 para corrigir acentuação no Excel
+  // Adiciona BOM UTF-8 para corrigir acentuação
   const BOM = '\uFEFF';
-  const html = `${BOM}<html xmlns:x="urn:schemas-microsoft-com:office:excel">
-<head>
-  <meta charset="UTF-8"/>
-  <style>
-    table { border-collapse: collapse; }
-    th { background-color: #F6A21E; color: #0D0D0D; font-weight: bold; border: 1px solid #ccc; padding: 8px; }
-    td { border: 1px solid #ccc; padding: 8px; }
-  </style>
-</head>
-<body>
-  <table>
-    <thead>
-      <tr>
-        <th>Matrícula</th>
-        <th>Nome</th>
-        <th>Turma</th>
-        <th>Ano</th>
-        <th>Escola</th>
-        <th>Email</th>
-        <th>WhatsApp</th>
-        <th>Responsável</th>
-      </tr>
-    </thead>
-    <tbody>${alunosFiltrados
-      .map(
-        (a) => `
-      <tr>
-        <td>${a.matricula || 'N/A'}</td>
-        <td>${a.nome}</td>
-        <td>${a.turma}</td>
-        <td>${a.ano_formatura || 'N/A'}</td>
-        <td>${a.escola || ''}</td>
-        <td>${a.email || ''}</td>
-        <td>${a.whatsapp || ''}</td>
-        <td>${a.responsavel || ''}</td>
-      </tr>`
-      )
-      .join('')}
-    </tbody>
-  </table>
-</body>
-</html>`;
-  const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8' });
+  
+  const rows = alunosFiltrados.map((a) => [
+    a.matricula || 'N/A',
+    a.nome,
+    a.turma,
+    a.ano_formatura || 'N/A',
+    a.escola || '',
+    a.email || '',
+    a.whatsapp || '',
+    a.responsavel || ''
+  ]);
+
+  const headers = ['Matrícula', 'Nome', 'Turma', 'Ano', 'Escola', 'Email', 'WhatsApp', 'Responsável'];
+  
+  // Criar TSV (Tab-Separated Values) que Excel interpreta melhor
+  const tsv = [headers.join('\t'), ...rows.map(row => row.join('\t'))].join('\n');
+  
+  const blob = new Blob([BOM + tsv], { type: 'text/plain;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
