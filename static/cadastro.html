@@ -874,31 +874,23 @@
 
         // ==================== CEP ====================
         byId("cep").addEventListener("input", (e) => {
-            let value = e.target.value.replace(/\D/g, '').slice(0, 8);
-            let cursorPos = e.target.selectionStart;
-            let oldValue = e.target.value;
+            let digitos = e.target.value.replace(/\D/g, '').slice(0, 8);
             
-            // Formata o valor
-            let formatted = value.replace(/^(\d{5})(\d{0,3})/, '$1-$2');
+            // Formata: 00000-000
+            let formatted = '';
+            if (digitos.length > 0) {
+                formatted = digitos.slice(0, 5);
+            }
+            if (digitos.length > 5) {
+                formatted += '-' + digitos.slice(5, 8);
+            }
+            
             e.target.value = formatted;
             
-            // Ajusta a posição do cursor
-            if (oldValue.length < formatted.length) {
-                // Usuário adicionou dígito
-                cursorPos++;
-            } else if (oldValue.length > formatted.length) {
-                // Usuário removeu dígito
-                cursorPos = Math.max(0, cursorPos - 1);
-            }
-            
-            // Evita cursor após o hífen na deleção
-            if (formatted[cursorPos - 1] === '-') {
-                cursorPos--;
-            }
-            
-            e.target.setSelectionRange(cursorPos, cursorPos);
+            // Posiciona cursor após último dígito digitado
+            e.target.setSelectionRange(formatted.length, formatted.length);
 
-            if (value.length < 8) {
+            if (digitos.length < 8) {
                 blocoEndereco.classList.add("d-none");
                 blocoEndereco.classList.remove("show");
                 document.querySelectorAll("#blocoEndereco input, #blocoEndereco select").forEach(el => el.value = "");
@@ -1074,11 +1066,8 @@
                     return;
                 }
 
-                showOk('Cadastro realizado com sucesso!');
                 // Redireciona para a página de sucesso
-                setTimeout(() => {
-                    window.location.href = `${window.location.origin}/sucesso.html`;
-                }, 1500);
+                window.location.href = `${window.location.origin}/sucesso.html`;
             } catch {
                 showErr('Erro de conexão. Tente novamente em instantes.');
                 btn.disabled = false;
