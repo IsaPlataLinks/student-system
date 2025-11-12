@@ -295,6 +295,10 @@ function limparFiltros() {
 function exportarExcel() {
   if (alunosFiltrados.length === 0) return alert('Não há dados para exportar!');
   
+  // Debug: Verificar dados
+  console.log('[EXPORT DEBUG] Primeiros alunos:', alunosFiltrados.slice(0, 3));
+  console.log('[EXPORT DEBUG] Campos disponíveis no primeiro aluno:', Object.keys(alunosFiltrados[0] || {}));
+  
   // Adiciona BOM UTF-8 para corrigir acentuação
   const BOM = '\uFEFF';
   
