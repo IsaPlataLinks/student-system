@@ -431,7 +431,7 @@ def unauthorized(e):
 @app.route('/api/cleanup', methods=['POST'])
 def cleanup():
     """
-    Limpa todos os leads e fotos para resetar o ambiente
+    Reset TOTAL do banco de dados - deleta todas as tabelas e recria
     Requer header de autenticação: X-Cleanup-Token
     """
     token = request.headers.get('X-Cleanup-Token', '')
@@ -442,21 +442,32 @@ def cleanup():
         return jsonify({'erro': 'Token inválido'}), 401
     
     try:
-        print("\n[CLEANUP] Iniciando limpeza de dados...")
+        print("\n[CLEANUP] Iniciando RESET TOTAL do banco de dados...")
         
-        # Deletar galeria primeiro
+        # 1. Deletar todos os dados das tabelas
         galeria_count = GaleriaFoto.query.count()
         GaleriaFoto.query.delete()
-        db.session.commit()
         print(f"[OK] {galeria_count} fotos de galeria deletadas")
         
-        # Deletar leads
         leads_count = Lead.query.count()
         Lead.query.delete()
-        db.session.commit()
         print(f"[OK] {leads_count} leads deletados")
         
-        # Limpar Cloudinary se configurado
+        eventos_count = Evento.query.count()
+        Evento.query.delete()
+        print(f"[OK] {eventos_count} eventos deletados")
+        
+        escolas_count = Escola.query.count()
+        Escola.query.delete()
+        print(f"[OK] {escolas_count} escolas deletadas")
+        
+        usuarios_count = Usuario.query.count()
+        # Deletar todos EXCETO admin
+        Usuario.query.filter(Usuario.login != 'admin').delete()
+        db.session.commit()
+        print(f"[OK] {usuarios_count - 1} usuários deletados (admin preservado)")
+        
+        # 2. Limpar Cloudinary
         cloudinary_deleted = 0
         if os.getenv('CLOUDINARY_URL'):
             try:
@@ -473,22 +484,25 @@ def cleanup():
             except Exception as e:
                 print(f"[AVISO] Erro ao limpar Cloudinary: {str(e)}")
         
-        print("[OK] Limpeza concluída com sucesso!\n")
+        print("[OK] RESET TOTAL concluído com sucesso!\n")
         
         return jsonify({
-            'mensagem': 'Ambiente limpo com sucesso!',
+            'mensagem': 'Banco de dados resetado com sucesso!',
+            'escolas_deletadas': escolas_count,
+            'eventos_deletados': eventos_count,
             'leads_deletados': leads_count,
             'galeria_deletada': galeria_count,
+            'usuarios_deletados': usuarios_count - 1,
             'cloudinary_deletado': cloudinary_deleted
         }), 200
         
     except Exception as e:
         db.session.rollback()
-        print(f"[ERRO] Falha na limpeza: {str(e)}")
+        print(f"[ERRO] Falha no reset: {str(e)}")
         import traceback
         traceback.print_exc()
         return jsonify({
-            'erro': 'Erro ao limpar',
+            'erro': 'Erro ao resetar',
             'detalhes': str(e)
         }), 500
 

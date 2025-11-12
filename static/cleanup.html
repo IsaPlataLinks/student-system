@@ -156,13 +156,21 @@
 <body>
     <div class="container-cleanup">
         <div class="header">
-            <h1><i class="fas fa-trash"></i> Limpeza de Dados</h1>
-            <p>Remove todos os eventos, leads e fotos</p>
+            <h1><i class="fas fa-trash"></i> Limpeza Total</h1>
+            <p>Reset completo do banco de dados</p>
         </div>
 
         <div class="warning-box">
             <i class="fas fa-exclamation-triangle"></i>
-            <strong>AVISO:</strong> Esta ação é irreversível! Todos os dados serão deletados do banco e Cloudinary.
+            <strong>AVISO CRÍTICO:</strong> Esta ação é IRREVERSÍVEL! Serão deletados:
+            <ul style="margin-top: 0.5rem; padding-left: 1.2rem;">
+                <li>✓ Todas as Escolas</li>
+                <li>✓ Todos os Eventos</li>
+                <li>✓ Todos os Leads</li>
+                <li>✓ Todas as Fotos da Galeria</li>
+                <li>✓ Todas as Fotos do Cloudinary</li>
+                <li>✓ Todos os Usuários (exceto admin)</li>
+            </ul>
         </div>
 
         <div id="formArea">
@@ -190,14 +198,22 @@
 
         function confirmarLimpeza() {
             const confirmacao = confirm(
-                '⚠️ CUIDADO!\n\n' +
-                'Esta ação NÃO pode ser desfeita.\n' +
-                'Todos os eventos, leads e fotos serão deletados.\n\n' +
-                'Tem certeza que deseja continuar?'
+                '⚠️ CUIDADO EXTREMO!\n\n' +
+                'Esta ação NÃO PODE SER DESFEITA!\n\n' +
+                'Serão deletados:\n' +
+                '✓ Todas as Escolas\n' +
+                '✓ Todos os Eventos\n' +
+                '✓ Todos os Leads\n' +
+                '✓ Todas as Fotos da Galeria\n' +
+                '✓ Todas as Fotos do Cloudinary\n' +
+                '✓ Todos os Usuários (exceto admin)\n\n' +
+                'Digite "DELETAR TUDO" para confirmar:'
             );
 
-            if (confirmacao) {
+            if (confirmacao && confirmacao.trim() === 'DELETAR TUDO') {
                 executarLimpeza();
+            } else if (confirmacao) {
+                alert('Confirmação inválida. Digite exatamente "DELETAR TUDO"');
             }
         }
 
@@ -227,13 +243,15 @@
                     resultArea.className = 'result success';
                     resultArea.innerHTML = `
                         <i class="fas fa-check-circle"></i>
-                        <h4>✅ Limpeza Concluída!</h4>
-                        <p>Todos os dados foram removidos com sucesso.</p>
+                        <h4>✅ Reset Total Concluído!</h4>
+                        <p>Banco de dados limpo completamente com sucesso.</p>
                         <div class="stats">
+                            <div>🏫 Escolas deletadas: <strong>${dados.escolas_deletadas}</strong></div>
                             <div>📅 Eventos deletados: <strong>${dados.eventos_deletados}</strong></div>
                             <div>👥 Leads deletados: <strong>${dados.leads_deletados}</strong></div>
                             <div>🖼️ Fotos de galeria deletadas: <strong>${dados.galeria_deletada}</strong></div>
                             <div>☁️ Fotos Cloudinary deletadas: <strong>${dados.cloudinary_deletado}</strong></div>
+                            <div>👤 Usuários deletados: <strong>${dados.usuarios_deletados}</strong></div>
                         </div>
                     `;
                 } else {
