@@ -316,6 +316,11 @@ def corrigir_orientacao_exif(img):
     return img
 
 def processar_foto(file):
+    """
+    Processa foto do lead (com crop e resize para 300x400)
+    Salva direto no Cloudinary em pasta 'fotos-alunos'
+    Retorna URL HTTPS completa
+    """
     if not file:
         return None
 
@@ -323,7 +328,7 @@ def processar_foto(file):
     timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
     nome_arquivo = f"{timestamp}_{filename}"
 
-    print(f"[DEBUG] Processando foto: {file.filename}")
+    print(f"[DEBUG] Processando foto do lead: {file.filename}")
     
     # Salva temporariamente em local para processar
     temp_path = os.path.join(app.config['UPLOAD_FOLDER'], nome_arquivo)
@@ -406,6 +411,74 @@ def processar_foto(file):
     
     except Exception as e:
         print(f"[ERRO] Erro ao processar imagem: {str(e)}")
+        raise
+
+def processar_foto_galeria(file):
+    """
+    Processa foto para galeria (sem redimensionar, apenas otimiza)
+    Salva direto no Cloudinary em pasta 'fotos-galeria'
+    Retorna URL HTTPS completa
+    """
+    if not file:
+        return None
+
+    filename = secure_filename(file.filename or 'foto.jpg')
+    timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+    nome_arquivo = f"{timestamp}_{filename}"
+
+    print(f"[DEBUG] Processando foto para galeria: {file.filename}")
+    
+    # Salva temporariamente
+    temp_path = os.path.join(app.config['UPLOAD_FOLDER'], nome_arquivo)
+    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    
+    try:
+        file.save(temp_path)
+        print(f"[OK] Arquivo salvo temporariamente: {temp_path}")
+    except Exception as e:
+        print(f"[ERRO] Falha ao salvar arquivo: {str(e)}")
+        raise
+
+    # Otimizar apenas qualidade (sem redimensionar)
+    try:
+        with Image.open(temp_path) as img:
+            if img.mode != 'RGB':
+                img = img.convert('RGB')
+            img.save(temp_path, 'JPEG', quality=90, optimize=True)
+        
+        # Upload obrigatório para Cloudinary
+        if not os.getenv('CLOUDINARY_URL'):
+            raise Exception("[ERRO] CLOUDINARY_URL não configurado. Upload de fotos requer Cloudinary em produção.")
+        
+        response = cloudinary.uploader.upload(
+            temp_path,
+            folder='fotos-galeria',
+            resource_type='image',
+            use_filename=True,
+            unique_filename=False,
+            overwrite=True
+        )
+        
+        cloudinary_url = response.get('secure_url')
+        if not cloudinary_url:
+            cloudinary_url = response.get('url', '').replace('http://', 'https://')
+        
+        print(f"[OK] Foto galeria enviada para Cloudinary: {cloudinary_url}")
+        
+        # Remove arquivo local
+        try:
+            os.remove(temp_path)
+        except:
+            pass
+        
+        return cloudinary_url
+    
+    except Exception as e:
+        print(f"[ERRO] Erro ao processar foto galeria: {str(e)}")
+        try:
+            os.remove(temp_path)
+        except:
+            pass
         raise
 
 # ==================== ERROR HANDLERS ====================
@@ -1237,6 +1310,21 @@ def obter_lead(lead_id):
         ev = lead.evento
         escola_obj = ev.escola if ev else None
         
+        # Processar URL da foto (Cloudinary ou local)
+        foto_url = None
+        if lead.foto:
+            # Se é uma URL completa HTTPS do Cloudinary, usar diretamente
+            if lead.foto.startswith('https://res.cloudinary.com/'):
+                foto_url = lead.foto
+            # Se começa com 'fotos-alunos/', é um public_id do Cloudinary (formato antigo)
+            elif lead.foto.startswith('fotos-alunos/'):
+                foto_url = cloudinary.CloudinaryResource(lead.foto).build_url()
+            else:
+                # É um arquivo local
+                foto_path = os.path.join(app.config['UPLOAD_FOLDER'], lead.foto)
+                if os.path.exists(foto_path):
+                    foto_url = f'/uploads/{lead.foto}'
+        
         return jsonify({
             'id': lead.id,
             'matricula': lead.matricula,
@@ -1252,7 +1340,7 @@ def obter_lead(lead_id):
             'numero': lead.numero,
             'complemento': lead.complemento,
             'tipo_imovel': lead.tipo_imovel,
-            'foto': lead.foto,
+            'foto': foto_url,
             'link_galeria': lead.link_galeria,
             'descricao_galeria': lead.descricao_galeria,
             'status_lead': lead.status_lead,
@@ -1395,6 +1483,10 @@ def remover_galeria_link(lead_id):
 @app.route('/api/eventos/<int:evento_id>/galeria', methods=['POST'])
 @jwt_required()
 def upload_galeria_foto(evento_id):
+    """
+    Upload de fotos para galeria do evento
+    ✅ Salva diretamente no Cloudinary (padronizado)
+    """
     vendedor_id = current_user_id()
     if vendedor_id is None:
         return jsonify({'erro': 'Token inválido'}), 401
@@ -1420,34 +1512,26 @@ def upload_galeria_foto(evento_id):
         tipos_permitidos = {'jpg', 'jpeg', 'png'}
         ext = arquivo.filename.rsplit('.', 1)[1].lower() if '.' in arquivo.filename else ''
         if ext not in tipos_permitidos:
+            print(f"[AVISO] Tipo de arquivo não permitido: {ext}")
             continue
         
-        # Salvar foto sem redimensionar (manter qualidade)
-        filename = secure_filename(arquivo.filename or 'foto.jpg')
-        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
-        nome_arquivo = f"galeria_{evento_id}_{timestamp}_{filename}"
-        caminho = os.path.join(app.config['UPLOAD_FOLDER'], nome_arquivo)
-        
-        arquivo.save(caminho)
-        
-        # Otimizar apenas a qualidade, sem redimensionar
         try:
-            with Image.open(caminho) as img:
-                if img.mode != 'RGB':
-                    img = img.convert('RGB')
-                img.save(caminho, 'JPEG', quality=90, optimize=True)
+            # ✅ Usar processar_foto_galeria() - salva em Cloudinary
+            foto_url = processar_foto_galeria(arquivo)
+            
+            # Registrar no banco com URL Cloudinary
+            galeria = GaleriaFoto(
+                evento_id=evento_id,
+                lead_id=int(lead_id) if lead_id else None,
+                nome_arquivo=foto_url,  # ← URL HTTPS Cloudinary
+                descricao=descricao
+            )
+            db.session.add(galeria)
+            fotos_salvas.append(foto_url)
+            print(f"[OK] Foto galeria adicionada ao banco: {foto_url}")
         except Exception as e:
-            print(f"Aviso ao otimizar imagem: {str(e)}")
-        
-        # Registrar no banco
-        galeria = GaleriaFoto(
-            evento_id=evento_id,
-            lead_id=int(lead_id) if lead_id else None,
-            nome_arquivo=nome_arquivo,
-            descricao=descricao
-        )
-        db.session.add(galeria)
-        fotos_salvas.append(nome_arquivo)
+            print(f"[ERRO] Erro ao processar foto galeria: {str(e)}")
+            continue
     
     try:
         db.session.commit()
@@ -1463,13 +1547,25 @@ def upload_galeria_foto(evento_id):
 @app.route('/api/eventos/<int:evento_id>/galeria', methods=['GET'])
 @jwt_required()
 def listar_galeria(evento_id):
+    """
+    Lista fotos da galeria do evento
+    ✅ Retorna URLs Cloudinary (padronizado)
+    """
     fotos = GaleriaFoto.query.filter_by(evento_id=evento_id).order_by(GaleriaFoto.criado_em.desc()).all()
     
     resultado = []
     for foto in fotos:
+        # nome_arquivo agora é URL Cloudinary (https://res.cloudinary.com/...)
+        foto_url = foto.nome_arquivo
+        
+        # Fallback para fotos antigas salvas localmente (antes da padronização)
+        if not foto_url.startswith('https://'):
+            foto_url = f'/uploads/{foto.nome_arquivo}'
+            print(f"[AVISO] Foto galeria {foto.id} ainda é local: {foto.nome_arquivo}")
+        
         resultado.append({
             'id': foto.id,
-            'url': f'/uploads/{foto.nome_arquivo}',
+            'url': foto_url,
             'nome_arquivo': foto.nome_arquivo,
             'descricao': foto.descricao,
             'lead_id': foto.lead_id,
