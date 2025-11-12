@@ -1820,10 +1820,14 @@ def listar_alunos():
                 
                 # Gerar URL da foto (Cloudinary ou local)
                 if lead.foto:
-                    # Se começa com 'fotos-alunos/', é uma foto do Cloudinary
-                    if lead.foto.startswith('fotos-alunos/'):
+                    # Se é uma URL completa HTTPS do Cloudinary, usar diretamente
+                    if lead.foto.startswith('https://res.cloudinary.com/'):
+                        foto_url = lead.foto
+                        print(f"[OK] Foto Cloudinary URL completa encontrada para lead {lead.id}: {foto_url}")
+                    # Se começa com 'fotos-alunos/', é um public_id do Cloudinary (formato antigo)
+                    elif lead.foto.startswith('fotos-alunos/'):
                         foto_url = cloudinary.CloudinaryResource(lead.foto).build_url()
-                        print(f"[OK] Foto Cloudinary encontrada para lead {lead.id}: {foto_url}")
+                        print(f"[OK] Foto Cloudinary public_id encontrada para lead {lead.id}: {foto_url}")
                     else:
                         # É um arquivo local
                         foto_path = os.path.join(app.config['UPLOAD_FOLDER'], lead.foto)

@@ -433,14 +433,31 @@
     // Aguarda o carregamento do DOM para iniciar a lógica de exibição
     document.addEventListener('DOMContentLoaded', function() {
         // Recupera dados do cadastro salvos no localStorage
-        const dadosCadastro = JSON.parse(localStorage.getItem('cadastroSucesso'));
+        const dadosJSON = localStorage.getItem('cadastroSucesso');
+        console.log('[DEBUG] Dados do localStorage:', dadosJSON);
         
-        if (dadosCadastro) {
+        if (!dadosJSON) {
+            console.warn('[AVISO] Nenhum dado de cadastro encontrado no localStorage');
+            // Fallback: exibir mensagem genérica
+            document.getElementById('nomeExibir').textContent = 'Seus dados foram cadastrados com sucesso!';
+            return;
+        }
+        
+        try {
+            const dadosCadastro = JSON.parse(dadosJSON);
+            console.log('[DEBUG] Dados parseados:', dadosCadastro);
+            
             // Exibir nome do cadastrado
             const nomeCompleto = dadosCadastro.nome || 'Não informado';
+            console.log('[DEBUG] Nome a exibir:', nomeCompleto);
             
             // Animar nome com efeito de digitação usando helper da UI
-            UI.animarNome(nomeCompleto, 'nomeExibir');
+            if (window.UI && typeof window.UI.animarNome === 'function') {
+                window.UI.animarNome(nomeCompleto, 'nomeExibir');
+            } else {
+                console.warn('[AVISO] UI.animarNome não disponível, exibindo texto direto');
+                document.getElementById('nomeExibir').textContent = nomeCompleto;
+            }
             
             // Mostrar opção apenas se for responsável
             if (dadosCadastro.tipo === 'responsavel') {
@@ -464,6 +481,9 @@
                     window.location.href = `cadastro.html?e=${dadosCadastro.eventoId}`;
                 });
             }
+        } catch (erro) {
+            console.error('[ERRO] Falha ao parsear dados:', erro);
+            document.getElementById('nomeExibir').textContent = 'Seus dados foram cadastrados com sucesso!';
         }
 
         // Usar confete realista da biblioteca UI se disponível

@@ -147,7 +147,7 @@ function renderizarAlunos(alunos) {
         <div class="card-body-custom">
           <div class="foto-container">
             ${
-              aluno.foto
+              aluno.foto && typeof aluno.foto === 'string'
                 ? `<img src="${aluno.foto.startsWith('http') ? aluno.foto : '/static/uploads/' + aluno.foto}" alt="${aluno.nome}">`
                 : `<i class="fas fa-user"></i>`
             }
