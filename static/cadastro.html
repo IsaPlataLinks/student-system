@@ -735,6 +735,18 @@
         const byId = (id) => document.getElementById(id);
         const blocoEndereco = byId("blocoEndereco");
 
+        const escapeHtml = (text) => {
+            if (!text || typeof text !== 'string') return '';
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        };
+
         const setBadge = async (id) => {
             if (!id) return;
             try {
@@ -743,14 +755,14 @@
                     const evento = await resp.json();
                     const nomeEvento = (evento.escola && evento.escola.nome) || `Evento ${id}`;
                     byId('eventoBadge').innerHTML =
-                        '<span class="badge-evento"><i class="fa-solid fa-qrcode me-2" style="color:var(--gold)"></i>' + nomeEvento + '</span>';
+                        '<span class="badge-evento"><i class="fa-solid fa-qrcode me-2" style="color:var(--gold)"></i>' + escapeHtml(nomeEvento) + '</span>';
                 } else {
                     byId('eventoBadge').innerHTML =
-                        '<span class="badge-evento"><i class="fa-solid fa-qrcode me-2" style="color:var(--gold)"></i>Evento: ' + id + '</span>';
+                        '<span class="badge-evento"><i class="fa-solid fa-qrcode me-2" style="color:var(--gold)"></i>Evento: ' + escapeHtml(String(id)) + '</span>';
                 }
             } catch (e) {
                 byId('eventoBadge').innerHTML =
-                    '<span class="badge-evento"><i class="fa-solid fa-qrcode me-2" style="color:var(--gold)"></i>Evento: ' + id + '</span>';
+                    '<span class="badge-evento"><i class="fa-solid fa-qrcode me-2" style="color:var(--gold)"></i>Evento: ' + escapeHtml(String(id)) + '</span>';
             }
         };
 

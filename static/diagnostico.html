@@ -150,6 +150,18 @@
     </div>
 
     <script>
+        function escapeHtml(text) {
+            if (!text || typeof text !== 'string') return '';
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
         async function carregarDados() {
             const conteudo = document.getElementById('conteudo');
             conteudo.innerHTML = '<div class="loading"><div class="spinner"><i class="fas fa-spinner fa-spin fa-3x mb-3"></i></div><p>Carregando...</p></div>';
@@ -159,13 +171,13 @@
                 const dados = await response.json();
                 
                 if (!response.ok) {
-                    conteudo.innerHTML = `<div class="error-box"><i class="fas fa-exclamation-triangle"></i> ${dados.erro || 'Erro ao carregar diagnóstico'}</div>`;
+                    conteudo.innerHTML = `<div class="error-box"><i class="fas fa-exclamation-triangle"></i> ${escapeHtml(dados.erro) || 'Erro ao carregar diagnóstico'}</div>`;
                     return;
                 }
                 
                 renderizarDados(dados);
             } catch (err) {
-                conteudo.innerHTML = `<div class="error-box"><i class="fas fa-exclamation-triangle"></i> Erro ao conectar: ${err.message}</div>`;
+                conteudo.innerHTML = `<div class="error-box"><i class="fas fa-exclamation-triangle"></i> Erro ao conectar: ${escapeHtml(err.message)}</div>`;
             }
         }
         
@@ -208,10 +220,10 @@
                     ${eventos.length === 0 ? '<p class="text-muted">Nenhum evento cadastrado</p>' : ''}
                     ${eventos.map(evt => `
                         <div class="evento-item">
-                            <div><strong>ID: ${evt.id}</strong> - ${evt.escola}</div>
+                            <div><strong>ID: ${evt.id}</strong> - ${escapeHtml(evt.escola || '')}</div>
                             <small class="text-muted">
                                 Data: ${evt.data ? new Date(evt.data).toLocaleDateString('pt-BR') : 'N/A'} | 
-                                Status: <span class="badge" style="background:${evt.status_auto === 'ativo' ? '#10b981' : evt.status_auto === 'finalizado' ? '#ef4444' : '#fbbf24'}">${evt.status_auto}</span> | 
+                                Status: <span class="badge" style="background:${evt.status_auto === 'ativo' ? '#10b981' : evt.status_auto === 'finalizado' ? '#ef4444' : '#fbbf24'}">${escapeHtml(evt.status_auto || '')}</span> | 
                                 Leads: ${evt.total_leads}
                             </small>
                         </div>
@@ -226,9 +238,9 @@
                     ${leads_recentes.length === 0 ? '<p class="text-muted">Nenhum lead cadastrado</p>' : ''}
                     ${leads_recentes.map(lead => `
                         <div class="lead-item">
-                            <div><strong>${lead.nome}</strong> (ID: ${lead.id})</div>
+                            <div><strong>${escapeHtml(lead.nome || '')}</strong> (ID: ${lead.id})</div>
                             <small class="text-muted">
-                                E-mail: ${lead.email} | 
+                                E-mail: ${escapeHtml(lead.email || '')} | 
                                 Criado: ${lead.criado_em ? new Date(lead.criado_em).toLocaleString('pt-BR') : 'N/A'}
                             </small>
                             <br>
@@ -236,7 +248,7 @@
                                 <i class="fas ${lead.foto ? (lead.foto_existe ? 'fa-check-circle' : 'fa-exclamation-circle') : 'fa-ban'}"></i>
                                 ${lead.foto ? (lead.foto_existe ? 'Foto OK' : 'Foto Faltando') : 'Sem Foto'}
                             </span>
-                            ${lead.foto ? `<small class="text-muted ms-2">${lead.foto}</small>` : ''}
+                            ${lead.foto ? `<small class="text-muted ms-2">${escapeHtml(lead.foto)}</small>` : ''}
                         </div>
                     `).join('')}
                 </div>
@@ -248,13 +260,13 @@
                     <div class="status-card">
                         <h4><i class="fas fa-folder"></i> Pasta de Uploads</h4>
                         <p>
-                            <strong>Caminho:</strong> ${dados.pasta_uploads}<br>
+                            <strong>Caminho:</strong> ${escapeHtml(dados.pasta_uploads || '')}<br>
                             <strong>Total de arquivos:</strong> ${dados.arquivos_upload || 0}
                         </p>
                         ${dados.arquivos && dados.arquivos.length > 0 ? `
                             <h5>Arquivos:</h5>
                             <ul class="list-unstyled">
-                                ${dados.arquivos.map(arq => `<li><code>${arq}</code></li>`).join('')}
+                                ${dados.arquivos.map(arq => `<li><code>${escapeHtml(arq)}</code></li>`).join('')}
                             </ul>
                         ` : ''}
                     </div>

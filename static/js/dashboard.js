@@ -274,7 +274,7 @@ function carregarEscolasNoFiltro() {
   const selectEscola = document.getElementById('filtroEscola');
   selectEscola.innerHTML =
     '<option value="">Todas as Escolas</option>' +
-    escolas.map((e) => `<option value="${e}">${e}</option>`).join('');
+    escolas.map((e) => `<option value="${escapeHtml(e)}">${escapeHtml(e)}</option>`).join('');
 }
 
 function aplicarFiltros() {
@@ -309,33 +309,34 @@ function limparFiltros() {
 // ======================================================
 
 function exportarExcel() {
-  if (alunosFiltrados.length === 0) return alert('Não há dados para exportar!');
-  
-  // Debug: Verificar dados
-  console.log('[EXPORT DEBUG] Primeiros alunos:', alunosFiltrados.slice(0, 3));
-  console.log('[EXPORT DEBUG] Campos disponíveis no primeiro aluno:', Object.keys(alunosFiltrados[0] || {}));
-  
-  // Adiciona BOM UTF-8 para corrigir acentuação
-  const BOM = '\uFEFF';
-  
-  const rows = alunosFiltrados.map((a) => [
-    a.evento_id || '',
-    a.matricula || '',
-    a.nome,
-    a.serie || '',
-    a.letra_turma || '',
-    a.ano_formatura || '',
-    a.escola || '',
-    a.email || '',
-    a.whatsapp || '',
-    a.responsavel || '',
-    a.cep || '',
-    a.endereco || '',
-    a.numero || '',
-    a.complemento || ''
-  ]);
+   if (alunosFiltrados.length === 0) return alert('Não há dados para exportar!');
+   
+   // Debug: Verificar dados
+   console.log('[EXPORT DEBUG] Primeiros alunos:', alunosFiltrados.slice(0, 3));
+   console.log('[EXPORT DEBUG] Campos disponíveis no primeiro aluno:', Object.keys(alunosFiltrados[0] || {}));
+   
+   // Adiciona BOM UTF-8 para corrigir acentuação
+   const BOM = '\uFEFF';
+   
+   const rows = alunosFiltrados.map((a) => [
+      a.evento_id || '',
+      a.matricula || 'N/A',
+      a.nome,
+      a.serie || '',
+      a.letra_turma || '',
+      a.ano_formatura || '',
+      a.escola || '',
+      a.email || '',
+      a.whatsapp || '',
+      a.responsavel || '',
+      a.cep || '',
+      a.endereco || '',
+      a.numero || '',
+      a.complemento || '',
+      a.tipo_imovel || ''
+   ]);
 
-  const headers = ['ID Evento', 'Matrícula', 'Nome', 'Série', 'Turma', 'Ano', 'Escola', 'Email', 'WhatsApp', 'Responsável', 'CEP', 'Endereço', 'Número', 'Complemento'];
+   const headers = ['ID Evento', 'Matrícula', 'Nome', 'Série', 'Turma', 'Ano', 'Escola', 'Email', 'WhatsApp', 'Responsável', 'CEP', 'Endereço', 'Número', 'Complemento', 'Tipo Imóvel'];
   
   // Criar TSV (Tab-Separated Values) que Excel interpreta melhor
   const tsv = [headers.join('\t'), ...rows.map(row => row.join('\t'))].join('\n');
@@ -430,15 +431,15 @@ function renderizarEventos(eventos) {
                   </button>`;
               
               return `
-        <tr>
-          <td>${e.id}</td>
-          <td>${e.escola || '-'}</td>
-          <td>${e.tipo_formatura || '-'}</td>
-          <td>${e.data_evento ? new Date(e.data_evento).toLocaleDateString('pt-BR') : '-'}</td>
-          <td><span class="badge bg-${badgeColor}">${statusTexto}${statusDetalhes}</span></td>
-          <td>${e.total_leads || 0}</td>
-          <td>${btnQR}</td>
-        </tr>`;
+              <tr>
+              <td>${e.id}</td>
+              <td>${escapeHtml(e.escola) || '-'}</td>
+              <td>${escapeHtml(e.tipo_formatura) || '-'}</td>
+              <td>${e.data_evento ? new Date(e.data_evento).toLocaleDateString('pt-BR') : '-'}</td>
+              <td><span class="badge bg-${badgeColor}">${escapeHtml(statusTexto)}${statusDetalhes}</span></td>
+              <td>${e.total_leads || 0}</td>
+              <td>${btnQR}</td>
+              </tr>`;
             }
           )
           .join('');
@@ -595,7 +596,7 @@ function renderizarDetalhesLead() {
         <i class="fas fa-check-circle me-1" style="color:var(--gold)"></i>
         <strong style="color:var(--gold)">Galeria vinculada!</strong><br>
         <small>${escapeHtml(lead.descricao_galeria) || 'Link de galeria em nuvem'}</small><br>
-        <a href="${escapeHtml(lead.link_galeria)}" target="_blank" class="btn btn-sm mt-2" style="background:var(--gold);color:var(--black);border:none;font-weight:600">
+        <a href="${lead.link_galeria}" target="_blank" class="btn btn-sm mt-2" style="background:var(--gold);color:var(--black);border:none;font-weight:600">
           <i class="fas fa-external-link-alt me-1"></i>Ver Galeria
         </a>
         <button class="btn btn-sm mt-2" onclick="removerGaleriaLink()" style="background:rgba(0,0,0,0.1);color:var(--black);border:none;font-weight:600">

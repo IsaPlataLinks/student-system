@@ -1985,6 +1985,7 @@ def listar_alunos():
                     'endereco': lead.endereco,
                     'numero': lead.numero,
                     'complemento': lead.complemento,
+                    'tipo_imovel': lead.tipo_imovel,
                     'criado_em': lead.criado_em.isoformat() if lead.criado_em else None
                 }
                 

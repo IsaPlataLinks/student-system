@@ -339,13 +339,26 @@ formCadastro.addEventListener('submit', async function(e) {
     }
 });
 
+// ==================== XSS PREVENTION ====================
+function escapeHtml(text) {
+    if (!text || typeof text !== 'string') return '';
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
+}
+
 // ==================== ALERTAS ====================
 function mostrarAlerta(mensagem, tipo) {
     const alert = document.createElement('div');
     alert.className = `alert alert-${tipo} alert-dismissible fade show`;
     alert.role = 'alert';
     alert.innerHTML = `
-        ${mensagem}
+        ${escapeHtml(mensagem)}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     `;
     alertContainer.innerHTML = '';

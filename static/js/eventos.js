@@ -168,6 +168,7 @@ function renderizarEventos(eventos) {
         </td>
       </tr>
     `;
+    })
   }).join('');
 }
 

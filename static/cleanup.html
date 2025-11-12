@@ -217,6 +217,18 @@
             }
         }
 
+        function escapeHtml(text) {
+            if (!text || typeof text !== 'string') return '';
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
         async function executarLimpeza() {
             const formArea = document.getElementById('formArea');
             const loadingArea = document.getElementById('loadingArea');
@@ -260,8 +272,8 @@
                     resultArea.innerHTML = `
                         <i class="fas fa-times-circle"></i>
                         <h4>❌ Erro na Limpeza</h4>
-                        <p>${dados.erro || 'Erro desconhecido'}</p>
-                        <p style="font-size: 0.85rem; margin-top: 0.5rem;">${dados.detalhes || ''}</p>
+                        <p>${escapeHtml(dados.erro) || 'Erro desconhecido'}</p>
+                        <p style="font-size: 0.85rem; margin-top: 0.5rem;">${escapeHtml(dados.detalhes) || ''}</p>
                     `;
                 }
 
@@ -273,7 +285,7 @@
                 resultArea.innerHTML = `
                     <i class="fas fa-times-circle"></i>
                     <h4>❌ Erro de Conexão</h4>
-                    <p>${error.message}</p>
+                    <p>${escapeHtml(error.message)}</p>
                 `;
                 resultArea.style.display = 'block';
                 loadingArea.style.display = 'none';
