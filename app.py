@@ -447,18 +447,22 @@ def cleanup():
         # 1. Deletar todos os dados das tabelas
         galeria_count = GaleriaFoto.query.count()
         GaleriaFoto.query.delete()
+        db.session.commit()
         print(f"[OK] {galeria_count} fotos de galeria deletadas")
         
         leads_count = Lead.query.count()
         Lead.query.delete()
+        db.session.commit()
         print(f"[OK] {leads_count} leads deletados")
         
         eventos_count = Evento.query.count()
         Evento.query.delete()
+        db.session.commit()
         print(f"[OK] {eventos_count} eventos deletados")
         
         escolas_count = Escola.query.count()
         Escola.query.delete()
+        db.session.commit()
         print(f"[OK] {escolas_count} escolas deletadas")
         
         usuarios_count = Usuario.query.count()
