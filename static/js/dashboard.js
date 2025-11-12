@@ -199,6 +199,7 @@ function renderizarAlunos(alunos) {
                 src="${sanitizeAttr(urlFoto)}" 
                 alt="${escapeHtml(aluno.nome)}" 
                 class="aluno-foto"
+                style="object-fit:contain; padding:5px;"
                 onerror="this.style.display='none'; this.nextElementSibling && (this.nextElementSibling.style.display='flex')">
               <i class="fas fa-user foto-fallback" style="display:none;"></i>`
             : `<i class="fas fa-user"></i>`;
@@ -592,8 +593,8 @@ function renderizarDetalhesLead() {
    const fotoUrl = construirUrlFoto(lead.foto);
    
    const fotoHtml = fotoUrl
-     ? `<div style="width:100%; aspect-ratio:3/4; border-radius:10px; overflow:hidden; display:flex; align-items:center; justify-content:center; background:#f5f5f5; border:2px solid #e0e0e0;">
-          <img src="${sanitizeAttr(fotoUrl)}" alt="Foto do formando" style="width:100%; height:100%; object-fit:cover;" />
+     ? `<div style="width:100%; max-height:300px; border-radius:10px; overflow:hidden; display:flex; align-items:center; justify-content:center; background:#f5f5f5; border:2px solid #e0e0e0;">
+          <img src="${sanitizeAttr(fotoUrl)}" alt="Foto do formando" style="max-width:100%; max-height:100%; object-fit:contain;" />
         </div>`
      : '<i class="fas fa-user-circle fa-5x text-muted"></i>';
 
