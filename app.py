@@ -364,10 +364,9 @@ def processar_foto(file):
                  left = (width - new_width) // 2
                  img = img.crop((left, 0, left + new_width, height))
              else:
-                 # Imagem muito alta - croppa o topo e parte inferior
+                 # Imagem muito alta - croppa centralizando verticalmente
                  new_height = int(width / aspect_ratio)
-                 # Prioriza a parte superior (rosto geralmente está acima do centro)
-                 top = int(height * 0.15)  # começa 15% do topo
+                 top = (height - new_height) // 2  # Centraliza verticalmente
                  img = img.crop((0, top, width, top + new_height))
              
              # Redimensiona para o tamanho final (300x400)
