@@ -297,26 +297,48 @@ function exportarExcel() {
   
   // Adiciona BOM UTF-8 para corrigir acentuação no Excel
   const BOM = '\uFEFF';
-  const html = `${BOM}
-    <table>
-      <thead><tr><th>Matrícula</th><th>Nome</th><th>Turma</th><th>Ano</th><th>Escola</th><th>Email</th><th>WhatsApp</th><th>Responsável</th></tr></thead>
-      <tbody>${alunosFiltrados
-        .map(
-          (a) => `
-        <tr>
-          <td>${a.matricula || 'N/A'}</td>
-          <td>${a.nome}</td>
-          <td>${a.turma}</td>
-          <td>${a.ano_formatura || 'N/A'}</td>
-          <td>${a.escola || ''}</td>
-          <td>${a.email || ''}</td>
-          <td>${a.whatsapp || ''}</td>
-          <td>${a.responsavel || ''}</td>
-        </tr>`
-        )
-        .join('')}
-      </tbody>
-    </table>`;
+  const html = `${BOM}<html xmlns:x="urn:schemas-microsoft-com:office:excel">
+<head>
+  <meta charset="UTF-8"/>
+  <style>
+    table { border-collapse: collapse; }
+    th { background-color: #F6A21E; color: #0D0D0D; font-weight: bold; border: 1px solid #ccc; padding: 8px; }
+    td { border: 1px solid #ccc; padding: 8px; }
+  </style>
+</head>
+<body>
+  <table>
+    <thead>
+      <tr>
+        <th>Matrícula</th>
+        <th>Nome</th>
+        <th>Turma</th>
+        <th>Ano</th>
+        <th>Escola</th>
+        <th>Email</th>
+        <th>WhatsApp</th>
+        <th>Responsável</th>
+      </tr>
+    </thead>
+    <tbody>${alunosFiltrados
+      .map(
+        (a) => `
+      <tr>
+        <td>${a.matricula || 'N/A'}</td>
+        <td>${a.nome}</td>
+        <td>${a.turma}</td>
+        <td>${a.ano_formatura || 'N/A'}</td>
+        <td>${a.escola || ''}</td>
+        <td>${a.email || ''}</td>
+        <td>${a.whatsapp || ''}</td>
+        <td>${a.responsavel || ''}</td>
+      </tr>`
+      )
+      .join('')}
+    </tbody>
+  </table>
+</body>
+</html>`;
   const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
